@@ -46,8 +46,13 @@ AIgent/oc.exe
 # ---------- 超大视频素材 ----------
 # 以下高清纪录片单文件体积过大，超出 Git LFS 免费额度，未纳入公开仓库；
 # 完整素材可另行获取，或先压缩至 100MB 以下再提交。
-# 化学史诗 vedio/part2~4.mp4 已压缩到 50MB 以内，归档进仓库（LFS 托管）。
-video/*.mp4
+# 化学史诗 vedio/part2~4.mp4 已压缩到 50MB 以内归档；
+# video/ 下汉弗莱·戴维、玛丽·居里（压缩后约 10MB）已归档，其余五部长片暂不入库。
+video/门捷列夫.mp4
+video/拉瓦锡.mp4
+video/舍勒.mp4
+video/鲍林.mp4
+video/道尔顿.mp4
 
 # ---------- IDE 生成的分享包 ----------
 .trae-html-share-packages/
