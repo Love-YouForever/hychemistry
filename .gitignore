@@ -46,10 +46,8 @@ AIgent/oc.exe
 # ---------- 超大视频素材 ----------
 # 以下高清纪录片单文件体积过大，超出 Git LFS 免费额度，未纳入公开仓库；
 # 完整素材可另行获取，或先压缩至 100MB 以下再提交。
+# 化学史诗 vedio/part2~4.mp4 已压缩到 50MB 以内，归档进仓库（LFS 托管）。
 video/*.mp4
-pages/Chemical_Epics/vedio/part2.mp4
-pages/Chemical_Epics/vedio/part3.mp4
-pages/Chemical_Epics/vedio/part4.mp4
 
 # ---------- IDE 生成的分享包 ----------
 .trae-html-share-packages/
