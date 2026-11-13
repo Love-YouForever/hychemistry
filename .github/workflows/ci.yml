@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
+        with:
+          lfs: true   # 视频素材由 Git LFS 托管，需显式拉取，避免拿到指针文件
 
       - name: 配置 Python
         uses: actions/setup-python@v5
@@ -32,7 +34,7 @@ jobs:
           pip install pytest pytest-cov
 
       - name: 运行单元测试
-        run: pytest -v
+        run: pytest -v --cov=server --cov-report=term-missing
 
       - name: 校验服务端语法
         run: python -m compileall -q server
