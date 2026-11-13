@@ -463,7 +463,7 @@
             <tr><td><b>3D 虚拟实验室</b></td><td>按真实科研实验室标准构建四大功能分区、72 项器材试剂，支持拖拽操作与反应模拟，并配套完整安全规范体系</td></tr>
             <tr><td><b>AI 安全护栏</b></td><td>在调用模型前拦截危险化学请求，是化学这一高风险主题下最必要的合规设计</td></tr>
             <tr><td><b>可对话的场景化 AI</b></td><td>首屏 AI 模式、可对话的 3D 元素周期表（元素点击 + 四组探索预设高亮）、化学先驱角色 Agent、文档问答轻量 RAG 四条路径共用同一套 Agent 与可解释引用链路</td></tr>
-            <tr><td><b>弱网与不可用降级</b></td><td>首屏视频按网络与设备能力降级为静态背景；WebGL / Three.js 不可用时自动切换为可交互 2D 周期表，AI 问答与元素详情不受影响</td></tr>
+            <tr><td><b>弱网与不可用降级</b></td><td>首屏视频懒加载（poster 先出、空闲再拉取），弱网/移动端只保留静态帧；WebGL / Three.js 不可用时自动切换为可交互 2D 周期表，AI 问答与元素详情不受影响</td></tr>
         </tbody>
     </table>
 
@@ -866,7 +866,7 @@ O : 0·x₁ + 2·x₂ − 3·x₃ = 0
     </div>
 
     <h4>⑤ 界面工程的「稳」：首屏视频与 WebGL 降级</h4>
-    <p>首屏视频默认 <code>opacity:0</code>，在 <code>playing</code> 事件后才淡入（0.8s）；检测到 Save-Data、2G/3G 网络、移动端窄屏、<code>prefers-reduced-motion</code>，或 6 秒内仍未就绪时，直接移除视频源并切换为渐变静态背景，保证首屏 1 秒内可读、可点。3D 周期表启动前检测 WebGL 与 Three.js：任一不可用即给 <code>body</code> 加 <code>pt-no-webgl</code>，隐藏 3D 容器、显示说明横幅、把视图切换按钮置为「3D 不可用」，并保留完整可交互的 2D 周期表；若 12 秒内元素数据仍未加载成功，同样回落到 2D 并提示网络原因。</p>
+    <p>首屏视频改为懒加载：HTML 中不写 <code>&lt;source&gt;</code>，只保留 42 KB 的 poster 静态帧（<code>background-poster.jpg</code>）并设 <code>preload="none"</code>；页面 <code>load</code> 完成、主线程空闲（<code>requestIdleCallback</code>，降级路径为 1.2s 定时器）后才动态挂载 15.6 MB 的视频源，避免与首屏关键资源争抢带宽。实测：静态帧 0.02s 返回、<code>load</code> 事件 0.70s、视频请求 1.28s（晚于 <code>load</code> 0.58s），首屏立即可读可点。检测到 Save-Data、2G/3G 网络、移动端窄屏或 <code>prefers-reduced-motion</code> 时完全不挂载视频，仅保留静态帧；已挂载但 8 秒内未就绪则软降级为渐变背景，且保留视频源，网络恢复后自动回到视频。3D 周期表启动前检测 WebGL 与 Three.js：任一不可用即给 <code>body</code> 加 <code>pt-no-webgl</code>，隐藏 3D 容器、显示说明横幅、把视图切换按钮置为「3D 不可用」，并保留完整可交互的 2D 周期表；若 12 秒内元素数据仍未加载成功，同样回落到 2D 并提示网络原因。</p>
 
     <figure class="doc-figure wide">
         <img src="images/periodic-webgl-fallback.png" alt="WebGL 不可用时的 2D 降级截图">

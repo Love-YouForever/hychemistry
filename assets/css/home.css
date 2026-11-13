@@ -41,7 +41,10 @@
             transition: opacity 0.8s ease;
         } /*实现自动裁剪，使其填满整个窗口*/
 
-        /* 首屏视频加载完成后再淡入，弱网/移动端降级为静态背景 */
+        /* 首屏视频加载完成后再淡入，弱网/移动端降级为静态背景
+           poster 为静态帧，先渲染海报，视频就绪后由同一元素无缝接管 */
+        body.video-poster .video-container video { opacity: 1; }
+
         body.video-ready .video-container video { opacity: 1; }
 
         body.video-degraded .video-container video { display: none; }

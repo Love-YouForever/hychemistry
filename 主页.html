@@ -7,16 +7,14 @@
     
     <link rel="stylesheet" href="assets/css/mobile-adaptation.css">
     
-    <link rel="stylesheet" href="assets/css/home.css?v=20261113a">
+    <link rel="stylesheet" href="assets/css/home.css?v=20261113b">
     <link rel="stylesheet" href="assets/css/ai-assistant.css?v=20261113h">
 </head>
-<body>
+<body class="video-poster">
 
 <!--背景层（视频 + 遮罩 + 粒子）-->
 <div class="video-container">
-    <video autoplay loop muted playsinline id="bgVideo">
-        <source src="./assets/background.mp4" type="video/mp4">
-    </video>
+    <video autoplay loop muted playsinline preload="none" id="bgVideo" poster="assets/background-poster.jpg"></video>
 </div>
 <div class="overlay"></div>
 <canvas id="particle-canvas"></canvas>
@@ -226,7 +224,7 @@
 </audio>
 
     <script src="assets/vendor/vue.global.prod.js"></script>
-    <script src="assets/js/home.js?v=20261113b"></script>
+    <script src="assets/js/home.js?v=20261113c"></script>
     <script src="assets/js/home-app.js?v=20261113r"></script>
 </body>
 </html>

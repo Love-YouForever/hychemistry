@@ -224,7 +224,8 @@
         initAuto();
     })();
 
-    //背景视频自动播放尝试：弱网 / 移动端 / 减少动态效果时降级为静态背景
+    //背景视频懒加载：先渲染 poster 静态帧，首屏空闲后再挂载视频源
+    //弱网 / 移动端 / 减少动态效果时降级为静态背景，不下载视频
     (function initBackgroundVideo() {
         const video = document.getElementById('bgVideo');
         if (!video) return;
@@ -240,12 +241,11 @@
             document.body.classList.add('video-degraded');
         }
 
-        // 硬降级：明确不该加载视频的场景（省流量 / 2G、3G / 窄屏），直接释放视频源
+        // 硬降级：明确不该加载视频的场景（省流量 / 2G、3G / 窄屏），保持 poster 静态帧
         function hardDegrade() {
             try { video.pause(); } catch (error) { /* 忽略 */ }
             video.querySelectorAll('source').forEach((source) => source.remove());
             video.removeAttribute('src');
-            video.load();
             softDegrade();
         }
 
@@ -254,13 +254,15 @@
             document.body.classList.remove('video-degraded');
         }
 
+        function markPoster() {
+            document.body.classList.add('video-poster');
+            document.body.classList.remove('video-degraded');
+        }
+
         if (slowNetwork || smallScreen || reduceMotion) {
             hardDegrade();
             return;
         }
-
-        // autoplay 可能在脚本执行前就已开始播放，此时不会再触发 playing 事件，需主动判定
-        if (!video.paused && video.readyState >= 2) markReady();
 
         video.addEventListener('playing', markReady);
         video.addEventListener('canplay', () => {
@@ -268,14 +270,33 @@
             if (video.paused) video.play().catch(() => {});
         });
 
-        const playPromise = video.play();
-        if (playPromise && typeof playPromise.catch === 'function') {
-            playPromise.catch(() => console.log('视频自动播放限制'));
+        // 懒加载：首屏渲染完成、主线程空闲后再请求 15.6MB 视频
+        function attachSource() {
+            if (video.currentSrc || video.querySelector('source')) return;
+            const source = document.createElement('source');
+            source.src = './assets/background.mp4';
+            source.type = 'video/mp4';
+            video.appendChild(source);
+            video.load();
+
+            const playPromise = video.play();
+            if (playPromise && typeof playPromise.catch === 'function') {
+                playPromise.catch(() => {
+                    console.log('视频自动播放限制');
+                    if (video.readyState < 2) markPoster();
+                });
+            }
+
+            setTimeout(() => {
+                if (video.readyState < 2) softDegrade();
+            }, 8000);
         }
 
-        setTimeout(() => {
-            if (video.readyState < 2) softDegrade();
-        }, 8000);
+        if ('requestIdleCallback' in window) {
+            window.requestIdleCallback(attachSource, { timeout: 2500 });
+        } else {
+            setTimeout(attachSource, 1200);
+        }
     })();
 
 
