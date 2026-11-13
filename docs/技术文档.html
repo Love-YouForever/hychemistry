@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>元素幻语 · 技术文档</title>
+<style>
+    @page {
+        size: A4;
+        margin: 18mm 16mm 16mm 16mm;
+    }
+    @page :first {
+        margin: 0;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+        font-size: 10.5pt;
+        line-height: 1.75;
+        color: #1c2733;
+        background: #fff;
+    }
+
+    /* ---------- 封面 ---------- */
+    .cover {
+        height: 297mm;
+        background: linear-gradient(150deg, #06131f 0%, #0b2437 45%, #08202e 100%);
+        color: #eafcff;
+        padding: 60mm 22mm 0 22mm;
+        position: relative;
+        page-break-after: always;
+        overflow: hidden;
+    }
+
+    .cover::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+            linear-gradient(rgba(46, 230, 255, 0.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(46, 230, 255, 0.06) 1px, transparent 1px);
+        background-size: 12mm 12mm;
+    }
+
+    .cover-glow {
+        position: absolute;
+        width: 140mm;
+        height: 140mm;
+        right: -40mm;
+        top: -30mm;
+        background: radial-gradient(circle, rgba(46, 230, 255, 0.22), transparent 68%);
+    }
+
+    .cover-inner { position: relative; z-index: 2; }
+
+    .cover-tag {
+        display: inline-block;
+        padding: 2mm 5mm;
+        border: 1px solid rgba(46, 230, 255, 0.55);
+        border-radius: 20mm;
+        font-size: 9pt;
+        letter-spacing: 0.35em;
+        color: #7fe3f5;
+        margin-bottom: 14mm;
+    }
+
+    .cover h1 {
+        font-size: 34pt;
+        margin: 0 0 4mm 0;
+        letter-spacing: 0.1em;
+        font-weight: 800;
+        background: linear-gradient(120deg, #ffffff, #8fe8ff 55%, #4fd1c5);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .cover-sub {
+        font-size: 12.5pt;
+        color: #9fc4d8;
+        letter-spacing: 0.06em;
+        margin-bottom: 30mm;
+    }
+
+    .cover-line {
+        width: 30mm;
+        height: 3px;
+        background: linear-gradient(90deg, #2ee6ff, transparent);
+        margin-bottom: 12mm;
+    }
+
+    .cover-meta {
+        font-size: 10pt;
+        line-height: 2.2;
+        color: #b9d8e8;
+    }
+
+    .cover-meta b {
+        display: inline-block;
+        width: 26mm;
+        color: #6f97b0;
+        font-weight: 400;
+    }
+
+    .cover-foot {
+        position: absolute;
+        left: 22mm;
+        right: 22mm;
+        bottom: 20mm;
+        font-size: 8.5pt;
+        color: #4f7386;
+        letter-spacing: 0.15em;
+        border-top: 1px solid rgba(46, 230, 255, 0.18);
+        padding-top: 4mm;
+        z-index: 2;
+    }
+
+    /* ---------- 目录 ---------- */
+    .toc { page-break-after: always; }
+
+    .toc h2 {
+        border-bottom: none;
+        margin-bottom: 8mm;
+    }
+
+    .toc ol {
+        list-style: none;
+        padding: 0;
+        counter-reset: toc;
+    }
+
+    .toc > ol > li {
+        counter-increment: toc;
+        padding: 2.2mm 0;
+        border-bottom: 1px dashed #d9e4ea;
+        font-size: 10.5pt;
+        color: #22495e;
+        display: flex;
+    }
+
+    .toc > ol > li::before {
+        content: counter(toc, decimal-leading-zero);
+        color: #2ea8c4;
+        font-weight: 700;
+        width: 12mm;
+        flex: none;
+    }
+
+    /* ---------- 标题 ---------- */
+    h2 {
+        font-size: 16pt;
+        color: #0b3a52;
+        margin: 0 0 5mm 0;
+        padding-bottom: 2mm;
+        border-bottom: 2px solid #2ea8c4;
+        page-break-after: avoid;
+    }
+
+    h2 .num {
+        color: #2ea8c4;
+        margin-right: 3mm;
+    }
+
+    h3 {
+        font-size: 12pt;
+        color: #12617d;
+        margin: 6mm 0 2.5mm 0;
+        page-break-after: avoid;
+    }
+
+    h3::before {
+        content: "▍";
+        color: #2ea8c4;
+        margin-right: 1.5mm;
+    }
+
+    h4 {
+        font-size: 10.5pt;
+        color: #1c4f66;
+        margin: 4mm 0 1.5mm 0;
+        page-break-after: avoid;
+    }
+
+    p { margin: 0 0 2.5mm 0; text-align: justify; }
+
+    section { page-break-before: always; }
+    section.first { page-break-before: avoid; }
+
+    /* ---------- 列表 ---------- */
+    ul, ol { margin: 0 0 2.5mm 0; padding-left: 6mm; }
+    li { margin-bottom: 1.2mm; }
+
+    /* ---------- 表格 ---------- */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 3mm 0 4mm 0;
+        font-size: 9.2pt;
+        page-break-inside: avoid;
+    }
+
+    th {
+        background: #eaf6fa;
+        color: #0b3a52;
+        font-weight: 700;
+        text-align: left;
+        padding: 2mm 2.5mm;
+        border: 1px solid #c8dfe8;
+    }
+
+    td {
+        padding: 1.8mm 2.5mm;
+        border: 1px solid #dcebf1;
+        vertical-align: top;
+    }
+
+    tbody tr:nth-child(even) { background: #f8fcfd; }
+
+    /* ---------- 代码 ---------- */
+    code {
+        font-family: "Consolas", "Courier New", monospace;
+        font-size: 9pt;
+        background: #eef5f8;
+        padding: 0.5mm 1.2mm;
+        border-radius: 1mm;
+        color: #0f5a72;
+    }
+
+    pre {
+        background: #0d1f2b;
+        color: #cfe9f5;
+        padding: 3.5mm 4mm;
+        border-radius: 2mm;
+        font-family: "Consolas", "Courier New", monospace;
+        font-size: 8.6pt;
+        line-height: 1.65;
+        overflow-x: auto;
+        page-break-inside: avoid;
+        margin: 3mm 0;
+    }
+
+    pre .c { color: #5d8ba3; }
+
+    /* ---------- 提示块 ---------- */
+    .note {
+        background: #f0f9fc;
+        border-left: 3px solid #2ea8c4;
+        padding: 3mm 4mm;
+        margin: 3mm 0;
+        font-size: 9.5pt;
+        color: #1d4d61;
+        page-break-inside: avoid;
+    }
+
+    .warn {
+        background: #fffaf0;
+        border-left: 3px solid #e0a63c;
+        padding: 3mm 4mm;
+        margin: 3mm 0;
+        font-size: 9.5pt;
+        color: #6b4a12;
+    }
+
+    /* ---------- 架构图 ---------- */
+    .arch {
+        border: 1px solid #cfe3ec;
+        border-radius: 2mm;
+        padding: 5mm;
+        margin: 3mm 0 4mm 0;
+        background: #fbfdfe;
+        page-break-inside: avoid;
+    }
+
+    .arch-row {
+        display: flex;
+        align-items: stretch;
+        gap: 2.5mm;
+        margin-bottom: 2.5mm;
+    }
+
+    .arch-row:last-child { margin-bottom: 0; }
+
+    .arch-box {
+        flex: 1;
+        border: 1px solid #bcdde9;
+        border-radius: 1.5mm;
+        padding: 2.5mm 2mm;
+        text-align: center;
+        font-size: 8.6pt;
+        line-height: 1.5;
+        color: #14495e;
+        background: #fff;
+    }
+
+    .arch-box.hl {
+        background: linear-gradient(160deg, #e8f8fd, #d5f0f9);
+        border-color: #6ccbe3;
+        font-weight: 700;
+    }
+
+    .arch-box.dark {
+        background: #0f2b3a;
+        border-color: #1c5a74;
+        color: #bfe9f7;
+        font-weight: 700;
+    }
+
+    .arch-label {
+        font-size: 8pt;
+        letter-spacing: 0.2em;
+        color: #7ba3b5;
+        margin-bottom: 1.5mm;
+    }
+
+    /* ---------- 指标卡 ---------- */
+    .metrics {
+        display: flex;
+        gap: 3mm;
+        margin: 3mm 0 4mm 0;
+        page-break-inside: avoid;
+    }
+
+    .metric {
+        flex: 1;
+        border: 1px solid #cfe3ec;
+        border-top: 3px solid #2ea8c4;
+        border-radius: 1.5mm;
+        padding: 3mm 2mm;
+        text-align: center;
+        background: #fbfdfe;
+    }
+
+    .metric b {
+        display: block;
+        font-size: 17pt;
+        color: #0b5d78;
+        line-height: 1.3;
+    }
+
+    .metric span {
+        font-size: 8.4pt;
+        color: #6b8e9f;
+    }
+
+    .two-col {
+        display: flex;
+        gap: 6mm;
+    }
+
+    .two-col > div { flex: 1; }
+
+    /* ---------- 实测截图 ---------- */
+    .figure-row {
+        display: flex;
+        gap: 5mm;
+        align-items: flex-start;
+        margin: 3mm 0 4mm 0;
+        page-break-inside: avoid;
+    }
+
+    .figure-row figure { flex: 1; }
+
+    .doc-figure {
+        width: 88mm;
+        margin: 3mm auto 4mm auto;
+        page-break-inside: avoid;
+    }
+
+    .figure-row .doc-figure { width: auto; margin: 0; }
+
+    .doc-figure img {
+        display: block;
+        width: 100%;
+        border: 1px solid #cfe3ec;
+        border-radius: 2mm;
+    }
+
+    .doc-figure.wide { width: 132mm; }
+
+    .doc-figure figcaption {
+        margin-top: 1.5mm;
+        font-size: 8.8pt;
+        line-height: 1.6;
+        color: #6b8e9f;
+        text-align: center;
+    }
+
+    .sign {
+        margin-top: 12mm;
+        font-size: 9pt;
+        color: #6b8e9f;
+        border-top: 1px dashed #cfe3ec;
+        padding-top: 3mm;
+    }
+</style>
+</head>
+<body>
+
+<!-- ================= 封面 ================= -->
+<div class="cover">
+    <div class="cover-glow"></div>
+    <div class="cover-inner">
+        <div class="cover-tag">2026 传智杯 · 参赛作品技术文档</div>
+        <h1>元素幻语</h1>
+        <div class="cover-sub">3D 沉浸式化学学习平台 · AI 化学助教 Agent</div>
+        <div class="cover-line"></div>
+        <div class="cover-meta">
+            <div><b>作品名称</b>元素幻语（Element Whisper）</div>
+            <div><b>作品类型</b>AI 原生 Web 应用 / 教育科技</div>
+            <div><b>技术栈</b>HTML5 · CSS3 · JavaScript · Three.js · MediaPipe · Python Flask · 大模型 Agent</div>
+            <div><b>文档版本</b>v1.2</div>
+        </div>
+    </div>
+    <div class="cover-foot">ELEMENT WHISPER · TECHNICAL DOCUMENT</div>
+</div>
+
+<!-- ================= 目录 ================= -->
+<div class="toc">
+    <h2>目录</h2>
+    <ol>
+        <li>项目概述</li>
+        <li>需求分析与用户场景</li>
+        <li>系统架构设计</li>
+        <li>AI 技术方案（核心）</li>
+        <li>核心功能实现</li>
+        <li>工程实践与代码规范</li>
+        <li>测试与验证</li>
+        <li>部署与运行</li>
+        <li>创新点总结</li>
+        <li>社会价值与未来展望</li>
+    </ol>
+</div>
+
+<!-- ================= 1 项目概述 ================= -->
+<section class="first">
+    <h2><span class="num">01</span>项目概述</h2>
+
+    <h3>1.1 项目背景</h3>
+    <p>化学是一门以实验为基础的学科，但中学阶段普遍面临三重困境：<b>实验条件不足</b>——县域中学难以配齐通风橱、精密仪器与安全防护；<b>抽象概念难懂</b>——原子结构、元素周期律、化学键等微观内容仅靠课本插图难以建立空间想象；<b>危险实验不敢做</b>——钠与水反应、氢气爆鸣等经典实验因安全顾虑被大量跳过。</p>
+    <p>《元素幻语》以浏览器为载体，把 3D 可视化、手势交互与大模型 Agent 结合，构建一个「可看、可玩、可问、可练」的沉浸式化学学习环境，让没有实验室的学校也能完成高质量的科学启蒙。</p>
+
+    <h3>1.2 项目定位</h3>
+    <p>本项目不是单一功能的演示页，而是一个由 10 个功能模块组成的学习闭环：</p>
+
+    <div class="metrics">
+        <div class="metric"><b>10</b><span>功能模块</span></div>
+        <div class="metric"><b>118</b><span>元素数据</span></div>
+        <div class="metric"><b>72</b><span>实验室配置项</span></div>
+        <div class="metric"><b>6</b><span>AI 可调用工具</span></div>
+    </div>
+
+    <h3>1.3 核心亮点</h3>
+    <table>
+        <thead>
+            <tr><th style="width:22%">亮点</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><b>AI 化学助教 Agent</b></td><td>不是简单调用大模型接口，而是具备 6 个化学工具调用能力的智能体，能查元素、算摩尔质量、配平方程式、检索反应、查危化品安全、检索知识库</td></tr>
+            <tr><td><b>多模态视觉理解</b></td><td>拍照上传化学方程式，视觉模型识别后自动调用配平工具校验，视觉与计算互相印证</td></tr>
+            <tr><td><b>隔空手势操控</b></td><td>基于 MediaPipe + TensorFlow.js 在浏览器端实时识别手部关键点，用手势旋转、缩放 3D 化学方程式词云</td></tr>
+            <tr><td><b>3D 虚拟实验室</b></td><td>按真实科研实验室标准构建四大功能分区、72 项器材试剂，支持拖拽操作与反应模拟，并配套完整安全规范体系</td></tr>
+            <tr><td><b>AI 安全护栏</b></td><td>在调用模型前拦截危险化学请求，是化学这一高风险主题下最必要的合规设计</td></tr>
+            <tr><td><b>可对话的场景化 AI</b></td><td>首屏 AI 模式、可对话的 3D 元素周期表（元素点击 + 四组探索预设高亮）、化学先驱角色 Agent、文档问答轻量 RAG 四条路径共用同一套 Agent 与可解释引用链路</td></tr>
+            <tr><td><b>弱网与不可用降级</b></td><td>首屏视频按网络与设备能力降级为静态背景；WebGL / Three.js 不可用时自动切换为可交互 2D 周期表，AI 问答与元素详情不受影响</td></tr>
+        </tbody>
+    </table>
+
+    <div class="note">
+        <b>一句话概括：</b>把大模型放进真实的化学学习场景里——它不只是会聊天，而是能被调用、能被验证、也懂得在危险话题前踩刹车。
+    </div>
+</section>
+
+<!-- ================= 2 需求分析 ================= -->
+<section>
+    <h2><span class="num">02</span>需求分析与用户场景</h2>
+
+    <h3>2.1 目标用户</h3>
+    <table>
+        <thead>
+            <tr><th style="width:18%">用户</th><th style="width:32%">典型痛点</th><th>对应方案</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><b>初中生</b></td><td>刚接触化学，元素符号与方程式记不住，缺乏直观感受</td><td>3D 元素周期表、元素 2048、原子构建游戏</td></tr>
+            <tr><td><b>高中生</b></td><td>方程式配平易错，实验现象记不牢，遇到难题没人即时答疑</td><td>方程式词云、拖拽填空挑战、AI 助教工具调用</td></tr>
+            <tr><td><b>教师</b></td><td>危险实验无法演示，缺少可交互的课堂素材</td><td>3D 虚拟实验室、化学史诗时间线、手势演示</td></tr>
+            <tr><td><b>自学者</b></td><td>学习路径散乱，缺少体系化的知识图鉴</td><td>元素图鉴（118 篇科普文本）+ RAG 知识检索</td></tr>
+        </tbody>
+    </table>
+
+    <h3>2.2 功能矩阵</h3>
+    <table>
+        <thead>
+            <tr><th style="width:20%">模块</th><th style="width:12%">类型</th><th>主要能力</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>主页入口</td><td>门户</td><td>视频背景、粒子画布、唱片播放器、模块导航、AI 助手入口</td></tr>
+            <tr><td>动态元素周期表</td><td>3D 可视化</td><td>2D / 3D 双视图、118 元素立体排布与旋转缩放、点击查看详情与元素图鉴、维基百科拓展、移动端横屏整表展示</td></tr>
+            <tr><td>化学方程式词云</td><td>3D + 手势</td><td>3D 词云、手势控制、相机视角切换</td></tr>
+            <tr><td>方程式拖拽填空</td><td>练习</td><td>随机题目、拖拽气泡填空、计分</td></tr>
+            <tr><td>3D 化学实验室</td><td>仿真</td><td>四大分区、72 项器材试剂、拖拽取用、反应模拟、安全规范</td></tr>
+            <tr><td>化学杀</td><td>卡牌对战</td><td>手牌组合成物质、酸碱 / 沉淀伤害判定、回合制 AI 对手</td></tr>
+            <tr><td>化学史诗</td><td>科普</td><td>化学史时间线与人物故事</td></tr>
+            <tr><td>元素 2048 / 原子游戏</td><td>游戏化</td><td>元素合成、原子结构搭建</td></tr>
+            <tr><td>AI 化学助教</td><td>Agent</td><td>工具调用问答、流式输出、语音朗读、拍照识别</td></tr>
+        </tbody>
+    </table>
+
+    <h3>2.3 非功能需求</h3>
+    <ul>
+        <li><b>可访问性</b>：纯浏览器运行，无需安装；支持移动端触摸与摄像头</li>
+        <li><b>性能与可维护性</b>：3D 场景按需加载，静态资源模块化按页面拆分；目录按功能分层，样式脚本与结构分离</li>
+        <li><b>安全合规</b>：密钥全部环境变量注入，危险请求前置拦截</li>
+    </ul>
+</section>
+
+<!-- ================= 3 系统架构 ================= -->
+<section>
+    <h2><span class="num">03</span>系统架构设计</h2>
+
+    <h3>3.1 整体分层</h3>
+    <div class="arch">
+        <div class="arch-label">PRESENTATION · 表现层</div>
+        <div class="arch-row">
+            <div class="arch-box">主页入口<br>视频 / 粒子 / 音乐</div>
+            <div class="arch-box">3D 可视化<br>Three.js 场景</div>
+            <div class="arch-box">虚拟实验室<br>拖拽交互</div>
+            <div class="arch-box">练习与游戏<br>2048 / 填空 / 化学杀</div>
+            <div class="arch-box hl">AI 助教面板<br>流式对话</div>
+        </div>
+        <div class="arch-label" style="margin-top:3mm">INTERACTION · 交互层</div>
+        <div class="arch-row">
+            <div class="arch-box">OrbitControls<br>鼠标 / 触摸</div>
+            <div class="arch-box">MediaPipe Hands<br>手势识别</div>
+            <div class="arch-box">HTML5 Drag<br>器材拖拽</div>
+            <div class="arch-box">SSE 流式<br>逐字渲染</div>
+            <div class="arch-box">Canvas<br>图片压缩</div>
+            <div class="arch-box">触摸与横屏<br>移动端适配</div>
+        </div>
+        <div class="arch-label" style="margin-top:3mm">SERVICE · 服务层</div>
+        <div class="arch-row">
+            <div class="arch-box">web_host<br>静态托管 + 反向代理</div>
+            <div class="arch-box">backend_server<br>Flask /api/*</div>
+            <div class="arch-box hl">chem_tools<br>6 个化学工具</div>
+            <div class="arch-box hl">vision_service<br>多模态识别</div>
+            <div class="arch-box hl">rag_engine<br>BM25 + 向量 + RRF</div>
+            <div class="arch-box">mcp_server<br>MCP 工具服务</div>
+            <div class="arch-box">aigent_service<br>Agent 循环 / SSE</div>
+        </div>
+        <div class="arch-label" style="margin-top:3mm">MODEL · 模型层</div>
+        <div class="arch-row">
+            <div class="arch-box dark">DeepSeek Chat<br>语义理解与表达</div>
+            <div class="arch-box dark">Qwen3-VL<br>视觉识别</div>
+            <div class="arch-box dark">CosyVoice<br>语音合成</div>
+            <div class="arch-box dark" style="flex:2">本地知识库<br>118 篇元素图鉴 · 1213 知识块</div>
+        </div>
+    </div>
+
+    <h3>3.2 请求链路</h3>
+    <p>AI 对话的完整链路如下，代理层对流式响应做逐块透传，避免缓冲导致首字延迟：</p>
+<pre>浏览器 (4100)
+   │  POST /api/aigent/chat/stream
+   ▼
+web_host.py ── 反向代理，SSE 逐块透传 ──▶ backend_server.py (4101)
+                                              │
+                            ┌─────────────────┴──────────────────┐
+                            ▼                                    ▼
+                    安全护栏（前置拦截）                    Agent 工具循环
+                    命中则直接返回                       最多 4 轮 Function Calling
+                            │                                    │
+                            └─────────────────┬──────────────────┘
+                                              ▼
+                                        DeepSeek API
+                                              │
+                                              ▼
+                                    SSE: status → tool → delta → done</pre>
+
+    <p>元素详情中的维基百科内容同样走服务端代理：浏览器请求同源 <code>/api/wiki/summary</code>，由 <code>web_host</code> 转发到 <code>backend_server</code>，再由服务器访问 <code>zh.wikipedia.org</code>，摘要缓存 10 分钟；配图通过 <code>/api/wiki/image</code> 二次代理。这样即使客户端网络无法直连维基，也能正常显示摘要与图片。</p>
+
+    <h3>3.3 目录结构</h3>
+<pre>元素幻语/
+├── 主页.html                 <span class="c"># 站点入口（结构 + 模块导航）</span>
+├── pages/                    <span class="c"># 功能模块</span>
+│   ├── Periodic_Table/       <span class="c"># 周期表（2D/3D 页面 + Flask 数据接口 + 118 篇元素图鉴）</span>
+│   ├── Chemical_equation/    <span class="c"># 方程式词云 + 拖拽填空 + vendor</span>
+│   ├── chemistry_lab/        <span class="c"># 3D 虚拟实验室</span>
+│   ├── chemistry_kill/       <span class="c"># 化学杀（独立 css / js 卡牌对战）</span>
+│   ├── Chemical_Epics/       <span class="c"># 化学史诗</span>
+│   └── games/                <span class="c"># 元素 2048 / 原子游戏</span>
+├── server/                   <span class="c"># 后端服务</span>
+│   ├── start_bs.py           <span class="c"># 本地一键启动（4100 + 4101，含自签 HTTPS）</span>
+│   ├── start_prod.py         <span class="c"># 生产启动入口（容器内，TLS 交由 Nginx）</span>
+│   ├── web_host.py           <span class="c"># 静态托管 + API 反向代理</span>
+│   ├── backend_server.py     <span class="c"># API 路由（对话 / 视觉 / TTS / 维基代理）</span>
+│   ├── aigent_service.py     <span class="c"># Agent 循环 / SSE / TTS 封装</span>
+│   ├── chem_tools.py         <span class="c"># 6 个化学工具</span>
+│   ├── vision_service.py     <span class="c"># 多模态视觉识别</span>
+│   ├── rag_engine.py         <span class="c"># BM25 + LSA 向量 + RRF 混合检索</span>
+│   ├── build_index.py        <span class="c"># 构建本地检索索引（落盘）</span>
+│   ├── mcp_server.py         <span class="c"># MCP 工具服务（6 工具 + 3 资源）</span>
+│   ├── eval_agent.py         <span class="c"># AI 效果评测（25 题）</span>
+│   ├── eval_rag.py           <span class="c"># RAG 检索评测（15 题，含消融）</span>
+│   ├── benchmark.py          <span class="c"># 性能基准</span>
+│   └── prompt_templates.json <span class="c"># 提示词模板</span>
+├── assets/                   <span class="c"># 共享资源</span>
+│   ├── css/（12 个）         <span class="c"># 各页面样式，与页面同名</span>
+│   ├── js/（11 个）          <span class="c"># 各页面脚本，与页面同名</span>
+│   ├── character/            <span class="c"># 元素角色图</span>
+│   ├── photo_up/ photo_down/ <span class="c"># 元素图鉴图片</span>
+│   ├── vendor/               <span class="c"># 本地化的第三方库</span>
+│   ├── background.mp4        <span class="c"># 全局背景视频（Git LFS）</span>
+│   └── 无人之地.mp3           <span class="c"># 背景音乐</span>
+├── tests/                    <span class="c"># 122 个离线单元测试</span>
+├── docs/                     <span class="c"># 技术文档与评测报告</span>
+│   ├── 技术文档.html/docx/pdf
+│   ├── AI评测报告.md / RAG评测报告.md / 性能测量报告.md
+│   ├── 演示视频脚本.md / 元素幻语_演示视频.mp4
+│   └── tools/html2docx.py    <span class="c"># HTML → Word 文档构建工具</span>
+├── AIgent/                   <span class="c"># 桌面宠物子项目</span>
+├── Dockerfile                <span class="c"># 生产镜像（python:3.12-slim）</span>
+├── .env.example              <span class="c"># 环境变量模板</span>
+├── requirements.txt          <span class="c"># pip 依赖清单</span>
+├── pyproject.toml / uv.lock  <span class="c"># uv 工程配置</span>
+└── README.md</pre>
+
+    <h3>3.4 技术选型</h3>
+    <table>
+        <thead>
+            <tr><th style="width:20%">层面</th><th style="width:26%">选型</th><th>理由</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>前端框架</td><td>Vue 3（主页外壳）+ 原生 HTML/CSS/JS</td><td>Vue 3 负责导航、AI 助手面板与对话状态管理，3D 场景保持原生渲染；本地引入 UMD 构建、无打包链，可静态部署，也支持双击 HTML 直接打开</td></tr>
+            <tr><td>3D 渲染</td><td>Three.js</td><td>成熟的 WebGL 封装，支持 CSS3D 标签与后处理，满足词云与实验室场景</td></tr>
+            <tr><td>手势识别</td><td>MediaPipe Hands + TF.js</td><td>浏览器端推理，不上传视频，隐私友好；支持 CPU 回退保证兼容性</td></tr>
+            <tr><td>后端</td><td>Python Flask</td><td>轻量、易读，两个服务职责分离（静态托管 / API）</td></tr>
+            <tr><td>大模型</td><td>DeepSeek Chat</td><td>中文表达自然、支持 Function Calling、成本可控</td></tr>
+            <tr><td>视觉模型</td><td>Qwen3-VL</td><td>中文场景 OCR 与图像理解表现好，兼容 OpenAI 协议便于集成</td></tr>
+            <tr><td>知识检索</td><td>自研混合 RAG</td><td>BM25 + LSA 向量 + RRF，全本地计算，零额度、可离线、结果可复现</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- ================= 4 AI 技术方案 ================= -->
+<section>
+    <h2><span class="num">04</span>AI 技术方案（核心）</h2>
+
+    <h3>4.1 设计理念：让模型负责表达，让工具负责计算</h3>
+    <p>大模型擅长理解意图和组织语言，但在精确计算上并不可靠。化学场景中，摩尔质量、方程式配平、元素常数容不得近似——一旦模型「大概记得」一个错误数值，学生就会记住这个错误。</p>
+    <p>因此本项目采用 <b>Agent + 工具</b> 架构：模型不直接回答可计算的问题，而是先调用本地工具拿到确定结果，再基于结果组织语言。这样既保留了自然语言交互的流畅性，又保证了科学内容的准确性。</p>
+
+    <div class="note">
+        <b>对比：</b>普通做法是「用户问 → 模型答」，答案依赖模型记忆，可能出错且无法追溯。<br>
+        <b>本项目做法是</b>「用户问 → 模型判断需要哪个工具 → 工具返回确定性结果 → 模型基于结果回答」，答案可验证、可追溯。
+    </div>
+
+    <h3>4.2 Agent 与工具集</h3>
+    <p>通过 DeepSeek 的 Function Calling 能力注册 6 个工具，模型以 <code>tool_choice: auto</code> 自主决定是否调用、调用哪个，最多支持 4 轮工具链（例如先查元素、再算摩尔质量）。</p>
+
+    <table>
+        <thead>
+            <tr><th style="width:24%">工具</th><th style="width:30%">能力</th><th>实现要点</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>query_element</code></td><td>按符号 / 中文名 / 英文名查询元素性质</td><td>加载 118 元素周期表数据，建立符号、中英文名三套索引，支持「氢元素」这类模糊匹配</td></tr>
+            <tr><td><code>molar_mass</code></td><td>计算摩尔质量</td><td>自研化学式解析器，递归处理括号分组，支持结晶水（CuSO₄·5H₂O）</td></tr>
+            <tr><td><code>balance_equation</code></td><td>配平化学方程式</td><td>用 <code>Fraction</code> 分数做高斯消元，避免浮点误差；最后求最大公约数归一化为最小整数比</td></tr>
+            <tr><td><code>lookup_reaction</code></td><td>查询反应类型与现象</td><td>试剂别名映射（「盐酸」→ HCl），排序后匹配反应键，未命中时明确告知不臆测</td></tr>
+            <tr><td><code>get_safety_info</code></td><td>危化品危险性 / 防护 / 急救</td><td>12 种常见危化品结构化安全库，含急救措施</td></tr>
+            <tr><td><code>search_knowledge</code></td><td>元素知识检索（RAG）</td><td>见 4.3 节</td></tr>
+        </tbody>
+    </table>
+
+    <h4>配平算法的关键实现</h4>
+    <p>配平本质是求解线性方程组。以 <code>Fe + O2 = Fe2O3</code> 为例，设系数为 x₁…x₄，由铁、氧原子守恒得到两组方程，构造矩阵后做分数高斯消元，最后把解归一化为最小正整数：</p>
+<pre>Fe: 1·x₁ + 0·x₂ − 2·x₃ = 0
+O : 0·x₁ + 2·x₂ − 3·x₃ = 0
+
+高斯消元（Fraction 精确运算）→ x₁=4, x₂=3, x₃=2
+结果: 4 Fe + 3 O2 = 2 Fe2O3</pre>
+    <p>使用分数而非浮点，是为了彻底避免 <code>0.3333…</code> 之类的精度误差导致系数判断失败——这是很多同类实现在复杂方程式上出错的根源。</p>
+
+    <h3>4.3 RAG：三路混合检索</h3>
+    <p>项目本身就包含 118 篇元素科普文本（与 3D 元素周期表同源）。将这些文本按句切分为 <b>1213 个知识块</b>，构建全本地混合检索：</p>
+    <table>
+        <thead>
+            <tr><th style="width:20%">通道</th><th>实现</th><th style="width:26%">擅长的场景</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>BM25 稀疏检索</td><td>词频 + 文档长度归一化 + IDF，中文按二元组切词</td><td>元素名、术语等关键词精确命中</td></tr>
+            <tr><td>LSA 向量检索</td><td>字符 1-2gram TF-IDF → 截断 SVD 降到 256 维 → 余弦相似度</td><td>语义相近但用词不同的表达</td></tr>
+            <tr><td>二元组重叠</td><td>查询与知识块的字符二元组交集计数</td><td>短查询与文档用词错位时的兜底召回</td></tr>
+        </tbody>
+    </table>
+    <p>三路结果用 <b>RRF</b> 融合：<code>score = Σ 1/(60 + rank)</code>。选择按排名而非按分数融合，是因为 BM25 分数无上界、余弦相似度落在 0–1 之间，直接加权必然被量纲大的通道主导。</p>
+    <p>融合之后还有两层领域规则，这是评测驱动出来的设计：</p>
+    <ol>
+        <li><b>概念扩展</b>：内置 9 个教材级概念到元素集合的映射（稀有气体、半导体、放射性、合金、导电……）。「金属为什么导电」这类提问不含任何元素名，字面检索无从下手，先把概念落到元素，再把对应知识块补进候选池</li>
+        <li><b>分层重排</b>：按「显式元素名命中 &gt; 概念映射命中 &gt; 普通召回」三档排序。初版只做分数叠加，结果元素名的强信号被向量召回的噪声稀释，Recall@1 反而比升级前低 1 题；改为分层排序后才真正超过基线</li>
+    </ol>
+    <p>索引全部在本机计算，不调用任何嵌入接口：一次构建落盘约 29 MB，单次查询约 40 毫秒，无额度限制、可离线、结果可复现。返回 Top-3 片段并标注来源（如「据元素图鉴·氢」）。</p>
+
+    <div class="note">
+        <b>消融评测：</b>15 道固定问题（含元素名提问、概念提问、性质提问）上对比三种策略，混合检索把 Recall@1 从 73.3% 提升到 <b>86.7%</b>，Recall@3 从 80.0% 提升到 <b>93.3%</b>，MRR 从 0.767 提升到 <b>0.900</b>。唯一未命中的「自然界最硬的物质」属于常识推理型提问，检索层无法从「坚硬」跳到「最硬」，报告中如实记录为已知边界。
+    </div>
+
+    <h3>4.4 多模态视觉理解</h3>
+    <p>网页端 AI 面板内置拍照入口，上传图片后由 <code>qwen3-vl-plus</code> 识别，并按类型分流处理：</p>
+    <table>
+        <thead>
+            <tr><th style="width:22%">识别类型</th><th>后续处理</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>化学方程式</td><td>提取表达式 → 自动调用配平工具校验 → 返回「识别原文 + 配平结果」</td></tr>
+            <tr><td>实验装置</td><td>识别装置名称 → 自动查询安全库，附防护要求</td></tr>
+            <tr><td>试剂 / 元素</td><td>识别名称 → 自动补充危化品信息</td></tr>
+            <tr><td>其他 / 模糊</td><td>返回低置信度提示，引导重拍</td></tr>
+        </tbody>
+    </table>
+    <p>关键设计在于<b>视觉与计算互相印证</b>：模型识别出手写方程式后，配平工具独立计算一遍，若结果与原式不同则提示未配平。这解决了纯 OCR 方案「抄错还讲错」的问题。</p>
+
+    <div class="note">
+        <b>实测：</b>上传一张写着 <code>Fe + O2 = Fe2O3</code> 的图片，4.4 秒返回——识别为 equation，置信度 high，自动配平得 <code>4 Fe + 3 O2 = 2 Fe2O3</code>，并给出「原式未配平，需调整系数使原子守恒」的讲解。
+    </div>
+
+    <h3>4.5 AI 安全护栏</h3>
+    <p>化学是高风险主题，模型若被引导输出制毒、爆炸物、化学武器相关内容，后果严重。本项目在<b>调用模型之前</b>做三层防护：</p>
+    <ol>
+        <li><b>前置意图检测</b>：20 类危险模式匹配（制毒、炸药配方、神经毒剂、投毒等），命中即拦截，<b>不消耗模型调用</b></li>
+        <li><b>拦截话术</b>：不冷冰冰拒绝，而是说明「无论出于什么目的都不能提供」，并主动引导到安全实验方向（紫甘蓝指示剂、硫酸铜结晶等）</li>
+        <li><b>输出约束</b>：系统提示词要求涉及实验操作时先讲安全注意事项，再讲操作步骤</li>
+    </ol>
+
+    <h3>4.6 流式输出与体验优化</h3>
+    <table>
+        <thead>
+            <tr><th style="width:26%">优化点</th><th>实现</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>SSE 事件流</td><td>后端产出 <code>status → tool → tool_result → delta → done</code> 五类事件，前端逐帧解析渲染</td></tr>
+            <tr><td>思考过程可见</td><td>「正在理解你的问题」「正在调用工具」状态实时展示，降低等待焦虑</td></tr>
+            <tr><td>工具调用可视化</td><td>每次调用渲染独立卡片，展示工具名与入参；调用前状态提示会写成「正在查询「镓」的熔点…」，让 AI 的决策过程可读</td></tr>
+            <tr><td>代理层透传</td><td><code>web_host</code> 对流式响应逐块转发，关闭缓冲，避免首字延迟</td></tr>
+            <tr><td>语音双通道</td><td>回答分句入队，边生成边请求 TTS 并自动朗读，形成「看 + 听」</td></tr>
+            <tr><td>错误边界</td><td>网络失败、流中断、模型异常均降级为友好提示，并提供「重新试一次」按钮，不白屏</td></tr>
+        </tbody>
+    </table>
+
+    <h3>4.7 MCP 协议集成</h3>
+    <p>六个化学工具不只服务于本项目，还按 <b>MCP（Model Context Protocol）</b>标准对外暴露。任何支持该协议的客户端——Claude Desktop、Cursor 或自研 Agent——都能直接调用，无需了解本项目的内部实现。</p>
+
+    <table>
+        <thead>
+            <tr><th style="width:14%">类型</th><th style="width:36%">名称</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Tool</td><td><code>query_element</code> / <code>molar_mass</code> / <code>balance_equation</code></td><td>元素查询、摩尔质量、方程式配平</td></tr>
+            <tr><td>Tool</td><td><code>lookup_reaction</code> / <code>get_safety_info</code> / <code>search_knowledge</code></td><td>反应检索、危化品安全、知识检索</td></tr>
+            <tr><td>Resource</td><td><code>chem://element/{symbol}</code></td><td>单个元素的结构化资料</td></tr>
+            <tr><td>Resource</td><td><code>chem://catalog/elements</code></td><td>全量元素清单（118 项）</td></tr>
+            <tr><td>Resource</td><td><code>chem://catalog/reactions</code></td><td>内置反应库清单</td></tr>
+        </tbody>
+    </table>
+
+    <p>基于 MCP 2.x 的 <code>MCPServer</code> 实现，同时支持 <b>stdio</b>（供桌面客户端以子进程接入）与 <b>streamable-http</b>（供局域网应用调用）两种传输方式。评委只需在 Claude Desktop 配置文件中加入三行，即可现场验证工具能力，不必进入网页。</p>
+
+    <div class="note">
+        <b>验证记录：</b>通过 MCP 标准客户端连接，成功枚举 6 个工具与 3 个资源；调用 <code>balance_equation</code> 返回 <code>4 Fe + 3 O2 = 2 Fe2O3</code>，调用 <code>molar_mass</code> 返回 74.092，读取 <code>chem://element/H</code> 返回氢的完整资料，协议链路完整。
+    </div>
+
+    <h3>4.8 可解释性与异常降级（实测截图）</h3>
+    <p>Agent 能力如果只停留在代码里，用户与评委都难以判断一条回答来自「模型记忆」还是「确定性工具 / 知识库」。因此前端把内部决策过程完整外化为四类界面元素：<b>工具轨迹</b>、<b>知识来源卡片</b>、<b>出处弹窗</b>、<b>降级与重试提示</b>。以下截图均来自本地运行实例的真实交互。</p>
+
+    <h4>工具调用轨迹</h4>
+    <p>当模型决定调用工具时，面板先出现「正在查询「镓」的熔点、密度等性质…」的状态提示，随后落地为工具卡片，显示工具名与本次入参（「镓 Ga，相对原子质量 69.7231」）。用户能清楚看到这一轮回答依据的是哪一次确定性计算，而不是模型「随口一说」。</p>
+
+    <figure class="doc-figure">
+        <img src="images/tool-call-closeup.png" alt="工具调用轨迹截图">
+        <figcaption>图 4-1　提问「镓的熔点是多少？」时的工具调用轨迹：状态提示 → 工具卡片 → 基于工具结果的回答</figcaption>
+    </figure>
+
+    <h4>RAG 出处卡片与查看依据</h4>
+    <p>涉及史实或元素性质的知识型回答，正文下方会附「📎 知识来源」卡片，每条标注来源名与知识库编号（如 <code>kb://element/氙</code>）。点击条目弹出「查看依据」，展示命中方式（<code>bigram+bm25+vector</code>）、RRF 融合得分与原文片段，读者可逐条核对后再采信。</p>
+
+    <figure class="doc-figure">
+        <img src="images/rag-sources-closeup.png" alt="知识来源卡片截图">
+        <figcaption>图 4-2　知识来源卡片：来源名 + 知识库编号 + 「查看依据」入口</figcaption>
+    </figure>
+
+    <figure class="doc-figure wide">
+        <img src="images/rag-evidence-crop.png" alt="查看依据弹窗截图">
+        <figcaption>图 4-3　「查看依据」弹窗：呈现来源、编号、命中方式、融合得分与原文片段</figcaption>
+    </figure>
+
+    <p>如果本轮检索没有命中任何知识块，界面不会假装有依据，而是明确标注<b>「系统建议：本条回答未检索到知识库原文，属于模型的通识推断，建议结合教材手动核对」</b>，把「哪些是查到的、哪些是推测的」直接摊开给用户。</p>
+
+    <h4>降级链路与重试入口</h4>
+    <p>上游模型不可用时，后端按「主模型 → 备用模型 → 本地兜底话术」逐级降级，并把实际链路随 <code>done</code> 事件下发（如「文本模型：主模型与备用模型均不可用 → 已切换到本地兜底话术」），前端以黄色提示条呈现。若请求在传输层就失败（断网、服务未启动），则显示红色错误卡并提供「重新试一次」按钮——点击后原问题自动重发，用户无需重新输入。</p>
+
+    <div class="figure-row">
+        <figure class="doc-figure">
+            <img src="images/retry-error.png" alt="系统建议与断网异常卡片截图">
+            <figcaption>图 4-4　「系统建议」标注（上）与断网后的错误卡 +「重新试一次」按钮（下）</figcaption>
+        </figure>
+        <figure class="doc-figure">
+            <img src="images/retry-recovered.png" alt="点击重试后恢复截图">
+            <figcaption>图 4-5　点击重试后自动重发原问题，工具调用与回答恢复正常</figcaption>
+        </figure>
+    </div>
+
+    <div class="note">
+        <b>设计取舍：</b>可解释性不是装饰。工具轨迹回答「它做了什么」，出处卡片回答「它凭什么这么说」，降级提示回答「它出问题时会不会骗我」。三者都做成界面的一等公民，才能在化学这类容错率极低的学科里建立信任。
+    </div>
+
+    <h3>4.9 场景化 AI 交互层：从「展陈」到「问题解决」（实测截图）</h3>
+    <p>如果 AI 只存在于右下角的聊天框，网站本质上仍是「可浏览的展品」。本轮改造把 AI 下沉到三个真实场景：<b>首屏 AI 模式</b>、<b>可对话的 3D 元素周期表</b>、<b>化学先驱角色 Agent</b>，并补上<b>文档问答</b>这一轻量 RAG 场景；同时按赛项「界面不要求炫酷、要求稳」的要求加固加载与降级策略。以下截图均来自本地运行实例。</p>
+
+    <h4>① 首屏 AI 模式入口：把体验重新框定为「AI 化学探索助手」</h4>
+    <p>首屏导航上方新增「🤖 AI 模式」入口，点击直接展开小幻语面板并聚焦输入框。面板空态给出三条可点击的示例问题（常温液态元素、钠与水反应、硫酸铜与氢氧化钠反应），点击即进入完整 Agent 链路：工具调用 → 知识库检索 → 流式回答 → 知识来源卡片。空态、加载态（三点等待）、错误态与重试入口均为独立界面状态，不会出现「打开后一片空白」。</p>
+
+    <figure class="doc-figure wide">
+        <img src="images/home-ai-mode.png" alt="首屏 AI 模式入口与回答截图">
+        <figcaption>图 4-6　首屏「AI 模式」入口；快捷提问后返回知识来源卡片，标明 <code>kb://element/汞</code> 等出处</figcaption>
+    </figure>
+
+    <h4>② 在 3D 周期表上叠加 AI 交互层</h4>
+    <p>周期表页面在捕获阶段监听元素格点击：读取 <code>data-number</code> 与元素符号后，右下角展开 AI 面板并自动带入「当前元素」上下文，快捷问题覆盖「在生活中有哪些应用」「发现历史有什么故事」「熔点沸点是多少」，每条提问都要求先检索知识库并标注来源。这样，118 个静态方块变成了 118 个可对话的知识对象。</p>
+
+    <figure class="doc-figure wide">
+        <img src="images/periodic-ai-panel.png" alt="周期表元素点击后弹出的 AI 面板截图">
+        <figcaption>图 4-7　点击元素后侧栏弹出 AI 面板，自动带入元素上下文与三个快捷问题</figcaption>
+    </figure>
+
+    <p>页面另设「🧪 AI 探索」与四组探索预设（常温液态元素、稀有气体、半导体元素、过渡金属）。选择预设后，JS 先按符号给 2D / 3D 两套表格打上高亮标记，再自动发起提问——例如「帮我找三个常温下是液态的元素」会高亮 Hg 与 Br，并生成共同用途的解释。用户看到的不再是「浏览周期表」，而是「AI 驱动周期表回答问题」。</p>
+
+    <figure class="doc-figure wide">
+        <img src="images/periodic-ai-highlight.png" alt="预设探索后高亮命中元素的截图">
+        <figcaption>图 4-8　「稀有气体」预设：两套表格同步高亮 He、Ne、Ar、Kr、Xe、Rn、Og，底部状态条列出命中符号（截图为查看高亮已收起面板）</figcaption>
+    </figure>
+
+    <figure class="doc-figure">
+        <img src="images/periodic-ai-evidence.png" alt="周期表 AI 面板的出处弹窗截图">
+        <figcaption>图 4-9　点击来源卡片可核对命中方式、融合得分与知识库原文，与主页使用同一套引用结构</figcaption>
+    </figure>
+
+    <h4>③ 化学先驱角色 Agent</h4>
+    <p>灵语画廊的每张人物卡新增「💬 与 XX 对话」按钮。点击后进入角色模式：面板标题切换为该科学家，副标题标注「历史人物访谈 · 第一人称对话」，并显示「🎭 角色模式」提示。前端在流式请求中携带 <code>role</code> 字段，后端据此追加「历史人物访谈模式」系统提示词——要求第一人称、以亲历者视角讲述、不自称 AI、不拒绝设定、不确定的年代与数据不编造。相比只在用户消息里写一句「请扮演」，把角色约束放进系统提示词能稳定得到第一人称回答。门捷列夫、拉瓦锡、戴维、舍勒、居里夫人五位先驱均可直接对话，把传记页从「阅读材料」升级为「可访谈的角色」。</p>
+
+    <figure class="doc-figure">
+        <img src="images/pioneer-chat.png" alt="与门捷列夫角色对话截图">
+        <figcaption>图 4-10　「与门捷列夫对话」：面板标题切换为门捷列夫，以第一人称讲述科研经历，并调用知识库工具</figcaption>
+    </figure>
+
+    <h4>④ 文档问答：复现「RAG 原文溯源」</h4>
+    <p>面板增加「📄 文档问答」：可粘贴文本或上传 <code>.txt / .md</code>（≤200KB，超出截断至 8000 字）。前端按段落与句末标点切块（累计约 170 字成块，最多 40 块），以字符 bigram 与单字命中打分取 Top 3，作为「用户提供的资料」注入提示词，并要求模型<b>只依据资料回答、引用处标注 [1][2]、资料未覆盖处明确写「资料未提及」</b>。回答下方给出「本地文档 · 第 N 段」来源卡片，点开即可看到原文片段——这正是获奖作品中「RAG 原文溯源」的加分项。</p>
+
+    <div class="figure-row">
+        <figure class="doc-figure">
+            <img src="images/doc-qa.png" alt="文档问答来源卡片截图">
+            <figcaption>图 4-11　回答下方给出「本地文档 · 第 N 段」来源卡片，标明命中段落的实际位置</figcaption>
+        </figure>
+        <figure class="doc-figure">
+            <img src="images/doc-qa-answer.png" alt="文档问答引用标注截图">
+            <figcaption>图 4-12　正文逐句标注 [1][2]，资料未覆盖的部分明确写「资料未提及」</figcaption>
+        </figure>
+    </div>
+
+    <h4>⑤ 界面工程的「稳」：首屏视频与 WebGL 降级</h4>
+    <p>首屏视频默认 <code>opacity:0</code>，在 <code>playing</code> 事件后才淡入（0.8s）；检测到 Save-Data、2G/3G 网络、移动端窄屏、<code>prefers-reduced-motion</code>，或 6 秒内仍未就绪时，直接移除视频源并切换为渐变静态背景，保证首屏 1 秒内可读、可点。3D 周期表启动前检测 WebGL 与 Three.js：任一不可用即给 <code>body</code> 加 <code>pt-no-webgl</code>，隐藏 3D 容器、显示说明横幅、把视图切换按钮置为「3D 不可用」，并保留完整可交互的 2D 周期表；若 12 秒内元素数据仍未加载成功，同样回落到 2D 并提示网络原因。</p>
+
+    <figure class="doc-figure wide">
+        <img src="images/periodic-webgl-fallback.png" alt="WebGL 不可用时的 2D 降级截图">
+        <figcaption>图 4-13　模拟 WebGL 不可用：页面提示已切换 2D 周期表，元素详情与 AI 问答仍可正常使用</figcaption>
+    </figure>
+
+    <div class="note">
+        <b>场景价值：</b>同一个页面，叙事逻辑从「欣赏元素之美」变为「让 AI 帮你解决一个化学问题」——入口、周期表、人物页、文档问答四条路径最终都汇入同一条可解释的 Agent 链路，这也是赛题强调的「AI + 前端解决真实需求」。
+    </div>
+</section>
+
+<!-- ================= 5 核心功能实现 ================= -->
+<section>
+    <h2><span class="num">05</span>核心功能实现</h2>
+
+    <h3>5.1 手势控制的化学方程式词云</h3>
+    <p>大量化学方程式以 3D 词云形式悬浮于空间，用户无需接触屏幕即可操控。</p>
+    <ul>
+        <li><b>识别层</b>：MediaPipe Hands 在浏览器端推理，输出 21 个手部关键点</li>
+        <li><b>手势映射</b>：张开手掌 → 旋转；捏合 → 缩放；握拳 → 暂停</li>
+        <li><b>兼容策略</b>：优先 WebGL 加速；检测不到 GPU 时自动回退 CPU 推理；模型文件支持内嵌加载，保证 <code>file://</code> 环境下也能运行</li>
+    </ul>
+
+    <h3>5.2 3D 虚拟化学实验室</h3>
+    <p>按真实科研实验室标准构建，而非简单的物品堆砌：</p>
+    <table>
+        <thead>
+            <tr><th style="width:20%">功能分区</th><th style="width:14%">配置数量</th><th>内容</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>试剂存储区</td><td>30</td><td>19 种液体试剂 + 11 种固体试剂，标注规格与浓度</td></tr>
+            <tr><td>实验操作区</td><td>29</td><td>玻璃器皿、加热支撑、取用工具（蒸发皿、坩埚、漏斗、坩埚钳等）</td></tr>
+            <tr><td>仪器分析区</td><td>7</td><td>pH 计、分光光度计、电子天平、滴定管等（固定安装，不可拖拽）</td></tr>
+            <tr><td>清洁与处置区</td><td>7</td><td>洗瓶、晾干架 + 废液缸、废固桶、锐器盒</td></tr>
+        </tbody>
+    </table>
+    <p><b>规则与器材的闭环</b>：规范不是写在文档里的死条文，而是能在场景中被执行——把装有试剂的容器拖入废液缸，系统按成分自动判定分类（含重金属 / 酸性 / 碱性），给出对应处置要求；拖拽精密仪器会被拦截并提示「固定安装，请到仪器前操作」。</p>
+    <p><b>安全体系</b>：首次进入的安全须知弹窗、21 种试剂的 GHS 风格危险标识、18 个反应的安全提示、五大模块规范面板（安全操作、流程管控、废弃物处理、应急处置、人员准入）。</p>
+    <p><b>异常操作演示</b>：除「正确路径」外，场景还内置了三类错误操作的后果演示——把水倒入浓硫酸（暴沸飞溅）、高锰酸钾与乙醇混放（剧烈氧化）、高锰酸钾与盐酸混合（释放氯气）。命中后不执行正常反应流程，而是触发红色警示条、容器红色脉冲、浑浊烟雾与分步处置说明。稀释硫酸的判断还区分了顺序：先加水再缓慢注酸会走「正确稀释」分支，只有酸在前、水在后才判定为异常——这一点与真实实验规范一致，而不是简单的两者一混就报警。</p>
+
+    <h3>5.3 其他模块</h3>
+    <table>
+        <thead>
+            <tr><th style="width:24%">模块</th><th>技术要点</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>动态元素周期表</td><td>2D / 3D 双视图，118 元素立体排布，点击弹出详情并可按需展开晶胞结构与电子排布；配套 118 篇元素图鉴文本，详情页接入服务端维基百科代理</td></tr>
+            <tr><td>化学杀</td><td>独立卡牌对战页面：手牌组合为物质后结算酸碱 / 沉淀伤害，回合制 AI 对手，支持移动端横竖屏布局</td></tr>
+            <tr><td>方程式拖拽填空</td><td>随机出题、气泡拖拽、即时判分与反馈</td></tr>
+            <tr><td>元素 2048</td><td>元素合成玩法，按原子序数递进</td></tr>
+            <tr><td>化学史诗</td><td>时间线叙事，串联化学史关键人物与发现</td></tr>
+            <tr><td>主页</td><td>视频背景、粒子画布、黑胶唱片播放器、响应式布局</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- ================= 6 工程实践 ================= -->
+<section>
+    <h2><span class="num">06</span>工程实践与代码规范</h2>
+
+    <h3>6.1 前端模块化重构</h3>
+    <p>项目初期各页面为单文件巨型 HTML，维护困难。已完成一次系统性重构：</p>
+    <div class="metrics">
+        <div class="metric"><b>19,700 → 3,000</b><span>HTML 总行数</span></div>
+        <div class="metric"><b>9,500</b><span>CSS 抽出（行）</span></div>
+        <div class="metric"><b>6,700</b><span>JS 抽出（行）</span></div>
+        <div class="metric"><b>22</b><span>独立模块文件</span></div>
+    </div>
+    <p>每个页面的样式与脚本导出为同名文件（如 <code>lab.html</code> → <code>lab.css</code> + <code>lab.js</code>），从文件名即可定位归属。CSS 迁移后统一修正了 <code>url()</code> 的相对路径基准，避免背景图失效。</p>
+
+    <h3>6.2 目录分层</h3>
+    <p>按职责划分 <code>pages/</code>（功能模块）、<code>server/</code>（后端服务）、<code>assets/</code>（共享资源）、<code>tests/</code>（单元测试）、<code>docs/</code>（文档与构建工具），修复了重构带来的 26 处跨目录引用。</p>
+
+    <h3>6.3 配置与密钥管理</h3>
+    <div class="warn">
+        <b>安全整改：</b>项目早期存在硬编码 API 密钥（共 5 处，含一个未被发现的通义千问密钥）。已全部改为环境变量注入，代码库中不存在任何明文密钥；<code>.env</code> 已加入 <code>.gitignore</code>，仓库仅保留 <code>.env.example</code> 占位模板。
+    </div>
+    <p>配置加载采用零依赖实现：从项目根读取 <code>.env</code>，仅补充未设置的环境变量，不覆盖外部注入值——既支持本地开发，也兼容容器化部署。</p>
+
+    <h3>6.4 依赖管理</h3>
+    <ul>
+        <li><code>requirements.txt</code> 声明 pip 依赖（flask、flask-cors、requests、websockets、mcp、numpy、scikit-learn、joblib）</li>
+        <li>同时提供 <code>pyproject.toml</code> 与 <code>uv.lock</code>，支持 <code>uv sync</code> 一键复现环境</li>
+        <li>使用独立虚拟环境 <code>.venv</code>，与系统 Python 隔离</li>
+        <li><code>.gitignore</code> 排除密钥、证书、缓存、构建产物与归档目录</li>
+        <li>大体积视频由 Git LFS 托管，避免超出仓库限制</li>
+    </ul>
+
+    <h3>6.5 性能治理</h3>
+    <table>
+        <thead>
+            <tr><th style="width:24%">问题</th><th style="width:26%">处理</th><th>效果</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>冗余视频</td><td>删除一个 132MB 未被引用的视频</td><td>仓库瘦身</td></tr>
+            <tr><td>超大视频</td><td>4 部超 100MB 纪录片排除出仓库并降级为海报图</td><td>满足托管平台单文件限制</td></tr>
+            <tr><td>可再生产物</td><td>归档 92MB 构建中间产物</td><td>减少版本噪音</td></tr>
+            <tr><td>图片上传</td><td>前端 Canvas 压缩至最长边 1024px / JPEG 0.82</td><td>上传体积降至数十 KB</td></tr>
+        </tbody>
+    </table>
+
+    <h3>6.6 测试与持续集成</h3>
+    <p>六个化学工具与安全规则全部实现为纯函数，具备天然的可测性。项目建立了 122 个用例的单元测试，全部离线运行、不依赖网络与 API 密钥。</p>
+
+    <table>
+        <thead>
+            <tr><th style="width:28%">测试文件</th><th style="width:44%">覆盖内容</th><th>用例数</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>test_chem_tools.py</code></td><td>元素查询、摩尔质量（含结晶水与嵌套括号）、方程式配平、反应检索、安全查询、知识检索、工具分发</td><td>47</td></tr>
+            <tr><td><code>test_safety.py</code></td><td>危险请求拦截（11 例正样本）+ 正常学术提问不误杀（10 例负样本）</td><td>24</td></tr>
+            <tr><td><code>test_ai_modules.py</code></td><td>评测模块的文本归一化与关键词判定、视觉服务 JSON 解析容错、MCP 工具注册</td><td>24</td></tr>
+            <tr><td><code>test_rag.py</code></td><td>分词、语料切分、向量索引拟合与持久化、BM25 与混合检索、概念扩展、来源多样性</td><td>27</td></tr>
+        </tbody>
+    </table>
+
+    <p>持续集成配置于 <code>.github/workflows/ci.yml</code>，包含两个任务：<b>单元测试</b>（Python 3.12 环境跑 pytest 并校验服务端语法）与<b>代码规范</b>（Ruff 检查未定义变量、未使用导入、import 排序）。静态检查当前为 0 告警。</p>
+
+    <div class="note">
+        <b>测试的实际价值：</b>编写安全用例时发现，「TNT 的分子结构」「冰毒的危害有哪些」「化学武器为什么被禁止」这类正常的学术性提问会被原有孤立名词规则误杀。据此把判定策略改为「危险名词 + 操作动词」的组合正则，正负样本全部通过。这类问题靠人工点击几乎不可能发现。
+    </div>
+</section>
+
+<!-- ================= 7 测试与验证 ================= -->
+<section>
+    <h2><span class="num">07</span>测试与验证</h2>
+
+    <h3>7.1 功能测试</h3>
+    <table>
+        <thead>
+            <tr><th style="width:26%">测试项</th><th style="width:16%">方法</th><th>结果</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>服务启动与健康检查</td><td>接口请求</td><td>4100 主页 200；4101 <code>/api/health</code> 返回 <code>{"ok":true}</code>；代理链路正常</td></tr>
+            <tr><td>元素查询工具</td><td>真实对话</td><td>提问「氢的相对原子质量」→ 触发 <code>query_element</code>，返回 1.008</td></tr>
+            <tr><td>方程式配平工具</td><td>真实对话</td><td>「配平 Fe + O2 = Fe2O3」→ 触发工具，返回 4 Fe + 3 O2 = 2 Fe2O3</td></tr>
+            <tr><td>摩尔质量计算</td><td>单元测试</td><td>H₂O=18.015、Ca(OH)₂=74.092、CuSO₄·5H₂O=249.677，均正确</td></tr>
+            <tr><td>安全护栏</td><td>接口测试</td><td>输入危险请求 → <code>blocked: true</code>，返回安全教育话术，未产生模型调用</td></tr>
+            <tr><td>SSE 流式输出</td><td>接口测试</td><td>单次回答产出 405~612 行事件，含 status / tool / delta / done</td></tr>
+            <tr><td>多模态识别</td><td>图片上传</td><td>4.4 秒识别方程式并自动配平，置信度 high</td></tr>
+            <tr><td>前端面板</td><td>浏览器实测</td><td>面板展开、工具卡片渲染、流式文字、安全警示样式均正常，控制台无报错</td></tr>
+        </tbody>
+    </table>
+
+    <h3>7.2 AI 效果量化评测</h3>
+    <p>AI 应用最容易被追问的问题是「你怎么知道它答得对」。为此项目内置了一套可复现的评测集：用 25 道覆盖六个工具能力的固定题目驱动真实 Agent，量化统计工具调用与答案准确性。</p>
+
+    <table>
+        <thead>
+            <tr><th style="width:30%">指标</th><th style="width:24%">结果</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>工具调用准确率</td><td><b>100%</b>（25/25）</td><td>该调工具时是否调用了正确的工具</td></tr>
+            <tr><td>答案准确率</td><td><b>100%</b>（25/25）</td><td>回答中是否出现正确数值或结论</td></tr>
+            <tr><td>端到端正确率</td><td><b>100%</b>（25/25）</td><td>工具与答案同时正确</td></tr>
+            <tr><td>安全拦截召回率</td><td><b>100%</b>（2/2）</td><td>危险请求是否被前置拦截</td></tr>
+            <tr><td>平均响应时间</td><td><b>3.8 秒</b></td><td>含工具调用与模型生成</td></tr>
+        </tbody>
+    </table>
+
+    <p>评测过程还暴露并修复了一个真实漏洞：原有关键词匹配无法拦截「制作炸药的配方」这类中间插词的表达，已补充组合正则规则；后续单元测试又发现反向问题——「冰毒的危害有哪些」等正常提问被误杀，据此把策略细化为「危险名词 + 操作动词」组合判定，11 例正样本与 10 例负样本全部通过。</p>
+
+    <p>这类问题靠人工点击几乎不可能发现，评测与测试的价值正在于此：它们不只为评分服务，也真的能发现问题。</p>
+
+    <h3>7.3 页面回归</h3>
+    <p>模块化重构后对 10 个页面逐一回归：样式加载正常、外部资源返回 200、交互生效（周期表点击详情、2048 棋盘生成、填空计分、实验室四项功能）、控制台无 404 与 JS 报错。</p>
+    <p>移动端另做了一轮逐页审计：在 390×844 竖屏与 844×390 横屏两种视口下检查全部页面，修复了化学杀弹窗超屏与横屏手牌不可见、实验室横屏实验区过小、周期表信息卡片超屏等问题；元素周期表在竖屏下提示旋转，横屏时 2D 整表与 3D 视图均可一屏完整展示。</p>
+
+    <h3>7.4 兼容性</h3>
+    <ul>
+        <li>桌面端 Chrome / Edge 正常；<code>https</code> 自签证书场景已适配</li>
+        <li>移动端完成竖屏 / 横屏双视口适配，覆盖安全区域、触摸拖拽与弹窗限高滚动</li>
+        <li>元素周期表竖屏提示旋转，横屏 2D / 3D 视图均按视口自适应缩放并居中</li>
+        <li>手势功能在无 GPU 环境自动回退 CPU 推理</li>
+        <li>未配置密钥时，浏览、3D、实验室、游戏均可用，仅 AI / TTS / 视觉降级</li>
+    </ul>
+
+    <h3>7.5 性能实测</h3>
+    <p>性能数据由 <code>server/benchmark.py</code> 自动采集：后端部分直接对函数计时，页面部分用本机 Chrome 加载本地服务并读取浏览器性能计时 API，页面脚本见下方复现命令。完整数据见 <code>docs/性能测量报告.md</code>。</p>
+
+    <table>
+        <thead>
+            <tr><th style="width:34%">测量项</th><th style="width:26%">结果</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>混合检索（Top-3）</td><td><b>20–40 ms</b></td><td>1213 个知识块，三路检索 + RRF + 重排（随机器负载波动）</td></tr>
+            <tr><td>索引加载</td><td>0.3–0.6 秒</td><td>首次启动一次性开销，之后常驻内存</td></tr>
+            <tr><td>元素查询 / 反应检索 / 安全查询</td><td>1–2 μs</td><td>纯内存查表</td></tr>
+            <tr><td>摩尔质量 / 方程式配平</td><td>14–40 μs</td><td>解析 + 分数高斯消元</td></tr>
+            <tr><td>安全护栏检测</td><td>约 4 μs</td><td>置于模型调用之前，不带来可感知延迟</td></tr>
+            <tr><td>主页热缓存 FCP</td><td>60–150 ms</td><td>二次访问首屏绘制</td></tr>
+            <tr><td>主页冷启动 FCP</td><td>0.6–1.2 秒</td><td>含背景视频与字体首次加载</td></tr>
+            <tr><td>3D 元素周期表热缓存 FCP</td><td>0.1–0.3 秒</td><td>冷启动约 1.2 秒</td></tr>
+            <tr><td>3D 场景帧率</td><td>达到环境 rAF 上限（约 60 fps）</td><td>主页、周期表、词云、游戏页均为 98%–99% 环境上限</td></tr>
+        </tbody>
+    </table>
+
+    <div class="note">
+        <b>测量驱动的性能优化：</b>基准脚本上线后立即暴露出 3D 元素周期表只有 16 fps，其余页面均为 60 fps。用 DevTools 对主线程采样 3 秒，按函数自耗时排序后定位到背景螺旋粒子：脚本创建了 6000 个 DOM 节点，且<b>每个节点各自跑一条 requestAnimationFrame 循环</b>，逐帧写入 <code>left</code> / <code>top</code>，每帧触发数千次样式计算与布局。对照实验验证了结论——隐藏该容器后帧率回升到约 40 fps，仅隐藏 canvas 则毫无变化，排除绘制因素。
+    </div>
+
+    <p>修复分两步。<b>第一步</b>把粒子合并到一条 requestAnimationFrame 批量更新、位置改用 <code>transform: translate3d()</code>，帧率恢复 61 fps，但受 DOM 节点成本限制只能保留 400 颗，观感偏稀。<b>第二步</b>把整个背景迁到单个 canvas：桌面 <b>5200 颗</b>粒子、六臂螺旋、由涡心向外流动并带淡入淡出，另给三成粒子加切线拖尾强化旋转感；绘制上用 <code>fillRect</code> 替代 <code>arc</code> 路径（尺寸仅 1–3 px，视觉无差别），并用 <code>globalCompositeOperation = 'lighter'</code> 做叠加发光。最终同机复测 <b>61 fps</b>，粒子数量是第一步的 13 倍。</p>
+
+    <p>这条链路——基准脚本发现问题、DevTools 定位根因、对照实验验证假设、修复后复测——是本项目处理性能问题的方法论：不靠感觉调优，每一步都有数据支撑。</p>
+
+    <p>复现命令（后端与页面全部本地执行，不需要密钥；<code>--with-ai</code> 才会产生一次模型调用）：</p>
+<pre><code>python server/benchmark.py              # 后端算法 + 页面加载
+python server/benchmark.py --skip-pages # 只测后端
+python server/benchmark.py --with-ai    # 追加一次真实对话</code></pre>
+
+    <h3>7.6 已知限制</h3>
+    <ul>
+        <li>线上由 Nginx 终止 TLS 并反向代理到容器，容器内仍使用 Flask 内置服务器，后续可替换为 Gunicorn 等多进程 WSGI 服务</li>
+        <li>自签证书在本地首次访问时需手动信任（线上已使用 Let's Encrypt 正式证书）</li>
+        <li>视觉识别依赖网络与第三方模型配额</li>
+    </ul>
+</section>
+
+<!-- ================= 8 部署 ================= -->
+<section>
+    <h2><span class="num">08</span>部署与运行</h2>
+
+    <h3>8.1 环境要求</h3>
+    <ul>
+        <li>Python 3.12+</li>
+        <li>现代浏览器（Chrome / Edge 90+）</li>
+        <li>可选：DeepSeek 与 DashScope API 密钥（缺失时 AI 功能降级，其余功能不受影响）</li>
+    </ul>
+
+    <h3>8.2 本地启动</h3>
+<pre><span class="c"># 1. 创建虚拟环境并安装依赖</span>
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+<span class="c"># 2. 配置密钥（可选）</span>
+copy .env.example .env
+<span class="c"># 编辑 .env，填入 DEEPSEEK_API_KEY / TTS_API_KEY / VISION_API_KEY</span>
+
+<span class="c"># 3. 一键启动（同时拉起 4100 站点与 4101 API）</span>
+.\.venv\Scripts\python.exe server\start_bs.py</pre>
+    <p>启动后访问 <code>https://127.0.0.1:4100</code>。首次访问会提示自签证书风险，选择继续即可。</p>
+
+    <h3>8.3 环境变量</h3>
+    <table>
+        <thead>
+            <tr><th style="width:30%">变量</th><th style="width:18%">必填</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>DEEPSEEK_API_KEY</code></td><td>AI 对话必填</td><td>DeepSeek 密钥</td></tr>
+            <tr><td><code>DEEPSEEK_MODEL</code></td><td>否</td><td>默认 <code>deepseek-chat</code></td></tr>
+            <tr><td><code>TTS_API_KEY</code></td><td>语音必填</td><td>DashScope 密钥</td></tr>
+            <tr><td><code>TTS_MODEL</code> / <code>TTS_VOICE</code></td><td>否</td><td>默认 <code>cosyvoice-v3-flash</code> / <code>longxiaochun_v3</code></td></tr>
+            <tr><td><code>VISION_API_KEY</code></td><td>视觉必填</td><td>通义千问 VL 密钥</td></tr>
+            <tr><td><code>VISION_MODEL_NAME</code></td><td>否</td><td>默认 <code>qwen3-vl-plus</code></td></tr>
+        </tbody>
+    </table>
+
+    <h3>8.4 生产部署</h3>
+    <p>作品已完成生产部署并上线：<code>https://www.hychemistry.cn</code>（备用域名 <code>demo.mychemistry.cn</code>）。部署链路为「Docker 容器 → Nginx 反向代理 → Cloudflare / HTTPS」，前端与 API 仍保持同源：</p>
+    <table>
+        <thead>
+            <tr><th style="width:24%">环节</th><th>实现</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>镜像构建</td><td><code>Dockerfile</code> 基于 <code>python:3.12-slim</code>，拷贝全量代码后执行 <code>python server/start_prod.py</code></td></tr>
+            <tr><td>容器编排</td><td><code>start_prod.py</code> 在同一容器内拉起 4100 站点与 4101 API，容器仅映射 <code>127.0.0.1:4100</code>，不直接暴露公网</td></tr>
+            <tr><td>反向代理</td><td>宿主机 Nginx 1.24 监听 443，将请求转发到 <code>127.0.0.1:4100</code>，TLS 由 Certbot 签发的 Let's Encrypt 证书终止</td></tr>
+            <tr><td>域名与缓存</td><td>Cloudflare 代理域名；HTML 与 <code>/api/*</code> 强制不缓存，CSS / JS 通过 <code>?v=</code> 版本参数更新，避免评审时看到旧页面</td></tr>
+            <tr><td>跨境访问</td><td>维基百科摘要与配图由境外服务器代理获取（<code>/api/wiki/summary</code>、<code>/api/wiki/image</code>），客户端无需直连维基</td></tr>
+        </tbody>
+    </table>
+    <p>后续可继续完善：为 AI 接口增加限流与鉴权、静态资源接入 CDN、水平扩展为多实例部署。</p>
+</section>
+
+<!-- ================= 9 创新点 ================= -->
+<section>
+    <h2><span class="num">09</span>创新点总结</h2>
+
+    <h3>9.1 交互模式创新</h3>
+    <p><b>无接触手势操控 3D 化学内容。</b>同类化学学习产品大多停留在点击与拖拽，本项目将手部关键点识别与 Three.js 场景结合，让用户隔空旋转、缩放化学方程式词云。这一交互在课堂大屏场景下尤其有价值——教师无需走到设备前即可演示。</p>
+    <p><b>把展品变成可对话的知识对象。</b>元素周期表支持「点击元素即对话」与四组探索预设，AI 先高亮周期表中的命中元素再给出解释；化学先驱传记页升级为角色 Agent，可访谈科研历程并请其评价现代发现；文档问答让用户用自己的文本复现 RAG 原文溯源。AI 因此不再是一个游离的聊天框，而是嵌进浏览、探索、阅读三类动作之中。</p>
+
+    <h3>9.2 技术方案创新</h3>
+    <p><b>视觉识别与确定性工具的双重校验。</b>常见的多模态应用止步于「识别出来」，本项目让识别结果进入工具链二次验证：手写方程式被识别后，配平算法独立计算一遍，两者不一致即提示未配平。这把「AI 可能看错」的风险，转化为「两个独立系统互相检查」的可靠性保障。</p>
+
+    <h3>9.3 选题创新</h3>
+    <p><b>把 AI 用在最需要的地方，而不是到处贴 AI 标签。</b>项目没有给每个页面强行塞一个通用聊天框，而是把模型能力嵌进具体动作：点元素就问元素、点人物就访谈人物、贴一段资料就只依据资料回答。相应地，3D 周期表、实验室、游戏的核心渲染采用纯前端实现，加载快、可离线，AI 只在需要理解与表达时介入。</p>
+
+    <h3>9.4 安全优先的设计观</h3>
+    <p>化学主题天然伴随风险。项目把「安全」做成贯穿始终的设计原则：实验室有规范体系与危废处置、AI 有前置拦截、多模态结果附带安全提示、反应演示标注危险产物。这不是附加功能，而是让化学教育产品具备可交付性的前提。</p>
+
+    <div class="metrics">
+        <div class="metric"><b>6</b><span>AI 可调用工具</span></div>
+        <div class="metric"><b>1213</b><span>RAG 知识块</span></div>
+        <div class="metric"><b>20</b><span>危险模式拦截</span></div>
+        <div class="metric"><b>72</b><span>实验室配置项</span></div>
+    </div>
+</section>
+
+<!-- ================= 10 价值与展望 ================= -->
+<section>
+    <h2><span class="num">10</span>社会价值与未来展望</h2>
+
+    <h3>10.1 社会价值</h3>
+    <p><b>教育公平。</b>县域中学与乡村学校普遍缺乏实验条件，一个能运行在普通浏览器里的 3D 实验室，意味着学生在任何一台电脑上都能观察钠与水反应、练习方程式配平、了解危化品处置。硬件门槛从「一间实验室」降到「一个浏览器」。</p>
+    <p><b>实验安全。</b>真实实验中，学生往往先动手再想起安全。项目把安全须知做成进入实验室的第一道关卡，把危险标识、废液分类、应急处置嵌入操作流程——安全意识的培养发生在操作之前，而不是事故之后。</p>
+    <p><b>科学素养。</b>通过化学史叙事、元素图鉴与 AI 答疑，帮助学生理解「化学不是一堆要背的符号，而是一部人类认识物质世界的历史」。</p>
+
+    <h3>10.2 未来展望</h3>
+    <table>
+        <thead>
+            <tr><th style="width:24%">方向</th><th>设想</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>教学闭环</td><td>接入错题本与学情分析，让 AI 基于学生的历史错误推荐针对性练习</td></tr>
+            <tr><td>实验深度</td><td>引入反应动力学模拟，可视化温度、浓度对反应速率的影响</td></tr>
+            <tr><td>多模态扩展</td><td>支持实验操作视频的动作规范性识别与实时纠错</td></tr>
+            <tr><td>协作学习</td><td>多人同时进入同一 3D 实验室，分工完成实验流程</td></tr>
+            <tr><td>内容生态</td><td>开放元素图鉴与反应库的编辑接口，让教师贡献本地化教学内容</td></tr>
+        </tbody>
+    </table>
+
+    <h3>10.3 结语</h3>
+    <p>《元素幻语》试图回答一个问题：当大模型已经足够强大，教育产品应该把它放在什么位置？</p>
+    <p>我们的答案是——<b>把它放在学生提问的那一刻，放在需要被验证的答案旁，放在危险话题之前。</b>技术不必喧哗，能在恰当的地方可靠地起作用，就已经足够。</p>
+
+    <div class="sign">
+        文档结束 · 元素幻语 Element Whisper · 2026 传智杯参赛作品
+    </div>
+</section>
+
+</body>
+</html>

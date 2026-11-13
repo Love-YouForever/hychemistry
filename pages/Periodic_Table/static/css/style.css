@@ -1,0 +1,466 @@
+/* --- 基本重置和全局样式 --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #1a1a1c;
+    color: #f0f0f0;
+    overflow: hidden;
+}
+
+.no-select { user-select: none; }
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    align-items: center;
+    padding: 10px 20px;
+}
+
+header {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+h1 {
+    font-size: 2em;
+    font-weight: 300;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+#temp-input {
+    background-color: #333;
+    color: #f0f0f0;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 4px 6px;
+    width: 80px;
+    text-align: center;
+}
+#temp-celsius {
+    color: #aaa;
+    min-width: 80px;
+    text-align: left;
+}
+#temp-slider { width: 200px; }
+
+/* --- 图例样式 --- */
+.legend-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    font-size: 12px;
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+.legend-section { display: flex; flex-direction: column; gap: 8px; }
+.legend-title { font-weight: bold; color: #ddd; margin-bottom: 4px; text-align: center; }
+.legend-grid { display: grid; grid-template-columns: repeat(2, auto); justify-content: start; gap: 4px 15px; }
+.legend-grid.small { grid-template-columns: 1fr; }
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.color-swatch {
+    width: 12px;
+    height: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.legend-explanation .legend-title { text-align: left; }
+.explanation-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+.explanation-text { color: #ccc; }
+.arrow { font-size: 16px; color: #888; }
+
+.legend-example-element {
+    position: relative;
+    width: 65px;
+    height: 65px;
+    border: 1px solid #888;
+    border-radius: 4px;
+    background-color: rgba(45, 45, 50, 0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    overflow: hidden;
+}
+.legend-example-element::before, .legend-example-element::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+}
+.legend-example-element::before { left: 0; background-color: #f6e58d; }
+.legend-example-element::after { right: 0; background-color: #88aacc; }
+.legend-example-element .number { position: absolute; top: 4px; left: 8px; font-size: 9px; opacity: 0.7; }
+.legend-example-element .symbol { font-size: 20px; font-weight: bold; }
+.legend-example-element .name { font-size: 9px; text-align: center; }
+
+/* --- 周期表容器与交互 --- */
+#table-container {
+    flex-grow: 1;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    perspective: 2000px;
+    pointer-events: none; /* 事件穿透到底层 table */
+}
+
+#periodic-table {
+    display: grid;
+    grid-template-columns: repeat(18, 65px);
+    grid-template-rows: repeat(10, 65px);
+    gap: 5px;
+    transform-style: preserve-3d;
+    transform: rotateX(50deg) rotateZ(-15deg) scale(1.0);
+    transition: transform 0.1s linear;
+    pointer-events: auto; /* 实际接收事件 */
+    cursor: grab;
+}
+
+#periodic-table:active { cursor: grabbing; }
+
+.loading { grid-column: 5 / 14; grid-row: 4; color: #888; font-size: 1.5em; }
+
+/* --- 元素格子样式 --- */
+.element-cell {
+    position: relative;
+    border: 1px solid #444;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 4px;
+    font-size: 10px;
+    background-color: rgba(45, 45, 50, 0.8);
+    backdrop-filter: blur(5px);
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+}
+
+.element-cell::before, .element-cell::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    transition: background 0.4s ease, background-color 0.4s ease;
+}
+.element-cell::before { left: 0; }
+.element-cell::after { right: 0; }
+
+.element-cell:hover {
+    transform: translateZ(25px) scale(1.1);
+    border-color: #fff;
+    box-shadow: 0 0 20px rgba(127, 255, 212, 0.5);
+}
+
+.element-cell .number { position: absolute; top: 4px; left: 8px; font-size: 9px; opacity: 0.7; }
+.element-cell .symbol { font-size: 20px; font-weight: bold; }
+.element-cell .name { font-size: 9px; text-align: center; }
+
+/* --- 元素类别颜色 --- */
+.alkali-metal::before, .color-swatch.alkali-metal { background-color: #ff3838; }
+.alkaline-earth-metal::before, .color-swatch.alkaline-earth-metal { background-color: #ff9f1a; }
+.lanthanide::before, .color-swatch.lanthanide { background-color: #fffa65; }
+.actinide::before, .color-swatch.actinide { background-color: #dff9fb; }
+.transition-metal::before, .color-swatch.transition-metal { background-color: #f0e68c; }
+.other-metal::before, .color-swatch.other-metal { background-color: #a4b0be; }
+.metalloid::before, .color-swatch.metalloid { background-color: #2bcbba; }
+.other-nonmetal::before, .color-swatch.other-nonmetal { background-color: #2ed573; }
+.halogen::before, .color-swatch.halogen { background-color: #be2edd; }
+.noble-gas::before, .color-swatch.noble-gas { background-color: #1e90ff; }
+.unknown-category::before, .color-swatch.unknown-category { background-color: #636e72; }
+
+/* --- 元素物态颜色 --- */
+.solid::after { background-color: #88aacc; }
+.liquid::after { background-color: #55ee77; }
+.gas::after { background-color: #ffaa55; }
+.unknown::after { background: linear-gradient(180deg, #7ed6df, #e056fd, #f6e58d); }
+
+/* --- 核心修改：弹窗样式 --- */
+.modal-hidden { display: none; }
+.modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); z-index: 999; }
+.modal-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #2c2c2e;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 1000;
+    width: 90%;
+    max-width: 850px; /* 增加最大宽度以容纳两列 */
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.modal-close-btn { position: absolute; top: 10px; right: 15px; background: none; border: none; color: #aaa; font-size: 28px; cursor: pointer; }
+
+#modal-body {
+    display: grid;
+    /* 定义两列布局：左侧固定宽度，右侧自适应 */
+    grid-template-columns: 250px 1fr;
+    /* 定义两行布局：标题行自动高度，内容行占满剩余空间 */
+    grid-template-rows: auto 1fr;
+    gap: 20px;
+}
+
+.modal-title {
+    grid-column: 1 / -1; /* 标题横跨两列 */
+    grid-row: 1;
+    margin-bottom: 0;
+    font-size: 2em;
+    font-weight: 300;
+}
+
+.visuals-container {
+    grid-column: 1;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.info-container {
+    grid-column: 2;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* 让子元素滚动条正常工作 */
+}
+
+.visuals-container .placeholder {
+    width: 100%;
+    height: 200px;
+    background-color: #222;
+    border: 1px dashed #444;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    color: #888;
+}
+
+model-viewer {
+    width: 100%;
+    height: 250px;
+    border-radius: 8px;
+}
+
+.image-wrapper {
+    text-align: center;
+}
+
+.image-label {
+    font-size: 0.8em;
+    color: #aaa;
+    margin-bottom: 5px;
+}
+
+.visuals-container img {
+    max-width: 100%;
+    border-radius: 5px;
+    background: #111;
+    border: 1px solid #444;
+}
+
+.details-text {
+    font-size: 0.9em;
+}
+
+.details-text p { margin-bottom: 8px; line-height: 1.6; }
+.details-text a { color: #7ed6df; }
+
+/* --- 新增：维基百科内容样式 --- */
+.wiki-container {
+    margin-top: 20px;
+    border-top: 1px solid #444;
+    padding-top: 15px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* 允许子元素滚动 */
+    flex-grow: 1; /* 占据剩余空间 */
+}
+
+.wiki-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.wiki-header h3 {
+    margin: 0;
+    font-size: 1.1em;
+    font-weight: 500;
+}
+
+.lang-btn {
+    background: #444;
+    color: #eee;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 0.8em;
+}
+
+.lang-btn:hover { background: #555; }
+
+#wiki-content-target {
+    overflow-y: auto;
+    padding-right: 10px; /* 为滚动条留出空间 */
+}
+
+/* 美化 details/summary 折叠面板 */
+.wiki-section {
+    border-bottom: 1px solid #3a3a3c;
+    margin-bottom: 10px;
+}
+.wiki-section:last-child {
+    border-bottom: none;
+}
+
+.wiki-section summary {
+    cursor: pointer;
+    font-weight: bold;
+    padding: 10px 5px;
+    list-style: none; /* 隐藏默认的三角箭头 */
+    position: relative;
+}
+
+.wiki-section summary::-webkit-details-marker {
+    display: none; /* 再次确认隐藏箭头 */
+}
+
+/* 使用 ::before 添加自定义箭头 */
+.wiki-section summary::before {
+    content: '▶';
+    position: absolute;
+    left: -5px;
+    font-size: 0.8em;
+    transform: rotate(0deg);
+    transition: transform 0.2s;
+}
+
+.wiki-section[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+.wiki-section-content {
+    padding: 0 5px 15px 15px;
+    opacity: 0.9;
+    font-size: 0.9em;
+    line-height: 1.7;
+}
+
+/* 确保维基百科内容中的各种标签有基本样式 */
+.wiki-section-content p { margin-bottom: 1em; }
+.wiki-section-content ul, .wiki-section-content ol { padding-left: 20px; margin-bottom: 1em; }
+.wiki-section-content li { margin-bottom: 0.5em; }
+.wiki-section-content a { color: #88d1df; text-decoration: none; }
+.wiki-section-content a:hover { text-decoration: underline; }
+.wiki-section-content table { border-collapse: collapse; margin: 1em 0; background: #222; width: 100%;}
+.wiki-section-content th, .wiki-section-content td { border: 1px solid #444; padding: 8px; text-align: left;}
+.wiki-section-content th { background: #333;}
+.wiki-section-content img { max-width: 100%; height: auto; border-radius: 4px; }
+.color-swatch.solid { background-color: #88aacc; }
+.color-swatch.liquid { background-color: #55ee77; }
+.color-swatch.gas { background-color: #ffaa55; }
+.color-swatch.unknown { background: linear-gradient(180deg, #7ed6df, #e056fd, #f6e58d); }
+
+.controls button {
+    background-color: #333;
+    color: #f0f0f0;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 14px;
+}
+.controls button:hover {
+    background-color: #444;
+}
+
+/* 在 .legend-example-element 部分，为 .name 添加下边距，并为 .atomic-mass 添加新样式 */
+
+.legend-example-element .name {
+    font-size: 9px;
+    text-align: center;
+    margin-bottom: 2px; /* 为原子质量留出空间 */
+}
+
+.legend-example-element .atomic-mass {
+    font-size: 8px;
+    opacity: 0.8;
+}
+
+/* 在 .element-cell 部分，同样为 .name 添加下边距，并为 .atomic-mass 添加新样式 */
+
+.element-cell .name {
+    font-size: 9px;
+    text-align: center;
+    margin-bottom: 2px; /* 为原子质量留出空间 */
+}
+
+.element-cell .atomic-mass {
+    font-size: 8px;
+    opacity: 0.7;
+    position: absolute; /* 精确控制位置 */
+    bottom: 3px;
+    left: 0;
+    right: 0;
+    text-align: center;
+}
+
+/* 电子排布相关样式 */
+.electron-config {
+    color: #7ed6df;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.electron-orbital-container {
+    margin: 15px 0;
+    text-align: center;
+}
+
+.electron-orbital-canvas {
+    border: 1px solid #444;
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.3);
+    margin: 0 auto;
+}

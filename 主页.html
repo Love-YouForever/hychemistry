@@ -1,0 +1,232 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>元素幻语</title>
+    
+    <link rel="stylesheet" href="assets/css/mobile-adaptation.css">
+    
+    <link rel="stylesheet" href="assets/css/home.css?v=20261113a">
+    <link rel="stylesheet" href="assets/css/ai-assistant.css?v=20261113h">
+</head>
+<body>
+
+<!--背景层（视频 + 遮罩 + 粒子）-->
+<div class="video-container">
+    <video autoplay loop muted playsinline id="bgVideo">
+        <source src="./assets/background.mp4" type="video/mp4">
+    </video>
+</div>
+<div class="overlay"></div>
+<canvas id="particle-canvas"></canvas>
+
+<!--主内容区域-->
+<div class="content">
+    <h1 class="title">元素幻语</h1>
+    <div class="subtitle">✨ 无人之地 · 灵音启程 ✨</div>
+    <div class="description">
+        流光倾泻，星河为幕；元素于指尖苏醒，<br>在三维时空里律动成诗。全屏视频将你拉入浩瀚，
+        <br>3D周期表让微观宇宙触手可及——科学与诗意在此交融，每一次滑动，都是与万物之灵的对话。
+    </div>
+    
+    <div class="ai-mode-entry">
+        <button type="button" class="ai-mode-btn" onclick="window.ElementWhisperAssistant && window.ElementWhisperAssistant.open()">🤖 AI 模式</button>
+        <span class="ai-mode-text">你的 AI 化学探索助手 · 试着问「帮我找三个常温下是液态的元素」</span>
+    </div>
+
+    <div class="btn-group" id="nav-app">
+        <div class="btn-group-left">
+            <a href="./pages/Periodic_Table/交互式元素周期表/交互式元素周期表3D.html" class="btn btn-primary" id="exploreBtn" @click.prevent="go('./pages/Periodic_Table/交互式元素周期表/交互式元素周期表3D.html')">🔬 周期表</a>
+            <a href="./pages/Chemical_equation/equation_cloud.html" class="btn btn-outline" id="detailBtn" @click.prevent="go('./pages/Chemical_equation/equation_cloud.html')">⚗️ 方程式</a>
+            <a href="./pages/chemistry_lab/lab.html" class="btn btn-primary" id="labBtn" @click.prevent="go('./pages/chemistry_lab/lab.html')">🧪 实验室</a>
+        </div>
+        <div class="btn-group-right">
+            <a href="./pages/Chemical_Epics/化学史诗.html" class="btn btn-primary" id="interactiveBtn" @click.prevent="go('./pages/Chemical_Epics/化学史诗.html')">📜 化学史诗</a>
+            <a href="./pages/games/games.html" class="btn btn-primary" id="miniGameBtn" @click.prevent="go('./pages/games/games.html')">🎮 小游戏</a>
+            <!-- 未完待续按钮，点击后将跳转至 surprise.html -->
+            <a href="./pages/surprise.html" class="btn btn-primary" id="unfinishedBtn" @click.prevent="go('./pages/surprise.html')">✨ 未完待续</a>
+        </div>
+    </div>
+    <div class="scroll-hint">⬇ 向下滚动 · 灵语画廊 ⬇</div>
+</div>
+
+
+<!-- 第一个下拉页面：灵语画廊 -->
+<section class="gallery-section" id="spiritGallery">
+    <div class="carousel-container">
+        <div class="gallery-subtle">✦ 化学先驱 ✦</div>
+        <div class="cards-wrapper" id="galleryCardsWrapper"></div>
+        <div class="nav-arrow arrow-left" id="galleryPrevBtn">‹</div>
+        <div class="nav-arrow arrow-right" id="galleryNextBtn">›</div>
+    </div>
+</section>
+
+
+
+<!-- 第二个下拉页面：双轨胶片 -->
+<section class="film-gallery-section" id="filmStripSection">
+    <div class="film-header">
+        ✦ 元素幻廊 · 光影诗篇 ✦
+        <p>｜          ｜                                                       ｜          ｜</p>
+    </div>
+    <div class="track track-up" id="trackUp">
+        <div class="film-scroll" id="scrollUpWrapper">
+            <div class="film-rail" id="filmRailUp"></div>
+        </div>
+    </div>
+    <div class="track track-down" id="trackDown">
+        <div class="film-scroll" id="scrollDownWrapper">
+            <div class="film-rail" id="filmRailDown"></div>
+        </div>
+    </div>
+</section>
+
+<!--唱片控件-->
+<div class="vinyl-player" id="vinylPlayer">
+    <div class="vinyl-disc" id="vinylDisc">
+        <div class="vinyl-label">♫</div>
+    </div>
+</div>
+
+<!--AI小助手（小幻语）：Vue 3 管理状态与交互-->
+<div id="assistant-app">
+    <div class="ai-agent-status">
+        <div class="status-dot" :class="statusMode"></div>
+        <span class="ai-status-text">{{ statusText }}</span>
+        <button class="manual-launch-btn" type="button" @click="togglePanel()">{{ panelOpen ? '收起' : '💬 对话' }}</button>
+    </div>
+    <div class="assistant-panel" :class="{ open: panelOpen }" :aria-hidden="panelOpen ? 'false' : 'true'">
+        <div class="assistant-header">
+            <div class="assistant-header-main">
+                <img src="./AIgent/oc图标.ico" alt="小幻语头像" class="assistant-avatar">
+                <div>
+                    <div class="assistant-title">{{ roleMode || '小幻语' }}</div>
+                    <div class="assistant-subtitle">{{ roleMode ? '历史人物访谈 · 第一人称对话' : '网页助手 · 化学灵感待命中' }}</div>
+                </div>
+            </div>
+            <button class="assistant-close" type="button" @click="togglePanel(false)">×</button>
+        </div>
+        <div class="assistant-messages" ref="messagesRef">
+            <template v-for="m in messages" :key="m.id">
+                <div v-if="m.type === 'pending'" class="assistant-message system assistant-pending">
+                    <span class="assistant-dots"><i></i><i></i><i></i></span>
+                    <span class="assistant-pending-text">{{ m.text }}</span>
+                </div>
+                <div v-else-if="m.type === 'tool'" class="assistant-tool" :class="{ done: m.done }">
+                    <div class="assistant-tool-title">⚙️ {{ m.label }}</div>
+                    <div class="assistant-tool-detail">{{ m.detail }}</div>
+                </div>
+                <div v-else-if="m.type === 'vision'" class="assistant-vision">
+                    <div class="assistant-vision-type">🔍 视觉识别 · {{ m.label }}</div>
+                    <div v-if="m.degraded && m.chain" class="assistant-vision-degrade">⚠️ {{ m.chain }}</div>
+                    <div class="assistant-vision-content">{{ m.result.content || '无法识别' }}</div>
+                    <div v-if="m.result.balance" class="assistant-vision-balance" :class="{ invalid: !m.result.balance.ok }">
+                        ⚖️ {{ m.result.balance.ok ? '自动配平校验：' + m.result.balance['配平结果'] : '配平校验：' + (m.result.balance.error || '无法配平') }}
+                    </div>
+                    <div v-if="m.result.explanation" class="assistant-vision-row"><span class="label">💡 讲解</span><span>{{ m.result.explanation }}</span></div>
+                    <div v-if="m.result.safety" class="assistant-vision-safety">⚠️ {{ m.result.safety }}</div>
+                    <div v-if="m.result.confidence === 'low'" class="assistant-vision-low">识别把握较低，建议换一张更清晰的图片</div>
+                </div>
+                <div v-else-if="m.type === 'sources'" class="assistant-sources">
+                    <div class="assistant-sources-title">📎 知识来源 · 点击条目查看依据</div>
+                    <div v-for="(s, i) in m.items" :key="i" class="assistant-source-item" role="button" tabindex="0" @click="openEvidence(s)">
+                        <div class="assistant-source-head">
+                            <span class="assistant-source-ref">{{ s.ref }}</span>
+                            <span v-if="s.source_ref" class="assistant-source-id">{{ s.source_ref }}</span>
+                            <span class="assistant-source-more">查看依据 ›</span>
+                        </div>
+                        <div class="assistant-source-snippet">{{ s.snippet }}</div>
+                    </div>
+                </div>
+                <div v-else-if="m.type === 'notice'" class="assistant-notice" :class="m.tone">
+                    <div class="assistant-notice-title">{{ m.title }}</div>
+                    <div class="assistant-notice-text">{{ m.text }}</div>
+                    <button v-if="m.retryText" type="button" class="assistant-retry" @click="retry(m)">重新试一次</button>
+                </div>
+                <div v-else-if="m.type === 'error'" class="assistant-error">
+                    <div class="assistant-error-text">{{ m.text }}</div>
+                    <button v-if="m.retryText" type="button" class="assistant-retry" @click="retry(m)">重新试一次</button>
+                </div>
+                <div v-else-if="m.type === 'image'" class="assistant-message user">
+                    <img class="assistant-thumb" :src="m.src" alt="上传的图片">
+                </div>
+                <div v-else class="assistant-message" :class="[m.type, { blocked: m.blocked, streaming: m.streaming }]">{{ m.text }}</div>
+            </template>
+            <div v-if="!messages.some(m => m.type === 'user')" class="assistant-empty">
+                <div v-if="!messages.length" class="assistant-empty-title">🤖 AI 模式已就绪</div>
+                <div v-if="!messages.length" class="assistant-empty-text">我是小幻语，可以直接问我化学问题，也可以让我检索知识库并标注出处。</div>
+                <div class="assistant-empty-chips">
+                    <button type="button" class="assistant-chip" @click="quickAsk('在元素周期表里找出常温（约 25℃）下呈液态的元素，并解释它们的共同用途。请先调用 search_knowledge 检索元素知识库，并在回答末尾标注来源。', '帮我找三个常温液态元素')">帮我找三个常温液态元素</button>
+                    <button type="button" class="assistant-chip" @click="quickAsk('钠为什么和水反应这么快？请结合元素性质与反应机理解释，并检索知识库标注来源。', '钠为什么和水反应这么快？')">钠为什么和水反应这么快？</button>
+                    <button type="button" class="assistant-chip" @click="quickAsk('硫酸铜溶液和氢氧化钠溶液反应会有什么现象？请写出方程式并解释现象，检索知识库标注来源。', '硫酸铜与氢氧化钠反应')">硫酸铜与氢氧化钠反应</button>
+                </div>
+            </div>
+        </div>
+        <div class="assistant-tools">
+            <button type="button" class="assistant-tool-btn" @click="openDoc" :disabled="sending">📄 文档问答</button>
+            <span class="assistant-tools-tip">粘贴一段文字，我只依据它回答并标出处</span>
+        </div>
+        <form class="assistant-form" @submit.prevent="submit">
+            <button class="assistant-camera" type="button" title="拍照识别化学方程式或实验装置" @click="pickImage" :disabled="cameraBusy">📷</button>
+            <input class="assistant-input" ref="inputRef" v-model="input" type="text" placeholder="想问点什么？比如：钠为什么和水反应这么快？" :disabled="sending">
+            <button class="assistant-send" type="submit" :disabled="sending">发送</button>
+        </form>
+        <input ref="imageInputRef" type="file" accept="image/*" capture="environment" hidden @change="onImageChange">
+    </div>
+
+    <!-- 可解释性：查看依据弹窗 -->
+    <div v-if="evidence" class="evidence-mask" @click.self="closeEvidence">
+        <div class="evidence-dialog" role="dialog" aria-modal="true">
+            <div class="evidence-head">
+                <span class="evidence-title">🔍 查看依据</span>
+                <button type="button" class="evidence-close" @click="closeEvidence">×</button>
+            </div>
+            <div class="evidence-meta">
+                <div class="evidence-row"><span class="k">来源</span><span class="v">{{ evidence.ref }}</span></div>
+                <div class="evidence-row"><span class="k">编号</span><span class="v">{{ evidence.source_ref || '—' }}</span></div>
+                <div class="evidence-row"><span class="k">命中方式</span><span class="v">{{ evidence.match || '混合检索' }}</span></div>
+                <div class="evidence-row"><span class="k">融合得分</span><span class="v">{{ formatScore(evidence.score) }}</span></div>
+            </div>
+            <div class="evidence-quote">{{ evidence.quote || evidence.snippet }}</div>
+            <div class="evidence-foot">原文取自本地化学知识库（BM25 + 向量召回 + RRF 融合 + 领域重排），可逐条核对后再采信。</div>
+        </div>
+    </div>
+
+    <!-- 轻量 RAG：粘贴文档提问 -->
+    <div v-if="docOpen" class="doc-mask" @click.self="closeDoc">
+        <div class="doc-dialog" role="dialog" aria-modal="true">
+            <div class="doc-head">
+                <span class="doc-title">📄 文档问答</span>
+                <button type="button" class="doc-close" @click="closeDoc">×</button>
+            </div>
+            <p class="doc-tip">粘贴一段化学文章或教材片段（至少 80 字），我会先在这段文字里检索，再只依据命中的片段回答，并标注出处。</p>
+            <div class="doc-upload">
+                <label class="doc-upload-btn">
+                    📎 选择 .txt / .md 文件
+                    <input type="file" accept=".txt,.md,text/plain" hidden @change="onDocFile">
+                </label>
+                <span class="doc-upload-tip">或在下方直接粘贴，文本只在浏览器本地处理</span>
+            </div>
+            <textarea id="docTextArea" v-model="docText" class="doc-textarea" maxlength="8000" placeholder="在这里粘贴文本，例如一篇元素科普文章……"></textarea>
+            <div class="doc-counter">{{ docText.length }} / 8000</div>
+            <input v-model="docQuestion" class="doc-question" type="text" placeholder="针对这段文字问一个问题，例如：文中提到的元素有哪些共同用途？" @keyup.enter="submitDoc">
+            <div v-if="docError" class="doc-error">{{ docError }}</div>
+            <div class="doc-actions">
+                <button type="button" class="doc-cancel" @click="closeDoc">取消</button>
+                <button type="button" class="doc-submit" @click="submitDoc" :disabled="sending">开始提问</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--背景音乐-->
+<audio id="bgMusic" loop preload="auto">
+    <source src="./assets/无人之地.mp3" type="audio/mpeg">
+</audio>
+
+    <script src="assets/vendor/vue.global.prod.js"></script>
+    <script src="assets/js/home.js?v=20261113b"></script>
+    <script src="assets/js/home-app.js?v=20261113r"></script>
+</body>
+</html>

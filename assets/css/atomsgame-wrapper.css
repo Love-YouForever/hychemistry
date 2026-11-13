@@ -1,0 +1,223 @@
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a1a1f 0%, #1a2a3a 50%, #0a1a1f 100%);
+            color: white;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* 视频背景 */
+        .video-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            overflow: hidden;
+        }
+        .video-container video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+            opacity: 0.4;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(10,26,31,0.9) 0%, rgba(26,42,58,0.85) 50%, rgba(10,26,31,0.9) 100%);
+            z-index: -1;
+        }
+
+        /* 头部 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            z-index: 100;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .back-btn {
+            padding: 0.6rem 1.5rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(-4px);
+        }
+
+        .title-container {
+            text-align: center;
+        }
+
+        .title {
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #ffd89b, #c7e9fb);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        /* 游戏容器 */
+        .game-container {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 80px;
+            padding-bottom: 20px;
+            overflow-x: auto;
+            overflow-y: auto;
+        }
+
+        .game-wrapper {
+            position: relative;
+            background: rgba(0,0,0,0.5);
+            border-radius: 16px;
+            overflow: visible;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            margin: 1rem;
+        }
+
+        .game-wrapper iframe {
+            width: 1000px;
+            height: 600px;
+            border: none;
+            display: block;
+        }
+
+        /* ========== 移动端竖屏提示界面 ========== */
+        .landscape-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #0a0a1a 100%);
+            z-index: 1000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .landscape-icon {
+            font-size: 6rem;
+            margin-bottom: 2rem;
+            animation: rotatePhone 2s ease-in-out infinite;
+        }
+
+        @keyframes rotatePhone {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-90deg); }
+            75% { transform: rotate(-90deg); }
+        }
+
+        .landscape-title {
+            font-size: clamp(1.5rem, 6vw, 2.5rem);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff, #ffd89b, #c7e9fb);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .landscape-desc {
+            font-size: clamp(1rem, 4vw, 1.3rem);
+            color: rgba(255,255,255,0.7);
+            max-width: 300px;
+            line-height: 1.6;
+        }
+
+        .landscape-hint {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        /* 响应式 */
+        @media (max-width: 680px) {
+            .header {
+                padding: 0.8rem 1rem;
+            }
+            
+            .back-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+            
+            .title {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* 移动端横屏适配 */
+        @media (max-width: 768px) and (orientation: portrait) {
+            .landscape-overlay {
+                display: flex;
+            }
+            
+            .header,
+            .game-container {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) and (orientation: landscape) {
+            .game-wrapper iframe {
+                width: 100vw;
+                height: calc(100vh - 80px);
+            }
+            
+            .game-container {
+                padding-top: 60px;
+                padding-bottom: 0;
+                align-items: center;
+            }
+            
+            .game-wrapper {
+                margin: 0;
+                border-radius: 0;
+                border: none;
+                box-shadow: none;
+            }
+        }

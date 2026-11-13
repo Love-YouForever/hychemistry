@@ -1,0 +1,16 @@
+# 元素幻语 · 后端依赖（pip 安装用）
+# 若使用 uv，可直接执行：uv sync（依赖以 pyproject.toml 为准）
+
+flask>=3.1.3
+flask-cors>=6.0.2
+requests>=2.33.1
+websockets>=16.0
+mcp>=2.3.0
+
+# 本地 RAG 混合检索（BM25 + LSA 向量）
+numpy>=2.0
+scikit-learn>=1.5
+joblib>=1.4
+
+# 可选：仅用于自动化截图/端到端验证，不影响运行时
+# playwright>=1.58.0

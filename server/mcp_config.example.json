@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "element-whisper-chem": {
+      "command": "<项目绝对路径>\\.venv\\Scripts\\python.exe",
+      "args": ["<项目绝对路径>\\server\\mcp_server.py"],
+      "description": "元素幻语 · 化学工具服务（6 个工具 + 3 个资源）"
+    }
+  }
+}

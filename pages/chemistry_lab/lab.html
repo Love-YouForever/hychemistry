@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D化学实验室 · 虚拟仿真实验平台</title>
+    <link rel="stylesheet" href="../../assets/css/lab.css?v=20261113g">
+</head>
+<body>
+    <!-- 横屏模式提示遮罩 -->
+    <div class="landscape-overlay" id="landscapeOverlay">
+        <div class="landscape-icon">🧪</div>
+        <h2 class="landscape-title">请切换横屏模式</h2>
+        <p class="landscape-message">为了获得最佳的化学实验室体验，请将设备旋转至横屏状态</p>
+        <p class="landscape-hint">⬅️ 旋转设备 ➡️</p>
+    </div>
+    
+    <div class="container">
+        <!-- 左侧工具栏 -->
+        <div class="sidebar">
+            <h2>🧪 3D化学实验室<span class="sci-sub">VIRTUAL CHEMISTRY LAB</span></h2>
+            
+            <!-- ===== 实验操作区 ===== -->
+            <div class="zone-block" data-zone="operation">
+                <div class="zone-head">
+                    <span class="zone-icon">⚗️</span>
+                    <span class="zone-name">实验操作区</span>
+                    <span class="zone-tag">BENCH</span>
+                </div>
+                <p class="zone-desc">中央操作台承担配制、加热与反应操作；台面仅放置当前实验所需器材，用后立即归位。</p>
+
+            <div class="category">
+                <h3>⚗️ 基础玻璃器材</h3>
+                <div class="items-grid">
+                    <div class="item" draggable="true" data-type="beaker">
+                        <div class="item-icon">🧪</div>
+                        <div class="item-name">烧杯</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="test-tube">
+                        <div class="item-icon">🧫</div>
+                        <div class="item-name">试管</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="flask">
+                        <div class="item-icon">⚗️</div>
+                        <div class="item-name">锥形瓶</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="round-bottom-flask">
+                        <div class="item-icon">🫙</div>
+                        <div class="item-name">圆底烧瓶</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="volumetric-flask">
+                        <div class="item-icon">⚱️</div>
+                        <div class="item-name">容量瓶</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="graduated-cylinder">
+                        <div class="item-icon">📏</div>
+                        <div class="item-name">量筒</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="category">
+                <h3>🔥 加热设备</h3>
+                <div class="items-grid">
+                    <div class="item" draggable="true" data-type="alcohol-lamp">
+                        <div class="item-icon">🕯️</div>
+                        <div class="item-name">酒精灯</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="bunsen-burner">
+                        <div class="item-icon">🔥</div>
+                        <div class="item-name">本生灯</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="category">
+                <h3>🔧 辅助器材</h3>
+                <div class="items-grid">
+                    <div class="item" draggable="true" data-type="test-tube-rack">
+                        <div class="item-icon">🎯</div>
+                        <div class="item-name">试管架</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="iron-stand">
+                        <div class="item-icon">⚙️</div>
+                        <div class="item-name">铁架台</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="tripod">
+                        <div class="item-icon">🔺</div>
+                        <div class="item-name">三角架</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="asbestos-net">
+                        <div class="item-icon">⭕</div>
+                        <div class="item-name">石棉网</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="medicine-spoon">
+                        <div class="item-icon">🥄</div>
+                        <div class="item-name">药匙</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="dropper">
+                        <div class="item-icon">💉</div>
+                        <div class="item-name">滴管</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="thermometer">
+                        <div class="item-icon">🌡️</div>
+                        <div class="item-name">温度计</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="evaporating-dish">
+                        <div class="item-icon">🥣</div>
+                        <div class="item-name">蒸发皿</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="crucible">
+                        <div class="item-icon">🏺</div>
+                        <div class="item-name">坩埚</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="watch-glass">
+                        <div class="item-icon">🫧</div>
+                        <div class="item-name">表面皿</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="glass-rod">
+                        <div class="item-icon">🥢</div>
+                        <div class="item-name">玻璃棒</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="funnel">
+                        <div class="item-icon">🔽</div>
+                        <div class="item-name">漏斗</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="separatory-funnel">
+                        <div class="item-icon">🧴</div>
+                        <div class="item-name">分液漏斗</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="gas-jar">
+                        <div class="item-icon">🫙</div>
+                        <div class="item-name">集气瓶</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="combustion-spoon">
+                        <div class="item-icon">🥄</div>
+                        <div class="item-name">燃烧匙</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="test-tube-clamp">
+                        <div class="item-icon">📎</div>
+                        <div class="item-name">试管夹</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="crucible-tongs">
+                        <div class="item-icon">🗜️</div>
+                        <div class="item-name">坩埚钳</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="tweezers">
+                        <div class="item-icon">🔧</div>
+                        <div class="item-name">镊子</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="mortar">
+                        <div class="item-icon">🧉</div>
+                        <div class="item-name">研钵</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="balance">
+                        <div class="item-icon">⚖️</div>
+                        <div class="item-name">托盘天平</div>
+                    </div>
+                </div>
+            </div>
+
+            </div>
+
+            <!-- ===== 试剂存储区 ===== -->
+            <div class="zone-block" data-zone="storage">
+                <div class="zone-head">
+                    <span class="zone-icon">🗄️</span>
+                    <span class="zone-name">试剂存储区</span>
+                    <span class="zone-tag">STORAGE</span>
+                </div>
+                <p class="zone-desc">试剂柜分区存放：酸类 A1、碱类 A2、盐类 A3、指示剂 A4；酸碱分开、避光密闭、标签朝外，取用后立即归位。</p>
+
+            <div class="category">
+                <h3>💧 液体试剂</h3>
+                <div class="items-grid">
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="HCl">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(220, 220, 220, 0.7);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">盐酸</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="H2SO4">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(200, 200, 200, 0.8);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">硫酸</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="HNO3">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(255, 255, 200, 0.7);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">硝酸</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="NaOH">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(200, 200, 200, 0.6);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">氢氧化钠</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="AgNO3">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(245, 245, 245, 0.8);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">硝酸银</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="NaCl">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(235, 235, 235, 0.6);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">氯化钠</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="CuSO4">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(64, 164, 223, 0.8);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">硫酸铜</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="FeCl3">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(200, 150, 100, 0.8);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">氯化铁</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="BaCl2">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(240, 240, 240, 0.7);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">氯化钡</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="Na2CO3">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(235, 235, 235, 0.7);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">碳酸钠</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="Phenolphthalein">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(255, 230, 230, 0.5);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">酚酞</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="KSCN">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(240, 240, 240, 0.6);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">硫氰化钾</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="H2O2">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(230, 240, 250, 0.7);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">双氧水</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="CH3COOH">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(240, 240, 235, 0.65);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">醋酸</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="NH3H2O">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(235, 242, 248, 0.55);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">氨水</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="NaHCO3">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(240, 245, 250, 0.6);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">碳酸氢钠</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="MethylOrange">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(255, 190, 110, 0.65);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">甲基橙</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="Ethanol">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(245, 250, 255, 0.45);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">乙醇</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="reagent-liquid" data-reagent="H2O">
+                        <div class="reagent-bottle-icon">
+                            <div class="reagent-icon-cap"></div>
+                            <div class="reagent-icon-body">
+                                <div class="reagent-icon-liquid" style="background: rgba(190, 220, 245, 0.45);"></div>
+                            </div>
+                        </div>
+                        <div class="item-name">蒸馏水</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="category">
+                <h3>💎 固体试剂（广口瓶）</h3>
+                <div class="items-grid">
+                    <div class="item" draggable="true" data-type="solid-bottle" data-reagent="Fe">
+                        <div class="wide-bottle-icon">
+                            <div class="bottle-icon-cap"></div>
+                            <div class="bottle-icon-body">
+                                <div class="bottle-icon-solid" style="background: #808080;"></div>
+                                <div class="bottle-icon-label">Fe</div>
+                            </div>
+                        </div>
+                        <div class="item-name">铁粉</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="solid-bottle" data-reagent="Zn">
+                        <div class="wide-bottle-icon">
+                            <div class="bottle-icon-cap"></div>
+                            <div class="bottle-icon-body">
+                                <div class="bottle-icon-solid" style="background: #C0C0C0;"></div>
+                                <div class="bottle-icon-label">Zn</div>
+                            </div>
+                        </div>
+                        <div class="item-name">锌粒</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="solid-bottle" data-reagent="Cu">
+                        <div class="wide-bottle-icon">
+                            <div class="bottle-icon-cap"></div>
+                            <div class="bottle-icon-body">
+                                <div class="bottle-icon-solid" style="background: #B87333;"></div>
+                                <div class="bottle-icon-label">Cu</div>
+                            </div>
+                        </div>
+                        <div class="item-name">铜片</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="solid-bottle" data-reagent="Mg">
+                        <div class="wide-bottle-icon">
+                            <div class="bottle-icon-cap"></div>
+                            <div class="bottle-icon-body">
+                                <div class="bottle-icon-solid" style="background: #E8E8E8;"></div>
+                                <div class="bottle-icon-label">Mg</div>
+                            </div>
+                        </div>
+                        <div class="item-name">镁条</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="solid-bottle" data-reagent="CaCO3">
+                        <div class="wide-bottle-icon">
+                            <div class="bottle-icon-cap"></div>
+                            <div class="bottle-icon-body">
+                                <div class="bottle-icon-solid" style="background: #F5F5F5;"></div>
+                                <div class="bottle-icon-label">CaCO₃</div>
+                            </div>
+                        </div>
+                        <div class="item-name">碳酸钙</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="solid-bottle" data-reagent="NaOH-solid">
+                        <div class="wide-bottle-icon">
+                            <div class="bottle-icon-cap"></div>
+                            <div class="bottle-icon-body">
+                                <div class="bottle-icon-solid" style="background: #FFFFFF;"></div>
+                                <div class="bottle-icon-label">NaOH</div>
+                            </div>
+                        </div>
+                        <div class="item-name">固体NaOH</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="solid-bottle" data-reagent="CuO">
+                        <div class="wide-bottle-icon">
+                            <div class="bottle-icon-cap"></div>
+                            <div class="bottle-icon-body">
+                                <div class="bottle-icon-solid" style="background: #2F2F2F;"></div>
+                                <div class="bottle-icon-label">CuO</div>
+                            </div>
+                        </div>
+                        <div class="item-name">氧化铜</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="solid-bottle" data-reagent="MnO2">
+                        <div class="wide-bottle-icon">
+                            <div class="bottle-icon-cap"></div>
+                            <div class="bottle-icon-body">
+                                <div class="bottle-icon-solid" style="background: #1A1A1A;"></div>
+                                <div class="bottle-icon-label">MnO₂</div>
+                            </div>
+                        </div>
+                        <div class="item-name">二氧化锰</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="solid-bottle" data-reagent="KMnO4">
+                        <div class="wide-bottle-icon">
+                            <div class="bottle-icon-cap"></div>
+                            <div class="bottle-icon-body">
+                                <div class="bottle-icon-solid" style="background: #4B0082;"></div>
+                                <div class="bottle-icon-label">KMnO₄</div>
+                            </div>
+                        </div>
+                        <div class="item-name">高锰酸钾</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="solid-bottle" data-reagent="S">
+                        <div class="wide-bottle-icon">
+                            <div class="bottle-icon-cap"></div>
+                            <div class="bottle-icon-body">
+                                <div class="bottle-icon-solid" style="background: #E8D44D;"></div>
+                                <div class="bottle-icon-label">S</div>
+                            </div>
+                        </div>
+                        <div class="item-name">硫粉</div>
+                    </div>
+                    <div class="item" draggable="true" data-type="solid-bottle" data-reagent="Fe2O3">
+                        <div class="wide-bottle-icon">
+                            <div class="bottle-icon-cap"></div>
+                            <div class="bottle-icon-body">
+                                <div class="bottle-icon-solid" style="background: #8B2500;"></div>
+                                <div class="bottle-icon-label">Fe₂O₃</div>
+                            </div>
+                        </div>
+                        <div class="item-name">氧化铁</div>
+                    </div>
+                </div>
+            </div>
+
+            </div>
+
+            <!-- ===== 仪器分析区 ===== -->
+            <div class="zone-block" data-zone="analysis">
+                <div class="zone-head">
+                    <span class="zone-icon">🔬</span>
+                    <span class="zone-name">仪器分析区</span>
+                    <span class="zone-tag">ANALYSIS</span>
+                </div>
+                <p class="zone-desc">精密仪器固定安装：防震、恒温、防尘，禁止搬动与私自拆装；使用前须预热校准并登记。</p>
+
+                <div class="category">
+                    <h3>🔬 精密仪器（固定）</h3>
+                    <div class="items-grid">
+                        <div class="item static" data-type="ph-meter" data-static="true">
+                            <div class="item-icon">📟</div>
+                            <div class="item-name">pH 计</div>
+                        </div>
+                        <div class="item static" data-type="spectrophotometer" data-static="true">
+                            <div class="item-icon">📊</div>
+                            <div class="item-name">分光光度计</div>
+                        </div>
+                        <div class="item static" data-type="analytical-balance" data-static="true">
+                            <div class="item-icon">⚖️</div>
+                            <div class="item-name">电子天平</div>
+                        </div>
+                        <div class="item static" data-type="magnetic-stirrer" data-static="true">
+                            <div class="item-icon">🌀</div>
+                            <div class="item-name">磁力搅拌器</div>
+                        </div>
+                        <div class="item static" data-type="water-bath" data-static="true">
+                            <div class="item-icon">♨️</div>
+                            <div class="item-name">恒温水浴锅</div>
+                        </div>
+                        <div class="item static" data-type="burette" data-static="true">
+                            <div class="item-icon">📐</div>
+                            <div class="item-name">滴定管</div>
+                        </div>
+                        <div class="item static" data-type="pipette" data-static="true">
+                            <div class="item-icon">💉</div>
+                            <div class="item-name">移液管</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== 清洁与处置区 ===== -->
+            <div class="zone-block" data-zone="cleaning">
+                <div class="zone-head">
+                    <span class="zone-icon">🚰</span>
+                    <span class="zone-name">清洁与处置区</span>
+                    <span class="zone-tag">CLEAN</span>
+                </div>
+                <p class="zone-desc">器皿洗净倒置晾干；废液按酸/碱/重金属分类收集，固体废物与锐器分别投放，严禁混装。</p>
+
+                <div class="category">
+                    <h3>🧽 清洁工具</h3>
+                    <div class="items-grid">
+                        <div class="item" draggable="true" data-type="wash-bottle">
+                            <div class="item-icon">💦</div>
+                            <div class="item-name">洗瓶</div>
+                        </div>
+                        <div class="item" draggable="true" data-type="test-tube-brush">
+                            <div class="item-icon">🖌️</div>
+                            <div class="item-name">试管刷</div>
+                        </div>
+                        <div class="item" draggable="true" data-type="drying-rack">
+                            <div class="item-icon">🧺</div>
+                            <div class="item-name">晾干架</div>
+                        </div>
+                        <div class="item" draggable="true" data-type="cloth">
+                            <div class="item-icon">🧻</div>
+                            <div class="item-name">抹布</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="category">
+                    <h3>🗑️ 废弃物容器</h3>
+                    <div class="items-grid">
+                        <div class="item" draggable="true" data-type="waste-liquid">
+                            <div class="item-icon">🪣</div>
+                            <div class="item-name">废液缸</div>
+                        </div>
+                        <div class="item" draggable="true" data-type="waste-solid">
+                            <div class="item-icon">🗑️</div>
+                            <div class="item-name">废固桶</div>
+                        </div>
+                        <div class="item" draggable="true" data-type="sharps-box">
+                            <div class="item-icon">🧯</div>
+                            <div class="item-name">锐器盒</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3D实验台 -->
+        <div class="workbench">
+            <!-- 返回主页按钮 -->
+            <a href="../../主页.html" class="home-button" title="返回主页">
+                <span class="icon">🏠</span>
+                <span>返回主页</span>
+            </a>
+
+            <div class="scene-3d">
+                <div class="wall-shelf"></div>
+                <div class="floor-3d"></div>
+                <div class="drop-zone" id="dropZone"></div>
+            </div>
+
+            <!-- 控制面板 -->
+            <div class="controls">
+                <!-- 实验指南下拉 -->
+                <div class="dropdown-container">
+                    <button class="btn dropdown-btn" id="experimentsBtn">📋 实验指南</button>
+                    <div class="dropdown-panel" id="experimentsPanel">
+                        <div class="dropdown-arrow"></div>
+                        <div class="dropdown-content">
+                            <div class="dropdown-title">🧪 实验指南</div>
+                            <div><strong>【新增：圆底烧瓶】</strong></div>
+                            <ul>
+                                <li>✨ 新增圆底烧瓶作为反应容器</li>
+                                <li>✨ 圆底烧瓶和烧杯在三脚架上必须先放石棉网</li>
+                            </ul>
+                            <div><strong>【铁架台组装】</strong></div>
+                            <ul>
+                                <li>1️⃣ 拖铁架台到实验台</li>
+                                <li>2️⃣ 拖烧杯/锥形瓶/试管/石棉网到附近自动固定</li>
+                                <li>3️⃣ 双击已固定的器材可取下</li>
+                            </ul>
+                            <div><strong>【三角架和石棉网搭配】</strong></div>
+                            <div class="warning">⚠️ 重要：烧杯和圆底烧瓶必须先在三脚架上放石棉网</div>
+                            <ul>
+                                <li>• 步骤1：拖三脚架到实验台</li>
+                                <li>• 步骤2：拖石棉网叠放在三脚架上</li>
+                                <li>• 步骤3：再放置烧杯/圆底烧瓶</li>
+                                <li>• 步骤4：配合酒精灯进行加热实验</li>
+                            </ul>
+                            <div><strong>【试剂操作】</strong></div>
+                            <ul>
+                                <li>固体：拖广口瓶 → 拖药匙取用 → 倒入容器</li>
+                                <li>液体：试剂瓶直接倒入，或用滴管精确滴加</li>
+                            </ul>
+                            <div><strong>【常见实验】</strong></div>
+                            <ul>
+                                <li>🔬 酸碱中和：盐酸 + 氢氧化钠</li>
+                                <li>🔬 金属与酸：锌粒/铁粉 + 盐酸</li>
+                                <li>🔬 沉淀反应：硝酸银 + 氯化钠</li>
+                                <li>🔬 显色反应：氯化铁 + 硫氰化钾</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 操作帮助下拉 -->
+                <div class="dropdown-container">
+                    <button class="btn success dropdown-btn" id="helpBtn">❓ 操作帮助</button>
+                    <div class="dropdown-panel" id="helpPanel">
+                        <div class="dropdown-arrow"></div>
+                        <div class="dropdown-content">
+                            <div class="dropdown-title">🎯 操作帮助</div>
+                            <div><strong>【新增功能】</strong></div>
+                            <ul>
+                                <li class="success">✅ 圆底烧瓶：用于回流、蒸馏等实验</li>
+                                <li class="success">✅ 安全规则：烧杯和圆底烧瓶在三脚架上需先放石棉网</li>
+                            </ul>
+                            <div><strong>【器材堆叠透视】</strong></div>
+                            <ul>
+                                <li>✓ 三脚架立体水平视角</li>
+                                <li>✓ 石棉网侧面透视椭圆</li>
+                                <li>✓ 层叠更符合物理透视</li>
+                            </ul>
+                            <div><strong>【基础拖拽】</strong></div>
+                            <ul>
+                                <li>✓ 自由移动，边界保护</li>
+                            </ul>
+                            <div><strong>【观察现象】</strong></div>
+                            <ul>
+                                <li>🔍 气泡上升 - 产生气体</li>
+                                <li>🔍 沉淀下落 - 生成沉淀</li>
+                                <li>🔍 颜色变化 - 指示剂反应</li>
+                                <li>🔍 固体颗粒 - 保持固态</li>
+                            </ul>
+                            <div><strong>【其他功能】</strong></div>
+                            <ul>
+                                <li>🔥 点击灯具点燃/熄灭</li>
+                                <li>🗑️ 拖到垃圾桶删除</li>
+                                <li>📋 查看实验指南</li>
+                                <li>🏠 点击左上角返回主页</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 安全须知下拉 -->
+                <div class="dropdown-container">
+                    <button class="btn warning dropdown-btn" id="safetyBtn">🛡️ 安全须知</button>
+                    <div class="dropdown-panel" id="safetyPanel">
+                        <div class="dropdown-arrow"></div>
+                        <div class="dropdown-content">
+                            <div class="dropdown-title">🛡️ 实验安全须知</div>
+                            <div><strong>【个人防护】</strong></div>
+                            <ul>
+                                <li>🥽 进入实验室必须佩戴护目镜</li>
+                                <li>🧤 接触酸碱等腐蚀性试剂须戴防护手套</li>
+                                <li>🥼 穿实验服，长发扎起，不穿拖鞋</li>
+                            </ul>
+                            <div><strong>【危险性标识图例】</strong></div>
+                            <div class="ghs-grid">
+                                <div class="ghs-item"><span>🧪</span>腐蚀性</div>
+                                <div class="ghs-item"><span>🔥</span>易燃/助燃</div>
+                                <div class="ghs-item"><span>☠️</span>有毒</div>
+                                <div class="ghs-item"><span>💥</span>氧化性</div>
+                            </div>
+                            <div><strong>【危化品警示】</strong></div>
+                            <ul>
+                                <li class="warning">⚠️ 浓硫酸：稀释时只能把酸沿器壁缓缓注入水中，严禁将水倒入酸中</li>
+                                <li class="warning">⚠️ 硝酸：强氧化性，避免与还原性物质接触</li>
+                                <li class="warning">⚠️ 氢氧化钠：强腐蚀性，溅到皮肤立即用大量清水冲洗</li>
+                                <li class="warning">⚠️ 硝酸银：见光分解，需避光保存，沾染皮肤会留下黑斑</li>
+                                <li class="warning">⚠️ 氯化钡：可溶性钡盐有毒，严禁入口</li>
+                                <li class="warning">⚠️ 过氧化氢：受热或遇催化剂剧烈分解放氧，远离火源</li>
+                            </ul>
+                            <div><strong>【操作规范】</strong></div>
+                            <ul>
+                                <li>🔹 加热烧杯、圆底烧瓶必须垫石棉网，受热均匀防炸裂</li>
+                                <li>🔹 闻气体时用手在瓶口轻轻扇动，切勿直接凑近瓶口</li>
+                                <li>🔹 产生氢气的实验必须远离明火，防止爆炸</li>
+                                <li>🔹 试管加热时管口不得对着人</li>
+                                <li>🔹 实验结束先熄灭酒精灯，再整理器材</li>
+                            </ul>
+                            <div><strong>【应急处置】</strong></div>
+                            <ul>
+                                <li class="success">✅ 酸溅到皮肤：大量清水冲洗后涂 3% 碳酸氢钠溶液</li>
+                                <li class="success">✅ 碱溅到皮肤：大量清水冲洗后涂 2% 硼酸溶液</li>
+                                <li class="success">✅ 酒精灯失火：用湿抹布盖灭，切勿用水浇</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 配置清单与规范体系 -->
+                <button class="btn" id="configBtn">📋 配置清单</button>
+                <button class="btn" id="rulesBtn">📕 规范体系</button>
+
+                <!-- 清空按钮 -->
+                <button class="btn danger" onclick="clearWorkbench()">🗑️ 清空</button>
+            </div>
+
+            <!-- 删除区域 -->
+            <div class="delete-zone" id="deleteZone">🗑️</div>
+
+            <!-- 实验说明 -->
+            <div class="experiment-info" id="experimentInfo">
+                <h3>实验提示</h3>
+                <p id="experimentText">拖拽器材和试剂到实验台开始实验！</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 顶部滑入式安全提示条 -->
+    <div id="safetyAlert">
+        <div class="safety-alert-title" id="safetyAlertTitle"></div>
+        <div id="safetyAlertText"></div>
+    </div>
+
+    <!-- 首次进入实验室的安全须知弹窗 -->
+    <div class="safety-modal" id="safetyModal">
+        <div class="safety-modal-card">
+            <h2>🛡️ 实验安全须知</h2>
+            <p class="safety-modal-sub">虚拟实验同样需要遵守真实实验室的安全规范，请在开始前阅读并确认。</p>
+            <ul class="safety-rule-list">
+                <li><span>🥽</span><span>全程佩戴护目镜与防护手套，穿好实验服</span></li>
+                <li><span>🔥</span><span>加热烧杯、圆底烧瓶必须垫石棉网，酒精灯用后立即熄灭</span></li>
+                <li><span>⚠️</span><span>稀释浓硫酸时，只能把酸缓慢倒入水中，严禁反向操作</span></li>
+                <li><span>💨</span><span>产生氢气的实验必须远离明火，防止爆炸</span></li>
+                <li><span>🚫</span><span>不品尝、不直接凑近闻任何试剂，取用后立即盖好瓶塞</span></li>
+            </ul>
+            <label class="safety-ack">
+                <input type="checkbox" id="safetyAck">
+                <span>我已阅读并理解上述安全规范，将规范操作</span>
+            </label>
+            <div class="safety-modal-actions">
+                <button class="btn success" id="safetyEnterBtn" disabled>进入实验室</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 实验室配置清单面板 -->
+    <div class="lab-modal" id="configModal">
+        <div class="lab-modal-card">
+            <div class="lab-modal-head">
+                <span>📋</span>
+                <h2>实验室配置清单 · EQUIPMENT &amp; REAGENT MANIFEST</h2>
+                <button class="lab-modal-close" data-close="configModal">✕</button>
+            </div>
+            <div class="lab-modal-body">
+                <div class="cfg-toolbar" id="cfgToolbar"></div>
+                <div id="cfgTableWrap"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 实验室规范体系面板 -->
+    <div class="lab-modal" id="rulesModal">
+        <div class="lab-modal-card">
+            <div class="lab-modal-head">
+                <span>📕</span>
+                <h2>实验室规范体系 · SOP &amp; SAFETY REGULATIONS</h2>
+                <button class="lab-modal-close" data-close="rulesModal">✕</button>
+            </div>
+            <div class="lab-modal-body">
+                <div class="rule-tabs" id="ruleTabs"></div>
+                <div id="rulePanes"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../assets/js/lab.js"></script>
+</body>
+</html>

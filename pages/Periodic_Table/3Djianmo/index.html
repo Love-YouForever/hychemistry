@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单立方晶胞 (Simple Cubic, SC)</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div id="scene-container"></div>
+    <div class="info-panel">
+        <h2>晶胞结构可视化</h2>
+        <div class="selector-container">
+            <label for="crystal-select">选择晶胞类型：</label>
+            <select id="crystal-select">
+                <option value="sc">简单立方晶胞 (SC)</option>
+                <option value="bcc">体心立方晶胞 (BCC)</option>
+                <option value="fcc">面心立方晶胞 (FCC)</option>
+                <option value="hcp">六方最密堆积 (HCP)</option>
+                <option value="diamond">金刚石结构</option>
+                <option value="nacl">NaCl 型离子晶胞</option>
+                <option value="cscl">CsCl 型晶胞</option>
+                <option value="zns">闪锌矿结构 (ZnS)</option>
+                <option value="perovskite">钙钛矿结构 (ABO₃)</option>
+            </select>
+        </div>
+        <div id="crystal-info">
+            <h3>简单立方晶胞 (Simple Cubic, SC)</h3>
+            <ul>
+                <li>原子仅在 8 个顶点</li>
+                <li>配位数：6</li>
+                <li>晶胞参数：a = b = c，α=β=γ=90°</li>
+                <li>原子坐标：(0,0,0)、(1,0,0)、(0,1,0)、(0,0,1)、(1,1,0)、(1,0,1)、(0,1,1)、(1,1,1)</li>
+                <li>结构特点：立方体顶点各一个球，体内无原子</li>
+            </ul>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

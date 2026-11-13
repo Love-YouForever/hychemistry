@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>元素幻语 - 化学杀</title>
+    <link rel="stylesheet" href="css/style.css?v=20261113a">
+</head>
+<body>
+    <!-- 视频背景容器 -->
+    <div class="video-container">
+        <video autoplay muted loop playsinline preload="metadata">
+            <source src="../../assets/background.mp4" type="video/mp4">
+        </video>
+    </div>
+    <div class="overlay"></div>
+
+    <!-- 顶部栏 -->
+    <header class="top-bar">
+        <div class="logo">⚗️ 化学杀</div>
+        <div class="beaker-status">
+            <span class="beaker-icon">🧪</span>
+            <span class="status-text">回合进行中</span>
+        </div>
+        <button class="menu-btn" onclick="showMenu()">☰</button>
+    </header>
+
+    <!-- 游戏菜单 -->
+    <div id="gameMenu" class="menu-overlay">
+        <div class="menu-content">
+            <h2>游戏菜单</h2>
+            <button onclick="restartGame()">🔄 重新开始</button>
+            <button onclick="changeDifficulty()">⚙️ 难度设置</button>
+            <button onclick="showHelp()">📖 游戏说明</button>
+            <button onclick="goHome()">🏠 返回主页</button>
+            <button onclick="closeMenu()">✕ 关闭</button>
+        </div>
+    </div>
+
+    <!-- 欢迎引导页面 -->
+    <div id="welcomeModal" class="modal-overlay">
+        <div class="modal-content welcome-content">
+            <div class="welcome-header">
+                <h1>⚗️ 欢迎来到化学沙盒</h1>
+                <p class="welcome-subtitle">元素幻语 - 化学杀</p>
+            </div>
+            <div class="welcome-description">
+                <p>通过组合化学元素，创造物质，触发反应，击败对手！</p>
+            </div>
+            <div class="welcome-section">
+                <h3>🎯 选择游戏难度</h3>
+                <div class="difficulty-buttons">
+                    <button class="diff-btn easy" onclick="setDifficulty('easy')">
+                        <span class="diff-icon">🌱</span>
+                        <span class="diff-name">简单</span>
+                        <span class="diff-desc">基础化学反应</span>
+                    </button>
+                    <button class="diff-btn medium" onclick="setDifficulty('medium')">
+                        <span class="diff-icon">🌿</span>
+                        <span class="diff-name">中等</span>
+                        <span class="diff-desc">初中化学</span>
+                    </button>
+                    <button class="diff-btn hard" onclick="setDifficulty('hard')">
+                        <span class="diff-icon">🌳</span>
+                        <span class="diff-name">困难</span>
+                        <span class="diff-desc">高中化学</span>
+                    </button>
+                    <button class="diff-btn hell" id="hellBtn" onclick="setDifficulty('hell')">
+                        <span class="diff-icon">🔥</span>
+                        <span class="diff-name">地狱</span>
+                        <span class="diff-desc">终极挑战</span>
+                    </button>
+                </div>
+            </div>
+            <div class="welcome-tip">
+                <p>💡 提示：游戏中可随时通过菜单更改难度设置</p>
+            </div>
+            <button class="close-btn" onclick="closeWelcomeModal()">关闭</button>
+        </div>
+    </div>
+
+    <!-- 难度选择弹窗 -->
+    <div id="difficultyModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>选择难度</h2>
+            <div class="difficulty-buttons">
+                <button class="diff-btn easy" onclick="setDifficulty('easy')">🌱 简单</button>
+                <button class="diff-btn medium" onclick="setDifficulty('medium')">🌿 中等</button>
+                <button class="diff-btn hard" onclick="setDifficulty('hard')">🌳 困难</button>
+                <button class="diff-btn hell" id="hellBtn" onclick="setDifficulty('hell')">🔥 地狱</button>
+            </div>
+            <button class="close-btn" onclick="closeDifficultyModal()">关闭</button>
+        </div>
+    </div>
+
+    <!-- 帮助弹窗 -->
+    <div id="helpModal" class="modal-overlay">
+        <div class="modal-content help-content">
+            <h2>📖 游戏说明</h2>
+            <div class="help-section">
+                <h3>🎯 游戏目标</h3>
+                <p>通过组合手牌打出物质，利用化学反应造成伤害，将对手生命值降至0即可获胜。</p>
+            </div>
+            <div class="help-section">
+                <h3>🃏 卡牌类型</h3>
+                <ul>
+                    <li><strong>原子牌</strong>：H、O、Na、Cl、Cu等元素</li>
+                    <li><strong>离子/原子团牌</strong>：NO₃⁻、OH⁻、CO₃²⁻等</li>
+                    <li><strong>条件牌</strong>：升温、点燃、水</li>
+                    <li><strong>功能牌</strong>：采购、过滤、反制</li>
+                </ul>
+            </div>
+            <div class="help-section">
+                <h3>⚡ 出牌规则</h3>
+                <p>点击选中多张手牌，若能组成物质则可打出。伤害物（酸、碱、沉淀）在回合结束时造成伤害。</p>
+            </div>
+            <div class="help-section">
+                <h3>🔬 反应机制</h3>
+                <p>反应区内的物质会自动触发化学反应，生成新物质并可能造成连锁反应。</p>
+            </div>
+            <button class="close-btn" onclick="closeHelpModal()">关闭</button>
+        </div>
+    </div>
+
+    <!-- 主游戏区域 -->
+    <div id="gameMain" class="game-container" style="display: none;">
+        <!-- 对手区域 -->
+        <div class="opponent-area">
+            <div class="player-info opponent-info">
+                <div class="avatar">🤖</div>
+                <div class="info-details">
+                    <span class="player-name">AI对手</span>
+                    <div class="hp-bar">
+                        <div class="hp-fill" id="opponentHp"></div>
+                    </div>
+                    <span class="hp-text" id="opponentHpText">10/10</span>
+                </div>
+                <div class="card-counts">
+                    <span>手牌: <span id="opponentHandCount">5</span></span>
+                    <span>牌堆: <span id="opponentDeckCount">30</span></span>
+                </div>
+            </div>
+            <div class="reaction-zone opponent-zone" id="opponentReactionZone">
+                <div class="zone-label">对手反应区</div>
+                <div class="zone-cards" id="opponentZoneCards"></div>
+            </div>
+        </div>
+
+        <!-- 中央对战区 -->
+        <div class="battlefield">
+            <div class="difficulty-info" id="difficultyInfo">
+                <span class="difficulty-badge">简单</span>
+                <span class="rules-count">已解锁反应: 0个</span>
+            </div>
+            <div class="reaction-animation" id="reactionAnimation"></div>
+            <div class="turn-indicator" id="turnIndicator">
+                <span>你的回合</span>
+            </div>
+            <div class="message-area" id="messageArea"></div>
+        </div>
+
+        <!-- 我方区域 -->
+        <div class="player-area">
+            <div class="reaction-zone player-zone" id="playerReactionZone">
+                <div class="zone-label">我方反应区</div>
+                <div class="zone-cards" id="playerZoneCards"></div>
+            </div>
+            <div class="hand-area" id="handArea">
+                <div class="hand-label">手牌区</div>
+                <div class="hand-cards" id="handCards"></div>
+            </div>
+            <div class="player-info player-self">
+                <div class="avatar">👤</div>
+                <div class="info-details">
+                    <span class="player-name">玩家</span>
+                    <div class="hp-bar">
+                        <div class="hp-fill player-hp" id="playerHp"></div>
+                    </div>
+                    <span class="hp-text" id="playerHpText">10/10</span>
+                </div>
+                <div class="turn-badge">你的回合</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 操作按钮区 -->
+    <div class="action-bar">
+        <button class="action-btn" id="playBtn" onclick="playSelectedCards()">打出物质</button>
+        <button class="action-btn" id="useConditionBtn" onclick="useConditionCard()">使用条件牌</button>
+        <button class="action-btn" id="endTurnBtn" onclick="endPlayerTurn()">结束出牌</button>
+        <button class="action-btn" id="passBtn" onclick="skipPlayerTurn()">跳过回合</button>
+    </div>
+
+    <!-- 反制弹窗 -->
+    <div id="counterModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>⚔️ 反制机会！</h2>
+            <p>对方使用了 <span id="counterCondition"></span>，你有 "水/H₂O" 牌可以反制！</p>
+            <div class="counter-buttons">
+                <button class="counter-btn yes" onclick="counterAction(true)">✅ 使用反制</button>
+                <button class="counter-btn no" onclick="counterAction(false)">❌ 不反制</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 目标选择弹窗 -->
+    <div id="targetModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>🎯 选择目标</h2>
+            <p>选择将物质打入哪个反应区：</p>
+            <div class="target-buttons">
+                <button class="target-btn opponent" onclick="selectTarget('opponent')">👹 对手反应区</button>
+                <button class="target-btn player" onclick="selectTarget('player')">👤 我方反应区</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏结束弹窗 -->
+    <div id="gameOverModal" class="modal-overlay">
+        <div class="modal-content game-over">
+            <h2 id="gameOverTitle">🎉 胜利！</h2>
+            <p id="gameOverMessage"></p>
+            <div class="game-over-stats">
+                <span>难度: <span id="finalDifficulty"></span></span>
+                <span>回合数: <span id="finalTurns"></span></span>
+            </div>
+            <div class="game-over-buttons">
+                <button onclick="restartGame()">🔄 再来一局</button>
+                <button onclick="goHome()">🏠 返回主页</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 成就提示 -->
+    <div id="achievementToast" class="toast">
+        <span id="achievementText">🏆 成就解锁！</span>
+    </div>
+
+    <!-- 核心文件 - 同步加载 -->
+    <script src="js/cards.js"></script>
+    <script src="js/reactions.js"></script>
+    <script src="js/ai.js"></script>
+    
+    <!-- 主游戏逻辑 - 延迟加载 -->
+    <script defer src="js/game.js?v=20261113a"></script>
+</body>
+</html>

@@ -1,0 +1,883 @@
+        /*CSS 变量系统（:root 基础定义） 将所有尺寸、间距、字体大小抽象为 CSS 自定义属性（变量）可以通过不同的 @media 查询重新定义 :root 下的变量值，从而实现全站响应式适配，无需逐个覆盖组件样式*/
+        :root {
+            /* 基础尺寸变量 - 会被JS动态覆盖 */
+            --btn-font: 14px;
+            --btn-padding-v: 6px;
+            --btn-padding-h: 16px;
+            --btn-radius: 30px;
+            --home-font: 16px;
+            --home-padding-v: 8px;
+            --home-padding-h: 20px;
+            --info-font: 13px;
+            --info-padding-v: 8px;
+            --info-padding-h: 15px;
+            --label-padding-v: 6px;
+            --label-padding-h: 16px;
+            --eq-max-width: 220px;
+            --eq-font-base: 0.85rem;
+            --magnifier-font: 2.2rem;
+            --magnifier-padding-v: 24px;
+            --magnifier-padding-h: 40px;
+            --cam-width: 220px;
+            --cam-height: 165px;
+            --cam-bottom: 70px;
+            --cursor-size: 44px;
+            --cursor-open: 64px;
+            --cursor-closed: 28px;
+            --gap-controls: 12px;
+            --bottom-offset: 20px;
+            --side-offset: 20px;
+            --top-offset: 20px;
+        }
+
+        /*全局重置与防误触*/
+        * {
+            touch-action: none; /*禁止浏览器默认的滚动/缩放手势，将全部触控事件交由 Three.js 的 OrbitControls 和自定义手势逻辑处理，避免页面滚动干扰 3D 交互*/
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden; /*固定视口，无滚动条*/
+            font-family: 'Microsoft YaHei', 'PingFang SC', 'Segoe UI', 'Roboto', sans-serif;
+            -webkit-user-select: none;/*移除移动端点击时的灰色遮罩和文本选中，提升沉浸感*/
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            background:
+                radial-gradient(circle at top, rgba(70, 130, 200, 0.2), transparent 45%),
+                linear-gradient(180deg, #08111f 0%, #0d1830 45%, #060b16 100%);
+            color: #e8f4ff;
+        }
+
+        /*加载覆盖层  全屏半透明遮罩 + 旋转 loading 动画，在 Three.js 场景初始化完成前展示。JS 在首帧渲染后调用 hidePageLoadingOverlay() 将其淡出移除*/
+        #page-loading-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 5000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(circle at top, rgba(76, 154, 255, 0.22), transparent 35%),
+                linear-gradient(180deg, rgba(5, 10, 20, 0.96) 0%, rgba(8, 17, 31, 0.94) 100%);
+            transition: opacity 0.35s ease, visibility 0.35s ease;
+        }
+
+        #page-loading-overlay.hidden { /*类控制透明度与可见性*/
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;/*使隐藏后不阻挡点击*/
+        }
+
+        .loading-card {
+            min-width: min(82vw, 360px);
+            padding: 20px 24px;
+            border-radius: 22px;
+            background: rgba(10, 20, 40, 0.72);
+            border: 1px solid rgba(125, 180, 255, 0.28);
+            box-shadow: 0 18px 60px rgba(0, 0, 0, 0.42);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 14px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.16);
+            border-top-color: #68b5ff;
+            animation: overlay-spin 0.9s linear infinite;
+        }
+
+        .loading-title {
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            color: #eaf5ff;
+        }
+
+        .loading-desc {
+            margin-top: 8px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: rgba(220, 236, 255, 0.82);
+        }
+
+        @keyframes overlay-spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ====== 设备指示器（调试用，可隐藏） ====== */
+        #device-indicator {
+            position: fixed;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.5);
+            color: rgba(255,255,255,0.5);
+            font-size: 10px;
+            padding: 2px 10px;
+            border-radius: 10px;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        /* ====== 信息栏 ====== */
+        #info {
+            position: absolute;
+            bottom: var(--bottom-offset);
+            left: var(--side-offset);
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(0,0,0,0.55);
+            padding: var(--info-padding-v) var(--info-padding-h);
+            border-radius: 20px;
+            font-size: var(--info-font);
+            pointer-events: none;
+            z-index: 100;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            font-weight: 500;
+            max-width: calc(100vw - var(--side-offset) * 2);
+            line-height: 1.4;
+        }
+
+        /* ====== 控制面板 ====== */
+        #controls-panel {
+            position: fixed;
+            bottom: var(--bottom-offset);
+            right: var(--side-offset);
+            z-index: 1300;
+            display: flex;
+            gap: var(--gap-controls);
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            max-width: calc(100vw - var(--side-offset) * 2);
+        }
+
+        /*按钮通用样式*/
+        button {
+            background: rgba(20, 30, 55, 0.8);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid #4c9aff;
+            color: #bbddff;
+            padding: var(--btn-padding-v) var(--btn-padding-h);
+            border-radius: var(--btn-radius);
+            cursor: pointer;
+            font-size: var(--btn-font);
+            font-weight: 500;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            white-space: nowrap;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button:hover {
+            background: #2a6cbb;
+            color: white;
+            border-color: white;
+            box-shadow: 0 0 10px rgba(76,154,255,0.5);
+        }
+
+        button:active {
+            transform: scale(0.96);
+        }
+
+        .toggle-active {
+            background: #2a6cbb;
+            color: white;
+            border-color: white;
+            box-shadow: 0 0 8px #4c9aff;
+        }
+
+        /*特殊按钮:返回主页样式*/
+        #home-btn {
+            position: absolute;
+            top: var(--top-offset);
+            left: var(--side-offset);
+            z-index: 300;
+            background: rgba(20, 30, 55, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid #ffaa66;
+            color: #ffddbb;
+            padding: var(--home-padding-v) var(--home-padding-h);
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: var(--home-font);
+            font-weight: 600;
+            transition: all 0.25s ease;
+            font-family: inherit;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            letter-spacing: 1px;
+        }
+
+        #home-btn:hover {
+            background: #ff884d;
+            color: white;
+            border-color: white;
+            box-shadow: 0 0 16px rgba(255,136,77,0.6);
+            transform: scale(1.02);
+        }
+
+        /*特殊按钮:右上角挑战样式*/
+        #challenge-btn {
+            position: absolute;
+            top: var(--top-offset);
+            right: var(--side-offset);
+            z-index: 300;
+            background: rgba(20, 30, 55, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid #ff66aa;
+            color: #ffbbdd;
+            padding: var(--home-padding-v) var(--home-padding-h);
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: var(--home-font);
+            font-weight: 600;
+            transition: all 0.25s ease;
+            font-family: inherit;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            letter-spacing: 1px;
+        }
+
+        #challenge-btn:hover {
+            background: #ff66aa;
+            color: white;
+            border-color: white;
+            box-shadow: 0 0 16px rgba(255,102,170,0.6);
+            transform: scale(1.02);
+        }
+
+        /*========3D 标签样式（.label-base、.element-label、.equation-label）=========*/
+        /*公共属性——圆角胶囊、毛玻璃背景、文字阴影、白色不换行（元素标签）或自动换行（方程式标签）*/
+        .label-base {
+            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            cursor: pointer;
+            background: rgba(10, 20, 40, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 60px;
+            padding: var(--label-padding-v) var(--label-padding-h);
+            font-weight: 600;
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            text-shadow: 0 0 3px rgba(0,0,0,0.5);
+            box-shadow: 0 0 12px rgba(0,0,0,0.4);
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        /*化学元素标签，边框颜色由 JS 根据元素数据动态设置（elem.color），悬停有放大效果*/
+        .element-label {
+            border-width: 2px;
+            border-style: solid;
+            transition: all 0.2s;
+        }
+
+        .element-label:hover {
+            transform: scale(1.03);
+            filter: brightness(1.1);
+        }
+
+        /*方程式标签，使用等宽字体，max-width 受 --eq-max-width 控制，支持换行*/
+        .equation-label {
+            border: 1px solid #88ddff;
+            background: rgba(15, 30, 55, 0.85);
+            color: #e0f3ff;
+            font-family: 'Courier New', 'SF Mono', monospace;
+            letter-spacing: 0.2px;
+            white-space: normal;
+            word-break: break-word;
+            text-align: center;
+            max-width: var(--eq-max-width);
+            line-height: 1.35;
+            border-radius: 36px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.4), 0 0 5px #88ddff80;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .equation-label:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px #88ddff;
+            border-color: white;
+            background: rgba(30, 60, 100, 0.9);
+        }
+
+        /*方程式放大镜 默认样式为hidden 鼠标悬浮或点击方程式标签时，JS 会显示该放大镜并填充完整的方程式*/
+        .equation-magnifier {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid #88ddff;
+            border-radius: 40px;
+            padding: var(--magnifier-padding-v) var(--magnifier-padding-h);
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            font-size: var(--magnifier-font);
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 1px;
+            box-shadow: 0 0 40px rgba(136, 221, 255, 0.5);
+            z-index: 1000;
+            display: none;
+            pointer-events: none;
+            transition: all 0.2s ease;
+            max-width: 85vw;
+            white-space: normal;
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
+        /*=============触摸效果============*/
+        /*触摸/点击时产生的扩散圆环，模拟水波纹效果*/
+        .touch-ripple {
+            position: fixed;
+            border-radius: 50%;
+            border: 2px solid rgba(136, 221, 255, 0.8);
+            background: radial-gradient(circle, rgba(136,221,255,0.3) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 999;
+            animation: rippleExpand 0.8s ease-out forwards;
+        }
+
+        @keyframes rippleExpand {
+            0% { width: 10px; height: 10px; opacity: 1; }
+            100% { width: 120px; height: 120px; opacity: 0; }
+        }
+
+        /*手指滑动时生成的拖尾小点，增加操作趣味性*/
+        .touch-trail-dot {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #88ddff, transparent);
+            pointer-events: none;
+            z-index: 998;
+            animation: trailFade 0.6s ease-out forwards;
+        }
+
+        @keyframes trailFade {
+            0% { opacity: 0.9; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.1); }
+        }
+
+        /*双指缩放或手势缩放时，屏幕中央出现的放大/缩小脉冲环*/
+        .zoom-pulse {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            border: 2px solid rgba(255, 170, 100, 0.6);
+            pointer-events: none;
+            z-index: 997;
+            animation: zoomPulseAnim 0.6s ease-out forwards;
+        }
+
+        @keyframes zoomPulseAnim {
+            0% { width: 20px; height: 20px; opacity: 0.8; border-width: 3px; }
+            100% { width: 300px; height: 300px; opacity: 0; border-width: 1px; }
+        }
+
+        .gesture-toast {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #88ddff;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-size: var(--info-font);
+            font-weight: 500;
+            z-index: 1100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border: 1px solid rgba(136,221,255,0.3);
+            white-space: nowrap;
+            max-width: 90vw;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .gesture-toast.show { opacity: 1; }
+
+        /* ====== 摄像头 ====== 默认隐藏（display: none），点击“手势控制”按钮后添加 .visible 显示 */
+        #camera-container {
+            position: fixed;
+            bottom: var(--cam-bottom);
+            left: var(--side-offset);
+            width: var(--cam-width);
+            height: var(--cam-height);
+            border-radius: 18px;
+            overflow: hidden;
+            border: 2px solid rgba(136, 221, 255, 0.3);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+            z-index: 500;
+            display: none;
+            background: #000;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        #camera-container.visible { display: block; }
+
+        #camera-container.hand-detected {
+            border-color: #66ff88;
+            box-shadow: 0 0 24px rgba(102, 255, 136, 0.35);
+        }
+
+        /*用于显示摄像头画面*/
+        #camera-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transform: scaleX(-1);
+            z-index: 0;
+            background: #000;
+        }
+
+        /*叠加在视频上方，用于绘制手部骨架关键点*/
+        #camera-canvas {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: scaleX(-1); /* 实现镜像效果（类似自拍）*/
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        #camera-status {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: #88ddff;
+            font-size: 11px;
+            padding: 4px 10px;
+            text-align: center;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 2;
+        }
+
+        /*虚拟光标，显示手掌位置*/
+        #hand-cursor {
+            position: fixed;
+            width: var(--cursor-size);
+            height: var(--cursor-size);
+            border-radius: 50%;
+            border: 2px solid #88ddff;
+            background: radial-gradient(circle, rgba(136,221,255,0.25), transparent 70%);
+            pointer-events: none;
+            z-index: 950;
+            transform: translate(-50%, -50%);
+            display: none;
+            transition: width 0.25s, height 0.25s, border-color 0.3s, background 0.3s, box-shadow 0.3s;
+            box-shadow: 0 0 20px rgba(136,221,255,0.4);
+        }
+
+        #hand-cursor.open {
+            width: var(--cursor-open);
+            height: var(--cursor-open);
+            border-color: #66ff88;
+            box-shadow: 0 0 32px rgba(102,255,136,0.5);
+            background: radial-gradient(circle, rgba(102,255,136,0.2), transparent 70%);
+        }
+
+        #hand-cursor.closed {
+            width: var(--cursor-closed);
+            height: var(--cursor-closed);
+            border-color: #ff8866;
+            box-shadow: 0 0 16px rgba(255,136,102,0.5);
+            background: radial-gradient(circle, rgba(255,136,102,0.3), transparent 70%);
+        }
+
+        /*光标标签 显示“放大”或“缩小”文字提示，位于光标上方，透明度动态变化*/
+        #hand-cursor-label {
+            position: fixed;
+            pointer-events: none;
+            z-index: 951;
+            font-size: 12px;
+            font-weight: 600;
+            color: #88ddff;
+            text-shadow: 0 0 8px rgba(136,221,255,0.8);
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            transform: translate(-50%, -100%);
+        }
+
+        #cameraToggleBtn {
+            border-color: #66ffaa;
+            color: #aaffcc;
+        }
+
+        #cameraToggleBtn:hover {
+            background: #228855;
+            color: white;
+            border-color: white;
+            box-shadow: 0 0 10px rgba(102,255,170,0.5);
+        }
+
+        #cameraToggleBtn.toggle-active {
+            background: #228855;
+            color: white;
+            border-color: #66ffaa;
+            box-shadow: 0 0 10px rgba(102,255,170,0.6);
+        }
+
+        /*手势识别中手掌快速张开时，从光标位置爆裂飞出的彩色粒子*/
+        .hand-burst {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 999;
+            animation: burstFly 0.7s ease-out forwards;
+        }
+
+        @keyframes burstFly {
+            0% { opacity: 1; transform: scale(1) translate(0,0); }
+            100% { opacity: 0; transform: scale(0.3) translate(var(--bx), var(--by)); }
+        }
+
+        /* ============================================================ */
+        /* ★★★★ 响应式断点 - 超大屏幕（2K+/4K） ★★★★ */
+        /* ============================================================ */
+        @media (min-width: 1921px) {
+            :root {
+                --btn-font: 18px;
+                --btn-padding-v: 10px;
+                --btn-padding-h: 24px;
+                --home-font: 20px;
+                --home-padding-v: 12px;
+                --home-padding-h: 28px;
+                --info-font: 16px;
+                --info-padding-v: 12px;
+                --info-padding-h: 22px;
+                --label-padding-v: 8px;
+                --label-padding-h: 22px;
+                --eq-max-width: 320px;
+                --magnifier-font: 3rem;
+                --magnifier-padding-v: 32px;
+                --magnifier-padding-h: 56px;
+                --cam-width: 320px;
+                --cam-height: 240px;
+                --cam-bottom: 90px;
+                --cursor-size: 56px;
+                --cursor-open: 80px;
+                --cursor-closed: 36px;
+                --gap-controls: 16px;
+                --bottom-offset: 28px;
+                --side-offset: 28px;
+                --top-offset: 28px;
+            }
+        }
+
+        /* ★★★★ 大屏桌面（1440-1920） ★★★★ */
+        @media (min-width: 1441px) and (max-width: 1920px) {
+            :root {
+                --btn-font: 15px;
+                --btn-padding-v: 7px;
+                --btn-padding-h: 18px;
+                --home-font: 17px;
+                --home-padding-v: 9px;
+                --home-padding-h: 22px;
+                --info-font: 14px;
+                --eq-max-width: 260px;
+                --magnifier-font: 2.4rem;
+                --cam-width: 260px;
+                --cam-height: 195px;
+            }
+        }
+
+        /* ★★★★ 标准桌面（1025-1440） ★★★★ */
+        @media (min-width: 1025px) and (max-width: 1440px) {
+            :root {
+                --btn-font: 14px;
+                --btn-padding-v: 6px;
+                --btn-padding-h: 16px;
+                --home-font: 16px;
+                --home-padding-v: 8px;
+                --home-padding-h: 20px;
+                --info-font: 13px;
+                --eq-max-width: 220px;
+                --magnifier-font: 2.2rem;
+                --cam-width: 220px;
+                --cam-height: 165px;
+            }
+        }
+
+        /* ★★★★ 平板横屏 / 小笔记本（769-1024） ★★★★ */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            :root {
+                --btn-font: 13px;
+                --btn-padding-v: 5px;
+                --btn-padding-h: 14px;
+                --btn-radius: 25px;
+                --home-font: 15px;
+                --home-padding-v: 7px;
+                --home-padding-h: 18px;
+                --info-font: 12px;
+                --info-padding-v: 6px;
+                --info-padding-h: 12px;
+                --label-padding-v: 5px;
+                --label-padding-h: 13px;
+                --eq-max-width: 190px;
+                --magnifier-font: 1.7rem;
+                --magnifier-padding-v: 20px;
+                --magnifier-padding-h: 30px;
+                --cam-width: 180px;
+                --cam-height: 135px;
+                --cam-bottom: 65px;
+                --cursor-size: 38px;
+                --cursor-open: 54px;
+                --cursor-closed: 24px;
+                --gap-controls: 10px;
+                --bottom-offset: 16px;
+                --side-offset: 16px;
+                --top-offset: 16px;
+            }
+        }
+
+        /* ★★★★ 大手机 / 平板竖屏（481-768） ★★★★ */
+        @media (max-width: 768px) {
+            :root {
+                --btn-font: 12px;
+                --btn-padding-v: 5px;
+                --btn-padding-h: 12px;
+                --btn-radius: 22px;
+                --home-font: 13px;
+                --home-padding-v: 6px;
+                --home-padding-h: 14px;
+                --info-font: 11px;
+                --info-padding-v: 5px;
+                --info-padding-h: 10px;
+                --label-padding-v: 4px;
+                --label-padding-h: 10px;
+                --eq-max-width: 160px;
+                --eq-font-base: 0.72rem;
+                --magnifier-font: 1.2rem;
+                --magnifier-padding-v: 16px;
+                --magnifier-padding-h: 24px;
+                --cam-width: 160px;
+                --cam-height: 120px;
+                --cam-bottom: 60px;
+                --cursor-size: 32px;
+                --cursor-open: 48px;
+                --cursor-closed: 20px;
+                --gap-controls: 8px;
+                --bottom-offset: 12px;
+                --side-offset: 12px;
+                --top-offset: 12px;
+            }
+
+            #info {
+                max-width: calc(55vw);
+                font-size: 10px;
+                line-height: 1.3;
+            }
+
+            #controls-panel {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .gesture-toast {
+                font-size: 11px;
+                padding: 8px 16px;
+                top: 50px;
+                white-space: normal;
+                text-align: center;
+                max-width: 85vw;
+            }
+        }
+
+        /* ★★★★ 小手机（≤480） ★★★★ */
+        @media (max-width: 480px) {
+            :root {
+                --btn-font: 11px;
+                --btn-padding-v: 4px;
+                --btn-padding-h: 10px;
+                --btn-radius: 20px;
+                --home-font: 12px;
+                --home-padding-v: 5px;
+                --home-padding-h: 12px;
+                --info-font: 10px;
+                --info-padding-v: 4px;
+                --info-padding-h: 8px;
+                --label-padding-v: 3px;
+                --label-padding-h: 8px;
+                --eq-max-width: 130px;
+                --eq-font-base: 0.65rem;
+                --magnifier-font: 1rem;
+                --magnifier-padding-v: 12px;
+                --magnifier-padding-h: 18px;
+                --cam-width: 130px;
+                --cam-height: 97px;
+                --cam-bottom: 55px;
+                --cursor-size: 28px;
+                --cursor-open: 40px;
+                --cursor-closed: 18px;
+                --gap-controls: 6px;
+                --bottom-offset: 8px;
+                --side-offset: 8px;
+                --top-offset: 8px;
+            }
+
+            #info {
+                max-width: calc(50vw);
+                font-size: 9px;
+                border-radius: 14px;
+            }
+
+            #home-btn, #challenge-btn {
+                letter-spacing: 0;
+            }
+
+            #controls-panel {
+                gap: 5px;
+            }
+
+            button {
+                min-height: 30px;
+            }
+
+            .gesture-toast {
+                font-size: 10px;
+                padding: 6px 12px;
+                top: 42px;
+            }
+
+            #camera-container {
+                border-radius: 12px;
+            }
+        }
+
+        /* ★★★★ 超小屏幕 / 折叠屏紧凑（≤360） ★★★★ */
+        @media (max-width: 360px) {
+            :root {
+                --btn-font: 10px;
+                --btn-padding-v: 3px;
+                --btn-padding-h: 8px;
+                --home-font: 11px;
+                --home-padding-v: 4px;
+                --home-padding-h: 10px;
+                --info-font: 9px;
+                --eq-max-width: 110px;
+                --eq-font-base: 0.58rem;
+                --magnifier-font: 0.85rem;
+                --magnifier-padding-v: 10px;
+                --magnifier-padding-h: 14px;
+                --cam-width: 110px;
+                --cam-height: 82px;
+                --cam-bottom: 48px;
+                --bottom-offset: 6px;
+                --side-offset: 6px;
+                --top-offset: 6px;
+            }
+        }
+
+        /* ★★★★ 横屏手机特殊处理 ★★★★ */
+        @media (max-height: 500px) and (orientation: landscape) {
+            :root {
+                --top-offset: 8px;
+                --bottom-offset: 8px;
+                --side-offset: 12px;
+                --home-font: 12px;
+                --home-padding-v: 4px;
+                --home-padding-h: 12px;
+                --btn-font: 11px;
+                --btn-padding-v: 3px;
+                --btn-padding-h: 10px;
+                --info-font: 10px;
+                --magnifier-font: 1.1rem;
+                --cam-width: 140px;
+                --cam-height: 105px;
+                --cam-bottom: 45px;
+            }
+
+            #info {
+                bottom: var(--bottom-offset);
+                max-width: 40vw;
+                font-size: 9px;
+            }
+
+            #controls-panel {
+                flex-wrap: nowrap;
+            }
+
+            .gesture-toast {
+                top: 36px;
+                font-size: 10px;
+            }
+        }
+
+        /* ★★★★ 高DPI屏幕微调 ★★★★ */
+        @media (-webkit-min-device-pixel-ratio: 3), (min-resolution: 3dppx) {
+            .label-base {
+                text-shadow: 0 0 2px rgba(0,0,0,0.4);
+            }
+            .equation-label {
+                border-width: 0.5px;
+            }
+            .element-label {
+                border-width: 1.5px;
+            }
+        }
+
+        /* ★★★★ 暗色模式增强（大部分设备） ★★★★ */
+        @media (prefers-color-scheme: dark) {
+            .equation-magnifier {
+                background: rgba(0, 0, 0, 0.9);
+            }
+        }
+
+        /* ★★★★ 安全区域适配（iPhone 刘海屏等） ★★★★ */
+        @supports (padding: env(safe-area-inset-bottom)) {
+            #info {
+                bottom: calc(var(--bottom-offset) + env(safe-area-inset-bottom));
+            }
+            #controls-panel {
+                bottom: calc(var(--bottom-offset) + env(safe-area-inset-bottom));
+            }
+            #home-btn {
+                top: calc(var(--top-offset) + env(safe-area-inset-top));
+                left: calc(var(--side-offset) + env(safe-area-inset-left));
+            }
+            #challenge-btn {
+                top: calc(var(--top-offset) + env(safe-area-inset-top));
+                right: calc(var(--side-offset) + env(safe-area-inset-right));
+            }
+            #camera-container {
+                bottom: calc(var(--cam-bottom) + env(safe-area-inset-bottom));
+                left: calc(var(--side-offset) + env(safe-area-inset-left));
+            }
+        }

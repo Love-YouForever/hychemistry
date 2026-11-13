@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>元素幻语 - 游戏中心</title>
+    <link rel="stylesheet" href="../../assets/css/games.css">
+</head>
+<body>
+    <!-- 视频背景 -->
+    <div class="video-container">
+        <video autoplay muted loop playsinline preload="metadata">
+            <source src="../../assets/background.mp4" type="video/mp4">
+        </video>
+    </div>
+    <div class="overlay"></div>
+    <!-- 粒子画布层 -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- 返回按钮 -->
+    <button id="backBtn" class="back-btn" onclick="handleBackClick()">返回主页</button>
+
+    <!-- 主内容 -->
+    <div class="content">
+        <h1 class="title">🎮 游戏中心</h1>
+        <p class="subtitle">探索化学世界的趣味玩法</p>
+        
+        <div class="games-container">
+            <!-- 左滑动按钮 -->
+            <button class="scroll-btn left" id="scrollLeftBtn" onclick="scrollToPrev()">‹</button>
+            
+            <!-- 游戏卡片滚动容器 -->
+            <div class="games-scroll-wrapper" id="gamesScrollWrapper">
+                <div class="games-grid">
+                    <!-- 化学杀游戏 -->
+                    <div class="game-card" onclick="location.href='../chemistry_kill/game.html'">
+                        <div class="game-icon">⚗️</div>
+                        <h2 class="game-title">化学杀</h2>
+                        <p class="game-description">通过组合化学元素，创造物质，触发反应，击败对手！体验化学知识与策略的完美结合。</p>
+                        <div class="game-tags">
+                            <span class="game-tag">策略</span>
+                            <span class="game-tag">化学</span>
+                            <span class="game-tag">对战</span>
+                        </div>
+                        <a href="../chemistry_kill/game.html" class="play-btn">开始游戏</a>
+                    </div>
+
+                    <!-- 化学元素2048游戏 -->
+                    <div class="game-card" onclick="location.href='element2048.html'">
+                        <div class="game-icon">🧬</div>
+                        <h2 class="game-title">元素2048</h2>
+                        <p class="game-description">合并相同元素，从氢开始，逐步合成更重的元素，目标是创造镁元素！</p>
+                        <div class="game-tags">
+                            <span class="game-tag">益智</span>
+                            <span class="game-tag">化学</span>
+                            <span class="game-tag">休闲</span>
+                        </div>
+                        <a href="element2048.html" class="play-btn">开始游戏</a>
+                    </div>
+
+                    <!-- 元素符号速配游戏 -->
+                    <div class="game-card" onclick="location.href='atomsgame_wrapper.html'">
+                        <div class="game-icon">⚛️</div>
+                        <h2 class="game-title">元素符号速配</h2>
+                        <p class="game-description">观察宇航员展示的中文元素名称，快速点击下落的对应化学元素符号！通过趣味游戏方式学习和记忆元素名称与符号的对应关系，提升化学知识储备。</p>
+                        <div class="game-tags">
+                            <span class="game-tag">益智</span>
+                            <span class="game-tag">化学</span>
+                            <span class="game-tag">学习</span>
+                        </div>
+                        <a href="atomsgame_wrapper.html" class="play-btn">开始游戏</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右滑动按钮 -->
+            <button class="scroll-btn right" id="scrollRightBtn" onclick="scrollToNext()">›</button>
+        </div>
+        
+        <!-- 滑动指示器 -->
+        <div class="scroll-indicators" id="scrollIndicators"></div>
+    </div>
+
+    <script src="../../assets/js/games.js"></script>
+</body>
+</html>

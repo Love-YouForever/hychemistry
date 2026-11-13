@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>元素幻语 - 元素2048</title>
+    <link rel="stylesheet" href="../../assets/css/element2048.css">
+</head>
+<body>
+    <!-- 视频背景 -->
+    <div class="video-container">
+        <video autoplay muted loop playsinline preload="metadata">
+            <source src="../../assets/background.mp4" type="video/mp4">
+        </video>
+    </div>
+    <div class="overlay"></div>
+
+    <!-- 头部 -->
+    <div class="header">
+        <button class="back-btn" onclick="goBack()">← 返回</button>
+        <div class="title-container">
+            <h1 class="title">Mg元素</h1>
+            <p class="subtitle">当镁元素出现时，你就成功了！</p>
+        </div>
+        <div style="width: 80px;"></div>
+    </div>
+
+    <!-- 游戏区域 -->
+    <div class="game-container">
+        <div class="game-grid" id="gameGrid">
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+            <div class="cell"></div>
+        </div>
+    </div>
+
+    <!-- 控制按钮 -->
+    <div class="controls">
+        <button class="control-btn" onclick="restartGame()">🔄 重新开始</button>
+    </div>
+
+    <!-- 移动端控制提示 -->
+    <div class="swipe-hint">👆 滑动屏幕控制方向（↑↓←→）</div>
+
+    <!-- 游戏说明 -->
+    <div class="instructions">
+        <h3>🎮 游戏说明</h3>
+        <p>使用键盘方向键或滑动屏幕移动元素，相同元素相撞合并为原子序数更高的元素。当界面被填满且无法移动时游戏结束。目标：合成镁元素（Mg）！</p>
+    </div>
+
+    <!-- 元素图例 -->
+    <div class="legend">
+        <h3>🧬 元素图例</h3>
+        <div class="legend-grid">
+            <div class="legend-item tile-1">1<br>H</div>
+            <div class="legend-item tile-2">2<br>He</div>
+            <div class="legend-item tile-3">3<br>Li</div>
+            <div class="legend-item tile-4">4<br>Be</div>
+            <div class="legend-item tile-5">5<br>B</div>
+            <div class="legend-item tile-6">6<br>C</div>
+            <div class="legend-item tile-7">7<br>N</div>
+            <div class="legend-item tile-8">8<br>O</div>
+            <div class="legend-item tile-9">9<br>F</div>
+            <div class="legend-item tile-10">10<br>Ne</div>
+            <div class="legend-item tile-11">11<br>Na</div>
+            <div class="legend-item tile-12">12<br>Mg</div>
+        </div>
+    </div>
+
+    <!-- 胜利弹窗 -->
+    <div class="modal-overlay" id="winModal">
+        <div class="modal-content">
+            <h2 class="modal-title">🎉 恭喜！</h2>
+            <p class="modal-text">你成功合成了镁元素！</p>
+            <button class="modal-btn" onclick="restartGame(); closeWinModal();">再来一局</button>
+        </div>
+    </div>
+
+    <!-- 失败弹窗 -->
+    <div class="modal-overlay" id="loseModal">
+        <div class="modal-content">
+            <h2 class="modal-title">😢 游戏结束</h2>
+            <p class="modal-text">没有可用空间了，试试重新开始！</p>
+            <button class="modal-btn" onclick="restartGame(); closeLoseModal();">重新开始</button>
+        </div>
+    </div>
+
+    <script src="../../assets/js/element2048.js"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+# ---------- 环境变量与密钥（禁止提交） ----------
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+server/certs/
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# ---------- 日志与临时产物 ----------
+*.log
+.coverage
+.coverage.*
+htmlcov/
+.screenshots/
+
+# ---------- 本地检索索引（可一键重建，不提交） ----------
+server/knowledge_index/
+*.joblib
+
+# ---------- 视频（作为赛事提交物单独上传，不进仓库） ----------
+docs/*.mp4
+docs/*.mov
+.start_bs.log
+
+# ---------- 本地归档 ----------
+_archive/
+
+# ---------- 桌宠子项目构建产物 ----------
+AIgent/build/
+AIgent/dist/
+AIgent/API_key.txt
+AIgent/*.spec
+AIgent/oc.exe
+
+# ---------- 超大视频素材 ----------
+# 以下高清纪录片单文件体积过大，超出 Git LFS 免费额度，未纳入公开仓库；
+# 完整素材可另行获取，或先压缩至 100MB 以下再提交。
+video/*.mp4
+pages/Chemical_Epics/vedio/part2.mp4
+pages/Chemical_Epics/vedio/part3.mp4
+pages/Chemical_Epics/vedio/part4.mp4
+
+# ---------- IDE 生成的分享包 ----------
+.trae-html-share-packages/
+
+# ---------- 编辑器与系统 ----------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

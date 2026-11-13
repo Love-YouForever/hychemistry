@@ -1,0 +1,4 @@
+# 视频素材统一由 Git LFS 托管，避免占用普通 Git 对象配额
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.webm filter=lfs diff=lfs merge=lfs -text
+*.mov filter=lfs diff=lfs merge=lfs -text

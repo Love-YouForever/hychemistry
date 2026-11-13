@@ -1,0 +1,287 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D动态元素周期表</title>
+    <!-- Three.js引入 -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <link rel="stylesheet" href="../../../assets/css/periodic-table-3d.css?v=20261113j">
+    <link rel="stylesheet" href="../../../assets/css/periodic-ai.css?v=20261113b">
+</head>
+<body>
+    <!-- 手机竖屏提示：强制横屏以保证周期表完整展示 -->
+    <div id="rotateTip">
+        <div class="rotate-icon">📱</div>
+        <h2>请横屏查看</h2>
+        <p>元素周期表内容较宽，请将手机旋转至横屏，即可完整查看 2D / 3D 周期表</p>
+    </div>
+
+    <canvas id="meteorCanvas"></canvas>
+    
+    <!-- 新增：螺旋粒子容器 -->
+    <div id="spiralParticles"></div>
+    
+    <!-- 服务器提示 -->
+    <div id="serverHint" class="server-hint" style="display: none;">
+        <h4>文件加载提示</h4>
+        <p>由于浏览器安全限制，请使用本地服务器运行此项目：</p>
+        <code>
+            <strong>Python 3:</strong> python -m http.server 8000<br>
+            <strong>Node.js:</strong> npx http-server<br>
+            <strong>PHP:</strong> php -S localhost:8000
+        </code>
+        <button onclick="document.getElementById('serverHint').style.display='none'">知道了</button>
+    </div>
+    
+    <!-- 新增：图片放大模态框 -->
+    <div class="image-modal" id="imageModal">
+        <div class="image-modal-content">
+            <img id="modalImage" src="" alt="放大图片">
+            <button class="image-modal-close" id="imageModalClose">&times;</button>
+        </div>
+    </div>
+
+    <!-- [两步揭秘] 钙元素专属揭秘模态框 -->
+    <div class="calcium-reveal-overlay" id="calciumRevealOverlay">
+        <button class="calcium-reveal-close" id="calciumRevealClose">&times;</button>
+        <div class="calcium-reveal-perspective">
+            <div class="calcium-reveal-card" id="calciumRevealCard">
+                <!-- 正面：日常认知 -->
+                <div class="calcium-card-front">
+                    <div class="calcium-front-image" id="calciumFrontImage">
+                        <div class="calcium-front-overlay">
+                            <div class="calcium-front-hint">点击图片，揭秘真实面貌</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 背面：科学真相 -->
+                <div class="calcium-card-back">
+                    <div class="calcium-back-content">
+                        <div class="calcium-back-image-container">
+                            <img id="calciumBackImage" src="" alt="钙元素真实样貌">
+                        </div>
+                        <div class="calcium-back-info">
+                            <div class="calcium-element-header">
+                                <div class="calcium-element-symbol">Ca</div>
+                                <div class="calcium-element-name">钙</div>
+                            </div>
+                            <div class="calcium-properties">
+                                <div class="calcium-property">
+                                    <span class="calcium-property-label">原子序数</span>
+                                    <span class="calcium-property-value" id="calciumAtomicNumber">20</span>
+                                </div>
+                                <div class="calcium-property">
+                                    <span class="calcium-property-label">原子量</span>
+                                    <span class="calcium-property-value" id="calciumAtomicMass">40.078</span>
+                                </div>
+                                <div class="calcium-property">
+                                    <span class="calcium-property-label">元素分区</span>
+                                    <span class="calcium-property-value" id="calciumBlock">s区</span>
+                                </div>
+                            </div>
+                            <div class="calcium-description" id="calciumDescription">
+                                <div class="loading">加载中...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="calcium-back-hint">点击翻转查看日常认知</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 新增：详细元素信息弹窗 -->
+    <div class="element-detail-modal" id="elementDetailModal">
+        <div class="element-detail-content">
+            <div class="element-detail-header">
+                <h2 class="element-detail-title" id="detailElementName">元素名称</h2>
+                <button class="element-detail-close" id="elementDetailClose">&times;</button>
+            </div>
+            <div class="element-detail-body">
+                <div class="element-detail-image" id="elementDetailImage">
+                    <!-- 图片将动态加载 -->
+                </div>
+                <div class="element-detail-info">
+                    <div class="element-detail-basic">
+                        <div class="element-detail-property">
+                            <span class="element-detail-label">元素符号:</span>
+                            <span class="element-detail-value" id="detailElementSymbol">-</span>
+                        </div>
+                        <div class="element-detail-property">
+                            <span class="element-detail-label">原子序数:</span>
+                            <span class="element-detail-value" id="detailElementNumber">-</span>
+                        </div>
+                        <div class="element-detail-property">
+                            <span class="element-detail-label">原子量:</span>
+                            <span class="element-detail-value" id="detailElementMass">-</span>
+                        </div>
+                        <div class="element-detail-property">
+                            <span class="element-detail-label">元素分区:</span>
+                            <span class="element-detail-value" id="detailElementBlock">-</span>
+                        </div>
+                    </div>
+                    <div class="element-detail-description" id="detailElementDescription">
+                        <!-- 元素简介将通过JavaScript动态填充 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <header>
+            <!-- 新增左上角返回主页按钮 -->
+            <button class="home-button" id="homeButton">返回主页</button>
+            <h1>PERIODIC TABLE OF ELEMENTS</h1>
+            <div class="subtitle">窥浮生之幻语——绘万物之奥秘</div>
+            <button class="view-toggle" id="viewToggle">3D视图</button>
+        </header>
+        
+        <main>
+            <!-- 族序数行 -->
+            <div class="group-numbers" id="groupNumbers">
+                <!-- 族序数将通过JavaScript动态生成 -->
+            </div>
+            
+            <div class="table-scroll">
+                <div class="periodic-table flat" id="periodicTable">
+                    <!-- 元素将通过JavaScript动态生成 -->
+                </div>
+            </div>
+            <div class="table-scroll-hint">← 左右滑动查看完整周期表 →</div>
+            
+            <!-- 3D 视图容器 -->
+            <div id="3d-view-container" style="display: none; margin-top: 40px;">
+                <div id="app">
+                    <header>
+                        <h1>交互式3D元素周期表</h1>
+                        <div class="controls">
+                            <label for="temp-slider">温度:</label>
+                            <input type="number" id="temp-input" value="298.15" min="0" max="6000" step="0.1"> K
+                            <span id="temp-celsius"></span>
+                            <input type="range" id="temp-slider" min="0" max="6000" value="298.15" step="1">
+                            <button id="toggle-table-lang-btn">切换为中文</button>
+                        </div>
+
+                        <div class="legend-container">
+                            <div class="legend-section legend-explanation">
+                                <div class="legend-title">图例说明</div>
+                                <div class="explanation-content">
+                                    <div class="explanation-text">元素类别</div>
+                                    <div class="arrow">→</div>
+                                    <div class="legend-example-element">
+                                        <div class="number">23</div>
+                                        <div class="symbol">V</div>
+                                        <div class="name">Vanadium</div>
+                                        <div class="atomic-mass">50.9415</div>
+                                    </div>
+                                    <div class="arrow">←</div>
+                                    <div class="explanation-text">元素物态</div>
+                                </div>
+                            </div>
+
+                            <!-- 全新10分类图例 -->
+                            <div class="legend-section">
+                                <div class="legend-title">元素类别</div>
+                                <div class="legend-grid">
+                                    <div class="legend-item"><span class="color-swatch alkali-metal"></span><span>碱金属</span></div>
+                                    <div class="legend-item"><span class="color-swatch alkaline-earth-metal"></span><span>碱土金属</span></div>
+                                    <div class="legend-item"><span class="color-swatch lanthanide"></span><span>镧系元素</span></div>
+                                    <div class="legend-item"><span class="color-swatch actinide"></span><span>锕系元素</span></div>
+                                    <div class="legend-item"><span class="color-swatch transition-metal"></span><span>过渡金属</span></div>
+                                    <div class="legend-item"><span class="color-swatch other-metal"></span><span>其他金属</span></div>
+                                    <div class="legend-item"><span class="color-swatch metalloid"></span><span>准金属</span></div>
+                                    <div class="legend-item"><span class="color-swatch other-nonmetal"></span><span>其他非金属</span></div>
+                                    <div class="legend-item"><span class="color-swatch halogen"></span><span>卤素</span></div>
+                                    <div class="legend-item"><span class="color-swatch noble-gas"></span><span>稀有气体</span></div>
+                                </div>
+                            </div>
+
+                            <div class="legend-section">
+                                <div class="legend-title">元素物态</div>
+                                <div class="legend-grid small">
+                                    <div class="legend-item"><span class="color-swatch solid"></span><span>固态</span></div>
+                                    <div class="legend-item"><span class="color-swatch liquid"></span><span>液态</span></div>
+                                    <div class="legend-item"><span class="color-swatch gas"></span><span>气态</span></div>
+                                    <div class="legend-item"><span class="color-swatch unknown"></span><span>未知</span></div>
+                                </div>
+                            </div>
+                        </div>
+                         <p class="drag-hint">左键拖动旋转 | 右键拖动平移 | 滚轮缩放</p>
+                    </header>
+
+                    <main id="table-container">
+                        <div id="periodic-table">
+                            <div class="loading">正在加载元素...</div>
+                        </div>
+                    </main>
+
+                    <div id="element-modal" class="modal-hidden">
+                        <div class="modal-backdrop"></div>
+                        <div class="modal-content">
+                            <button class="modal-close-btn">&times;</button>
+                            <div id="modal-body"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-card" id="infoCard">
+                <h2 id="elementName">元素信息</h2>
+                <div class="property">
+                    <span class="property-label">元素符号:</span>
+                    <span class="property-value" id="elementSymbol">-</span>
+                </div>
+                <div class="property">
+                    <span class="property-label">原子量:</span>
+                    <span class="property-value" id="elementAtomicMass">-</span>
+                </div>
+                <div class="property">
+                    <span class="property-label">熔点:</span>
+                    <span class="property-value" id="elementMeltingPoint">-</span>
+                </div>
+                <div class="property">
+                    <span class="property-label">沸点:</span>
+                    <span class="property-value" id="elementBoilingPoint">-</span>
+                </div>
+                <div class="property">
+                    <span class="property-label">密度:</span>
+                    <span class="property-value" id="elementDensity">-</span>
+                </div>
+                <div class="property interactive">
+                    <span class="property-label">价电子排布:</span>
+                    <span class="property-value" id="elementElectronConfig">-</span>
+                    <div class="sub-info-card">
+                        <h3>电子排布</h3>
+                        <div class="electron-config" id="fullElectronConfig">1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴ 6d¹⁰ 7p⁶</div>
+                        <!-- 3D电子模型视图 -->
+                        <div class="electron-model-3d" id="electronModel3D"></div>
+                    </div>
+                </div>
+                <div class="property interactive">
+                    <span class="property-label">晶体类型:</span>
+                    <span class="property-value" id="elementCrystalType">-</span>
+                    <div class="sub-info-card">
+                        <h3>晶体结构</h3>
+                        <div class="crystal-structure" id="crystalStructure">
+                            <div class="crystal-3d-container" id="crystalContainer">
+                                <!-- Three.js 3D晶体结构将在这里渲染 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>交互式3D元素周期表 &copy; 2025 | 淮南二中幻语化学社</p>
+        </footer>
+    </div>
+
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <script src="../../../assets/js/periodic-table-3d.js?v=20261113j"></script>
+    <script src="../../../assets/js/periodic-ai.js?v=20261113b"></script>
+</body>
+</html>

@@ -1,0 +1,350 @@
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none; /* 避免拖动文字影响点击，但不影响复制 */
+        }
+
+        body {
+            /* 背景图片：文件夹中名为 background2 的图片（支持 .jpg/.png/.webp 等，按实际文件名修改后缀） */
+            background-image: url('../background2.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            font-family: 'Segoe UI', 'Roboto', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1.5rem;
+            position: relative;
+        }
+
+        /* 为了增强文字可读性，添加一层半透明遮罩（可选，不影响背景视觉） */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(2px);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* 主内容容器，位于遮罩之上 */
+        .main-container {
+            position: relative;
+            z-index: 2;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* 顶部彩蛋标题 */
+        .egg-title {
+            text-align: center;
+            font-size: 4rem;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+            color: #ffec3e;
+            text-shadow: 0 0 10px #ff9f00, 0 0 20px #ff6a00, 0 4px 15px rgba(0,0,0,0.6);
+            background: linear-gradient(135deg, #fff4b0, #ffdd77);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            text-shadow: none;
+            margin-bottom: 2rem;
+            animation: glowPulse 2s infinite ease-in-out;
+        }
+        /* 兼容不支持背景剪裁的浏览器，提供备用亮黄色 */
+        @supports not (background-clip: text) {
+            .egg-title {
+                color: #ffea80;
+                text-shadow: 0 0 12px #e05a00, 0 2px 8px black;
+            }
+        }
+
+        @keyframes glowPulse {
+            0% { filter: drop-shadow(0 0 2px gold) drop-shadow(0 0 5px orange); opacity: 0.95; }
+            100% { filter: drop-shadow(0 0 8px #ffb347) drop-shadow(0 0 12px #ff7e05); opacity: 1; }
+        }
+
+        /* 双栏布局 */
+        .cards-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        /* 左右通用卡片样式（文本框） */
+        .card {
+            flex: 1;
+            min-width: 280px;
+            background: rgba(20, 20, 35, 0.75);
+            backdrop-filter: blur(12px);
+            border-radius: 2rem;
+            padding: 2rem 1.8rem;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(255,255,255,0.1) inset;
+            border: 1px solid rgba(255, 215, 100, 0.5);
+            transition: transform 0.25s ease, box-shadow 0.3s;
+            color: #f0f3fa;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 28px 40px -15px black;
+            border-color: rgba(255, 200, 80, 0.9);
+        }
+
+        /* 左侧卡片无特殊点击效果 */
+        .left-card {
+            cursor: default;
+        }
+
+        /* 右侧卡片可点击，鼠标指示交互 */
+        .right-card {
+            cursor: pointer;
+            background: rgba(30, 25, 45, 0.85);
+            border-left: 4px solid #ff8c42;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .right-card:hover {
+            background: rgba(45, 35, 60, 0.9);
+            border-left-color: #ffcc44;
+        }
+
+        /* 卡片内部标题 */
+        .card h2 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            border-left: 5px solid #ffb347;
+            padding-left: 1rem;
+            color: #ffe2a4;
+            letter-spacing: -0.3px;
+        }
+
+        .left-card h2 {
+            border-left-color: #4caf92;
+        }
+
+        /* 安全须知列表 */
+        .safety-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        .safety-list li {
+            margin-bottom: 0.9rem;
+            padding-left: 1.6rem;
+            position: relative;
+            font-size: 1.05rem;
+            line-height: 1.45;
+            font-weight: 500;
+        }
+        .safety-list li:before {
+            content: "⚠️";
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-size: 1rem;
+        }
+
+        /* 右侧内容警示文字 */
+        .warning-text {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 0.8rem 1rem;
+            border-radius: 1.2rem;
+            margin: 1rem 0;
+            font-weight: 500;
+            border-left: 3px solid #ff5e5e;
+        }
+        .danger-badge {
+            color: #ffb347;
+            font-weight: bold;
+            background: rgba(255,80,40,0.2);
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            margin-right: 8px;
+        }
+
+        .right-card p {
+            margin: 1rem 0;
+            line-height: 1.5;
+            font-size: 1rem;
+        }
+
+        /* 链接样式（插入链接要求） */
+        .police-link {
+            display: inline-block;
+            margin-top: 0.8rem;
+            background: #d42e12;
+            background: linear-gradient(95deg, #c52a0e, #e0481c);
+            padding: 0.6rem 1.3rem;
+            border-radius: 3rem;
+            color: white !important;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            border: 1px solid #ffaa66;
+            cursor: pointer;
+        }
+        .police-link:hover {
+            background: #b32104;
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        /* 右侧卡片内普通文字 */
+        .italic-note {
+            font-style: italic;
+            font-size: 0.9rem;
+            color: #ffd9a5;
+            margin-top: 12px;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 800px) {
+            .egg-title {
+                font-size: 2.4rem;
+                margin-bottom: 1rem;
+            }
+            .cards-wrapper {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            .card {
+                padding: 1.5rem;
+            }
+            .card h2 {
+                font-size: 1.6rem;
+            }
+            body {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .egg-title {
+                font-size: 1.9rem;
+            }
+            .card {
+                padding: 1.2rem;
+            }
+            .card h2 {
+                font-size: 1.4rem;
+            }
+            .safety-list li {
+                font-size: 0.9rem;
+                line-height: 1.5;
+                margin-bottom: 0.75rem;
+            }
+            .police-link {
+                padding: 0.9rem 1.8rem;
+                font-size: 1.1rem;
+                min-width: 160px;
+                min-height: 44px;
+            }
+        }
+
+        /* 超小屏幕优化 (≤360px) */
+        @media (max-width: 360px) {
+            body {
+                padding: 0.8rem;
+            }
+            .egg-title {
+                font-size: 1.5rem;
+            }
+            .card {
+                padding: 1rem;
+                min-width: auto;
+            }
+            .card h2 {
+                font-size: 1.25rem;
+                padding-left: 0.8rem;
+            }
+            .safety-list li {
+                font-size: 0.85rem;
+                padding-left: 1.3rem;
+            }
+            .police-link {
+                min-width: 140px;
+                font-size: 1rem;
+                padding: 0.8rem 1.4rem;
+            }
+            footer {
+                font-size: 0.65rem;
+                padding: 0.3rem 0.8rem;
+            }
+        }
+
+        /* 横屏模式优化 */
+        @media (max-height: 500px) and (orientation: landscape) {
+            body {
+                padding: 1rem;
+            }
+            .egg-title {
+                font-size: 1.6rem;
+                margin-bottom: 0.8rem;
+            }
+            .cards-wrapper {
+                flex-direction: row;
+                gap: 1.2rem;
+            }
+            .card {
+                padding: 1rem;
+                min-width: 220px;
+            }
+            .card h2 {
+                font-size: 1.2rem;
+            }
+            .safety-list li {
+                font-size: 0.8rem;
+                margin-bottom: 0.5rem;
+            }
+            .police-link {
+                min-width: 120px;
+                padding: 0.6rem 1.2rem;
+                font-size: 0.9rem;
+            }
+            footer {
+                margin-top: 1.5rem;
+                font-size: 0.6rem;
+            }
+        }
+
+        /* 安全区域适配（iPhone刘海屏等） */
+        @supports (padding: env(safe-area-inset-bottom)) {
+            body {
+                padding-left: max(1rem, env(safe-area-inset-left));
+                padding-right: max(1rem, env(safe-area-inset-right));
+            }
+            footer {
+                margin-bottom: env(safe-area-inset-bottom);
+            }
+        }
+
+        /* 辅助文字淡入 */
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            font-size: 0.75rem;
+            color: rgba(255,245,200,0.7);
+            background: rgba(0,0,0,0.3);
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 0.4rem 1.2rem;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
+        }

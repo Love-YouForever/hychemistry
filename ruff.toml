@@ -1,0 +1,22 @@
+# Ruff 静态检查配置
+# 只保留与正确性直接相关的规则，避免风格差异造成 CI 噪音。
+
+line-length = 120
+target-version = "py312"
+
+[lint]
+select = [
+    "E",   # pycodestyle 错误
+    "F",   # pyflakes（未定义变量、未使用导入等）
+    "W",   # pycodestyle 警告
+    "I",   # import 排序
+]
+
+ignore = [
+    "E501",  # 行长度：中文注释与提示词较长，由 line-length 宽松控制
+    "E402",  # 模块级 import 不在顶部：服务启动前需先调整 sys.path，属有意设计
+]
+
+[lint.per-file-ignores]
+# 服务层对异常做兜底捕获是有意设计，避免单次失败中断对话
+"server/chem_tools.py" = []

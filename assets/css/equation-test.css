@@ -1,0 +1,234 @@
+        * {
+            user-select: none;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #e0f2fe 0%, #bae6fd 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Poppins', 'Roboto', 'Noto Sans', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .game-container {
+            width: 1100px;
+            max-width: 95vw;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(2px);
+            border-radius: 64px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+            padding: 20px 30px 35px;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .cancel-btn {
+            background: #ff6b6b;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 8px 24px;
+            border-radius: 48px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .cancel-btn:hover {
+            background: #e63946;
+            transform: scale(0.96);
+        }
+
+        .score-board {
+            background: #2c3e66;
+            padding: 6px 24px;
+            border-radius: 48px;
+            color: #f9e56c;
+            font-weight: bold;
+            font-size: 1.8rem;
+            box-shadow: inset 0 -2px 0 #1b2a41, 0 8px 16px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        .score-label {
+            font-size: 1rem;
+            background: #f9e56c;
+            color: #2c3e66;
+            padding: 4px 12px;
+            border-radius: 32px;
+        }
+
+        .score-value {
+            font-size: 2rem;
+            min-width: 50px;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .equation-area {
+            background: #fef9e8;
+            border-radius: 60px;
+            padding: 30px 20px;
+            margin: 20px 0 25px;
+            box-shadow: inset 0 0 0 2px rgba(255,255,200,0.8), 0 12px 24px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .equation {
+            font-size: 1.9rem;
+            font-weight: 600;
+            font-family: 'Courier New', 'SF Mono', monospace;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: baseline;
+            gap: 8px 12px;
+            background: #fff3e0;
+            padding: 20px 25px;
+            border-radius: 48px;
+            min-height: 120px;
+        }
+
+        .eq-part {
+            display: inline-flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 2px;
+        }
+
+        .drop-slot {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 70px;
+            background: #ffe0b5;
+            border: 3px dashed #ff9f4a;
+            border-radius: 36px;
+            padding: 6px 18px;
+            margin: 0 2px;
+            font-size: 1.7rem;
+            font-weight: bold;
+            color: #b97f2e;
+            transition: all 0.1s;
+            cursor: pointer;
+        }
+
+        .drop-slot.filled {
+            background: #c8e6d9;
+            border: 3px solid #2e7d64;
+            color: #1e5a48;
+            cursor: default;
+        }
+
+        .bubbles-area {
+            margin-top: 25px;
+            padding: 15px;
+            background: rgba(200, 230, 255, 0.5);
+            border-radius: 60px;
+        }
+
+        .bubbles-title {
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #2c5282;
+            margin-bottom: 16px;
+        }
+
+        .bubbles {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            min-height: 110px;
+        }
+
+        .bubble {
+            background: radial-gradient(circle at 30% 28%, #fff, #ffd966);
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            font-family: monospace;
+            color: #3b2a1f;
+            box-shadow: 0 12px 18px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0,0,0,0.1);
+            cursor: grab;
+            transition: transform 0.1s;
+            border: 2px solid #fff8;
+        }
+
+        .bubble:active {
+            cursor: grabbing;
+        }
+
+        .chat-toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2d3748e6;
+            backdrop-filter: blur(12px);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            z-index: 1000;
+            border-left: 6px solid #facc15;
+            pointer-events: none;
+        }
+
+        .chat-toast.success {
+            background: #276749e6;
+            border-left-color: #f6e05e;
+        }
+
+        .chat-toast.error {
+            background: #9b2c2ce6;
+            border-left-color: #fc8181;
+        }
+
+        .next-tip {
+            text-align: center;
+            font-size: 0.8rem;
+            margin-top: 16px;
+            color: #5a6e7c;
+        }
+
+        @media (max-width: 700px) {
+            .equation {
+                font-size: 1.2rem;
+            }
+            .drop-slot {
+                min-width: 55px;
+                padding: 4px 12px;
+                font-size: 1.2rem;
+            }
+            .bubble {
+                width: 70px;
+                height: 70px;
+                font-size: 1.5rem;
+            }
+            .score-value {
+                font-size: 1.6rem;
+            }
+        }

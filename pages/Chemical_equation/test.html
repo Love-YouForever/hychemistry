@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>化学方程式拖拽填空 - 完全随机版</title>
+    <link rel="stylesheet" href="../../assets/css/equation-test.css">
+</head>
+<body>
+
+<div class="game-container">
+    <div class="game-header">
+        <button class="cancel-btn" id="cancelBtn">← 返回</button>
+        <div class="score-board">
+            <span class="score-label">积分</span>
+            <span class="score-value" id="scoreValue">0</span>
+        </div>
+    </div>
+
+    <div class="equation-area">
+        <div class="equation" id="equationContainer">
+            <!-- 动态渲染方程式（含槽位） -->
+        </div>
+    </div>
+
+    <div class="bubbles-area">
+        <div class="bubbles-title">✨ 拖动气泡到空白位置 ✨</div>
+        <div class="bubbles" id="bubblesContainer"></div>
+        <div class="next-tip">💡 全部填空正确后自动加分，刷新下一题！</div>
+    </div>
+</div>
+
+    <script src="../../assets/js/equation-test.js"></script>
+</body>
+</html>

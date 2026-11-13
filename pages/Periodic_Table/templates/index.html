@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式3D元素周期表</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>交互式3D元素周期表</h1>
+            <div class="controls">
+                <label for="temp-slider">温度:</label>
+                <input type="number" id="temp-input" value="298.15" min="0" max="6000" step="0.1"> K
+                <span id="temp-celsius"></span>
+                <input type="range" id="temp-slider" min="0" max="6000" value="298.15" step="1">
+                <button id="toggle-table-lang-btn">切换为中文</button>
+            </div>
+
+            <div class="legend-container">
+                <div class="legend-section legend-explanation">
+                    <div class="legend-title">图例说明</div>
+                    <div class="explanation-content">
+                        <div class="explanation-text">元素类别</div>
+                        <div class="arrow">→</div>
+                        <div class="legend-example-element">
+                            <div class="number">23</div>
+                            <div class="symbol">V</div>
+                            <div class="name">Vanadium</div>
+                            <div class="atomic-mass">50.9415</div>
+                        </div>
+                        <div class="arrow">←</div>
+                        <div class="explanation-text">元素物态</div>
+                    </div>
+                </div>
+
+                <!-- 全新10分类图例 -->
+                <div class="legend-section">
+                    <div class="legend-title">元素类别</div>
+                    <div class="legend-grid">
+                        <div class="legend-item"><span class="color-swatch alkali-metal"></span><span>碱金属</span></div>
+                        <div class="legend-item"><span class="color-swatch alkaline-earth-metal"></span><span>碱土金属</span></div>
+                        <div class="legend-item"><span class="color-swatch lanthanide"></span><span>镧系元素</span></div>
+                        <div class="legend-item"><span class="color-swatch actinide"></span><span>锕系元素</span></div>
+                        <div class="legend-item"><span class="color-swatch transition-metal"></span><span>过渡金属</span></div>
+                        <div class="legend-item"><span class="color-swatch other-metal"></span><span>其他金属</span></div>
+                        <div class="legend-item"><span class="color-swatch metalloid"></span><span>准金属</span></div>
+                        <div class="legend-item"><span class="color-swatch other-nonmetal"></span><span>其他非金属</span></div>
+                        <div class="legend-item"><span class="color-swatch halogen"></span><span>卤素</span></div>
+                        <div class="legend-item"><span class="color-swatch noble-gas"></span><span>稀有气体</span></div>
+                    </div>
+                </div>
+
+                <div class="legend-section">
+                    <div class="legend-title">元素物态</div>
+                    <div class="legend-grid small">
+                        <!-- BUG修复：将 'phase-solid' 等修改为 'solid' 等 -->
+                        <div class="legend-item"><span class="color-swatch solid"></span><span>固态</span></div>
+                        <div class="legend-item"><span class="color-swatch liquid"></span><span>液态</span></div>
+                        <div class="legend-item"><span class="color-swatch gas"></span><span>气态</span></div>
+                        <div class="legend-item"><span class="color-swatch unknown"></span><span>未知</span></div>
+                    </div>
+                </div>
+            </div>
+             <p class="drag-hint">左键拖动旋转 | 右键拖动平移 | 滚轮缩放</p>
+        </header>
+
+        <main id="table-container">
+            <div id="periodic-table">
+                <div class="loading">正在加载元素...</div>
+            </div>
+        </main>
+
+        <div id="element-modal" class="modal-hidden">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content">
+                <button class="modal-close-btn">&times;</button>
+                <div id="modal-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

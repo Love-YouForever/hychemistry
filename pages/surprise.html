@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>实验室安全彩蛋 | 重要警示</title>
+    <link rel="stylesheet" href="../assets/css/surprise.css">
+</head>
+<body>
+
+<div class="main-container">
+    <!-- 大号加亮彩蛋文字 -->
+    <div class="egg-title">🎉 恭喜你，发现了彩蛋！ 🎉</div>
+
+    <div class="cards-wrapper">
+        <!-- 左侧文本框：实验室安全须知 -->
+        <div class="card left-card">
+            <h2>🧪 实验室安全须知</h2>
+            <ul class="safety-list">
+                <li>进入实验室必须穿戴实验服、护目镜及丁腈手套。</li>
+                <li>禁止在实验室内饮食、吸烟或存放个人食品饮料。</li>
+                <li>使用易燃、易爆、腐蚀性药品前，务必仔细阅读MSDS并开启通风橱。</li>
+                <li>所有危险操作必须在导师或安全员监督下进行。</li>
+                <li>熟悉紧急冲淋器、洗眼器及灭火毯、灭火器的位置与使用方法。</li>
+                <li>实验结束后及时关闭水、电、气源，清理台面并按规定处置废弃物。</li>
+                <li>发生意外立即报告实验室负责人，并拨打紧急救援电话。</li>
+            </ul>
+            <div class="italic-note" style="margin-top:1rem;">🔬 安全第一，规范实验，保护自己与他人。</div>
+        </div>
+
+        <!-- 右侧文本框：常见爆炸物的制取 (警示及合法链接) 同时整体可点击跳转 -->
+        <div class="card right-card" id="rightDangerCard">
+            <h2>💣 常见爆炸物的制取</h2>
+            <div class="warning-text">
+                <span class="danger-badge">🚫 法律红线 🚫</span> 
+                <strong>本内容仅供法律警示与安全教育，绝不提供任何实际操作信息。</strong>
+            </div>
+            <p>
+                依据《中华人民共和国刑法》第一百二十五条、第一百二十七条，非法制造、买卖、运输、邮寄、储存枪支、弹药、爆炸物的，处三年以上十年以下有期徒刑；情节严重的，处十年以上有期徒刑、无期徒刑或者死刑。<br>
+                <strong style="color:#ffaa66;">任何个人均严禁私自合成、试验、储存爆炸物或爆炸前体。</strong> 实验室管制类化学品必须由具备资质的机构依法管理。
+            </p>
+            <p>
+                ⚡ 常见爆炸性物质（如过氧化物、硝基化合物、雷酸盐等）具有极端敏感性，非专业环境下极微量的冲击、摩擦或静电即可引发灾难性事故，<span style="color:#ff7b62;">个人操作绝对禁止！</span>
+            </p>
+            <!-- 显式插入链接：符合“并插入链接”要求 -->
+            <div style="margin: 1.2rem 0 0.5rem 0; text-align: center;">
+                <a href="#" id="policeRedirectLink" class="police-link">点击此处进入</a>
+            </div>
+            <div class="italic-note">
+                ※ 点击本框任意位置或上方按钮，即表示您已知悉相关法律风险，再次确认后将进入官方普法页面。
+            </div>
+        </div>
+    </div>
+    <footer>
+        ⚖️ 国家严格管制爆炸物前体及制造工艺 | 举报违法线索请拨打110
+    </footer>
+</div>
+
+    <script src="../assets/js/surprise.js"></script>
+
+<!-- 
+    背景图片说明：
+    请确保 assets 文件夹下存在名为 background2 的图片文件，
+    支持 .jpg .png .webp 等常见格式。代码中默认使用 background2.jpg，
+    若您的图片后缀为 .png 或其他，请将 CSS 中 background-image: url('../assets/background2.jpg');
+    修改为正确路径，例如 background-image: url('./background2.png');
+    同时为了最佳显示效果，推荐图片分辨率 1920x1080 以上。
+-->
+</body>
+</html>

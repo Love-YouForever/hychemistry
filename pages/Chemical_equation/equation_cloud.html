@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
+    <title>化学方程式词云</title>
+    <link rel="stylesheet" href="../../assets/css/equation-cloud.css">
+</head>
+<body>
+    <div id="page-loading-overlay" aria-live="polite">
+        <div class="loading-card">
+            <div class="loading-spinner"></div>
+            <div class="loading-title">化学方程式词云加载中</div>
+            <div class="loading-desc" id="page-loading-text">正在初始化场景与交互组件...</div>
+        </div>
+    </div>
+    <div id="device-indicator"></div>
+    <button id="home-btn">返回主页</button>
+    <button id="challenge-btn">挑战</button>
+    <div id="info">✨ 单指拖拽旋转 | 双指捏合缩放 | 悬浮/点击方程式放大</div>
+    <div id="controls-panel">
+        <button id="backBtn" style="display:none;">↺ 返回元素词云</button>
+        <button id="cameraToggleBtn" onclick="window.__chemicalEquationHandleCameraToggle && window.__chemicalEquationHandleCameraToggle(event)">📷 手势控制</button>
+        <button id="autoRotateBtn">⏵ 自动旋转 ON</button>
+    </div>
+    <div id="equationMagnifier" class="equation-magnifier"></div>
+    <div id="gestureToast" class="gesture-toast"></div>
+
+    <div id="camera-container">
+        <video id="camera-video" playsinline muted></video>
+        <canvas id="camera-canvas" width="320" height="240"></canvas>
+        <div id="camera-status">📷 点击按钮开启</div>
+    </div>
+    <div id="hand-cursor"></div>
+    <div id="hand-cursor-label"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script src="./vendor/tf.min.js"></script>
+    <script src="./vendor/handpose.js"></script>
+    <script>
+        window.__chemicalEquationPendingCameraToggle = false;
+        window.__chemicalEquationHandleCameraToggle = function () {
+            window.__chemicalEquationPendingCameraToggle = true;
+            const camStatus = document.getElementById('camera-status');
+            const cameraContainer = document.getElementById('camera-container');
+            const cameraToggleBtn = document.getElementById('cameraToggleBtn');
+            if (camStatus) camStatus.textContent = '📷 请求摄像头...';
+            if (cameraContainer) cameraContainer.classList.add('visible');
+            if (cameraToggleBtn) cameraToggleBtn.textContent = '📷 启动中...';
+        };
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+        const tf = globalThis.tf;
+        const handpose = globalThis.handpose;
+        const pageLoadingOverlay = document.getElementById('page-loading-overlay');
+        const pageLoadingText = document.getElementById('page-loading-text');
+
+        function updatePageLoadingText(text) {
+            if (pageLoadingText) pageLoadingText.textContent = text;
+        }
+
+        function hidePageLoadingOverlay() {
+            if (!pageLoadingOverlay || pageLoadingOverlay.classList.contains('hidden')) return;
+            pageLoadingOverlay.classList.add('hidden');
+            setTimeout(() => {
+                if (pageLoadingOverlay && pageLoadingOverlay.parentNode) {
+                    pageLoadingOverlay.parentNode.removeChild(pageLoadingOverlay);
+                }
+            }, 450);
+        }
+
+        updatePageLoadingText('正在初始化渲染器与元素场景...');
+
+        // ================================================================
+        // ★★★★★ 设备检测与自适应系统 ★★★★★
+        // ================================================================
+        const DeviceAdapter = (() => {
+            const ua = navigator.userAgent || '';
+            const platform = navigator.platform || '';
+
+            // 设备类型检测
+            const isMobileUA = /Mobi|Android|iPhone|iPod|Opera Mini|IEMobile|WPDesktop/i.test(ua);
+            const isTabletUA = /iPad|Android(?!.*Mobi)|Tablet|PlayBook|Silk/i.test(ua);
+            const isIPad = /Macintosh/i.test(ua) && 'ontouchend' in document;
+            const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const isSmallScreen = window.innerWidth <= 768;
+            const isMediumScreen = window.innerWidth > 768 && window.innerWidth <= 1024;
+            const isLargeScreen = window.innerWidth > 1024;
+
+            let deviceType; // 'phone', 'tablet', 'desktop'
+            if (isMobileUA && !isTabletUA) {
+                deviceType = 'phone';
+            } else if (isTabletUA || isIPad || (hasTouch && isMediumScreen)) {
+                deviceType = 'tablet';
+            } else {
+                deviceType = 'desktop';
+            }
+
+            // 屏幕尺寸分级
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            const dpr = Math.min(window.devicePixelRatio || 1, 3);
+            const aspect = w / h;
+            const isLandscape = w > h;
+            const diag = Math.sqrt(w * w + h * h);
+
+            // 尺寸级别
+            let sizeClass;
+            if (w <= 360) sizeClass = 'xs';
+            else if (w <= 480) sizeClass = 'sm';
+            else if (w <= 768) sizeClass = 'md';
+            else if (w <= 1024) sizeClass = 'lg';
+            else if (w <= 1440) sizeClass = 'xl';
+            else if (w <= 1920) sizeClass = '2xl';
+            else sizeClass = '3xl';
+
+            // 基于设备和屏幕计算的参数
+            function getSceneParams() {
+                const base = {
+                    cameraDistance: 13,
+                    cameraFOV: 45,
+                    sphereRadius: 5.3,
+                    particleCount: 2500,
+                    particleSize: 0.08,
+                    flowParticleCount: 1200,
+                    flowParticleSize: 0.06,
+                    starCount: 800,
+                    starSize: 0.08,
+                    coreSize: 0.45,
+                    labelFontScale: 1.0,
+                    eqFontScale: 1.0,
+                    floatAmplitude: 0.1,
+                    fogDensity: 0.003,
+                    autoRotateSpeed: 1.0,
+                    minDist: 5,
+                    maxDist: 25
+                };
+
+                switch (sizeClass) {
+                    case 'xs':
+                        return { ...base,
+                            cameraDistance: 16,
+                            cameraFOV: 50,
+                            sphereRadius: 4.8,
+                            particleCount: 1000,
+                            particleSize: 0.06,
+                            flowParticleCount: 600,
+                            flowParticleSize: 0.04,
+                            starCount: 400,
+                            starSize: 0.06,
+                            coreSize: 0.35,
+                            labelFontScale: 0.65,
+                            eqFontScale: 0.6,
+                            floatAmplitude: 0.08,
+                            fogDensity: 0.004,
+                            autoRotateSpeed: 0.8,
+                            minDist: 6,
+                            maxDist: 28
+                        };
+                    case 'sm':
+                        return { ...base,
+                            cameraDistance: 15,
+                            cameraFOV: 48,
+                            sphereRadius: 5.0,
+                            particleCount: 1400,
+                            particleSize: 0.07,
+                            flowParticleCount: 700,
+                            flowParticleSize: 0.05,
+                            starCount: 500,
+                            starSize: 0.07,
+                            coreSize: 0.38,
+                            labelFontScale: 0.72,
+                            eqFontScale: 0.68,
+                            floatAmplitude: 0.09,
+                            fogDensity: 0.0035,
+                            autoRotateSpeed: 0.85,
+                            minDist: 5.5,
+                            maxDist: 27
+                        };
+                    case 'md':
+                        return { ...base,
+                            cameraDistance: 14,
+                            cameraFOV: 47,
+                            sphereRadius: 5.1,
+                            particleCount: 1800,
+                            particleSize: 0.07,
+                            flowParticleCount: 900,
+                            flowParticleSize: 0.05,
+                            starCount: 600,
+                            starSize: 0.07,
+                            coreSize: 0.4,
+                            labelFontScale: 0.82,
+                            eqFontScale: 0.78,
+                            floatAmplitude: 0.09,
+                            fogDensity: 0.003,
+                            autoRotateSpeed: 0.9,
+                            minDist: 5,
+                            maxDist: 26
+                        };
+                    case 'lg':
+                        return { ...base,
+                            cameraDistance: 13.5,
+                            sphereRadius: 5.2,
+                            particleCount: 2200,
+                            labelFontScale: 0.9,
+                            eqFontScale: 0.88
+                        };
+                    case '2xl':
+                        return { ...base,
+                            cameraDistance: 12.5,
+                            sphereRadius: 5.5,
+                            particleCount: 3000,
+                            flowParticleCount: 1500,
+                            starCount: 1000,
+                            labelFontScale: 1.05,
+                            eqFontScale: 1.05,
+                            coreSize: 0.5
+                        };
+                    case '3xl':
+                        return { ...base,
+                            cameraDistance: 12,
+                            cameraFOV: 42,
+                            sphereRadius: 5.8,
+                            particleCount: 4000,
+                            particleSize: 0.1,
+                            flowParticleCount: 2000,
+                            flowParticleSize: 0.08,
+                            starCount: 1500,
+                            starSize: 0.1,
+                            coreSize: 0.55,
+                            labelFontScale: 1.2,
+                            eqFontScale: 1.15,
+                            autoRotateSpeed: 1.2,
+                            minDist: 4,
+                            maxDist: 30
+                        };
+                    default:
+                        return base;
+                }
+            }
+
+            // 更新提示文字
+            function getInfoText() {
+                if (deviceType === 'phone') {
+                    return '👆 单指旋转 | 🤏 双指缩放 | 点击查看方程式';
+                } else if (deviceType === 'tablet') {
+                    return '👆 触摸旋转 | 🤏 捏合缩放 | 点击元素查看方程式';
+                } else {
+                    return '✨ 鼠标拖拽旋转 | 滚轮缩放 | 悬浮/点击方程式放大';
+                }
+            }
+
+            // 调试指示器
+            function showIndicator() {
+                const el = document.getElementById('device-indicator');
+                if (el) {
+                    el.textContent = `${deviceType} | ${sizeClass} | ${w}×${h} @${dpr}x | ${isLandscape ? '横' : '竖'}`;
+                    el.style.opacity = '0.6';
+                    setTimeout(() => el.style.opacity = '0', 5000);
+                }
+            }
+
+            return {
+                deviceType,
+                sizeClass,
+                isMobile: deviceType === 'phone',
+                isTablet: deviceType === 'tablet',
+                isDesktop: deviceType === 'desktop',
+                hasTouch,
+                width: w,
+                height: h,
+                dpr,
+                aspect,
+                isLandscape,
+                getSceneParams,
+                getInfoText,
+                showIndicator
+            };
+        })();
+
+        // 应用设备检测结果
+        DeviceAdapter.showIndicator();
+        document.getElementById('info').innerHTML = DeviceAdapter.getInfoText();
+
+        const SP = DeviceAdapter.getSceneParams();
+
+        // ================= 数据集 =================
+        const elements = [
+            { symbol: "H", name: "氢", color: "#88ccff", equations: [
+                "2H<sub>2</sub> + O<sub>2</sub> → 2H<sub>2</sub>O",
+                "Zn + H<sub>2</sub>SO<sub>4</sub> → ZnSO<sub>4</sub> + H<sub>2</sub>↑",
+                "2Na + 2H<sub>2</sub>O → 2NaOH + H<sub>2</sub>↑",
+                "H<sub>2</sub> + Cl<sub>2</sub> → 2HCl",
+                "CH<sub>4</sub> + 2O<sub>2</sub> → CO<sub>2</sub> + 2H<sub>2</sub>O",
+                "C + H<sub>2</sub>O(g) → CO + H<sub>2</sub>",
+                "N<sub>2</sub> + 3H<sub>2</sub> ⇌ 2NH<sub>3</sub>",
+                "2Al + 6HCl → 2AlCl<sub>3</sub> + 3H<sub>2</sub>↑",
+                "CaH<sub>2</sub> + 2H<sub>2</sub>O → Ca(OH)<sub>2</sub> + 2H<sub>2</sub>↑",
+                "2H<sub>2</sub>O → 2H<sub>2</sub>↑ + O<sub>2</sub>↑ (电解)",
+                "H<sub>2</sub> + F<sub>2</sub> → 2HF",
+                "C<sub>2</sub>H<sub>4</sub> + H<sub>2</sub> → C<sub>2</sub>H<sub>6</sub>",
+                "2H<sub>2</sub> + 2NO → N<sub>2</sub> + 2H<sub>2</sub>O"
+            ] },
+            { symbol: "O", name: "氧", color: "#66ffaa", equations: [
+                "C + O<sub>2</sub> → CO<sub>2</sub>",
+                "2Mg + O<sub>2</sub> → 2MgO",
+                "4P + 5O<sub>2</sub> → 2P<sub>2</sub>O<sub>5</sub>",
+                "2H<sub>2</sub>O<sub>2</sub> → 2H<sub>2</sub>O + O<sub>2</sub>↑",
+                "2SO<sub>2</sub> + O<sub>2</sub> ⇌ 2SO<sub>3</sub>",
+                "C<sub>2</sub>H<sub>5</sub>OH + 3O<sub>2</sub> → 2CO<sub>2</sub> + 3H<sub>2</sub>O",
+                "4FeS<sub>2</sub> + 11O<sub>2</sub> → 2Fe<sub>2</sub>O<sub>3</sub> + 8SO<sub>2</sub>",
+                "2Cu + O<sub>2</sub> → 2CuO",
+                "4NH<sub>3</sub> + 5O<sub>2</sub> → 4NO + 6H<sub>2</sub>O",
+                "2Zn + O<sub>2</sub> → 2ZnO",
+                "C<sub>3</sub>H<sub>8</sub> + 5O<sub>2</sub> → 3CO<sub>2</sub> + 4H<sub>2</sub>O",
+                "2CO + O<sub>2</sub> → 2CO<sub>2</sub>",
+                "4Fe + 3O<sub>2</sub> → 2Fe<sub>2</sub>O<sub>3</sub>"
+            ] },
+            { symbol: "C", name: "碳", color: "#ffaa66", equations: [
+                "C + O<sub>2</sub> → CO<sub>2</sub>","2C + O<sub>2</sub> → 2CO",
+                "Fe<sub>2</sub>O<sub>3</sub> + 3CO → 2Fe + 3CO<sub>2</sub>",
+                "CaCO<sub>3</sub> → CaO + CO<sub>2</sub>↑",
+                "CH<sub>4</sub> + 2O<sub>2</sub> → CO<sub>2</sub> + 2H<sub>2</sub>O",
+                "C + 2H<sub>2</sub>SO<sub>4</sub>(浓) → CO<sub>2</sub>↑ + 2SO<sub>2</sub>↑ + 2H<sub>2</sub>O",
+                "2C + SiO<sub>2</sub> → Si + 2CO↑",
+                "CO<sub>2</sub> + C → 2CO",
+                "CaC<sub>2</sub> + 2H<sub>2</sub>O → Ca(OH)<sub>2</sub> + C<sub>2</sub>H<sub>2</sub>↑",
+                "6CO<sub>2</sub> + 6H<sub>2</sub>O → C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> + 6O<sub>2</sub>",
+                "C + H<sub>2</sub>O → CO + H<sub>2</sub>",
+                "2C + CaO → CaC<sub>2</sub> + CO",
+                "CO + 2H<sub>2</sub> → CH<sub>3</sub>OH"
+            ] },
+            { symbol: "Na", name: "钠", color: "#ffaa88", equations: [
+                "2Na + 2H<sub>2</sub>O → 2NaOH + H<sub>2</sub>↑",
+                "NaCl + AgNO<sub>3</sub> → AgCl↓ + NaNO<sub>3</sub>",
+                "2Na + Cl<sub>2</sub> → 2NaCl",
+                "NaOH + HCl → NaCl + H<sub>2</sub>O",
+                "2NaOH + CuSO<sub>4</sub> → Cu(OH)<sub>2</sub>↓ + Na<sub>2</sub>SO<sub>4</sub>",
+                "Na<sub>2</sub>CO<sub>3</sub> + Ca(OH)<sub>2</sub> → CaCO<sub>3</sub>↓ + 2NaOH",
+                "2NaHCO<sub>3</sub> → Na<sub>2</sub>CO<sub>3</sub> + CO<sub>2</sub>↑ + H<sub>2</sub>O",
+                "Na<sub>2</sub>O + H<sub>2</sub>O → 2NaOH",
+                "2Na + O<sub>2</sub> → Na<sub>2</sub>O<sub>2</sub>"
+            ] },
+            { symbol: "Mg", name: "镁", color: "#88ffaa", equations: [
+                "2Mg + O<sub>2</sub> → 2MgO",
+                "Mg + H<sub>2</sub>SO<sub>4</sub> → MgSO<sub>4</sub> + H<sub>2</sub>↑",
+                "Mg + 2HCl → MgCl<sub>2</sub> + H<sub>2</sub>↑",
+                "3Mg + N<sub>2</sub> → Mg<sub>3</sub>N<sub>2</sub>",
+                "Mg + 2H<sub>2</sub>O → Mg(OH)<sub>2</sub> + H<sub>2</sub>↑",
+                "MgO + H<sub>2</sub>O → Mg(OH)<sub>2</sub>",
+                "Mg(OH)<sub>2</sub> + 2HCl → MgCl<sub>2</sub> + 2H<sub>2</sub>O",
+                "Mg + CO<sub>2</sub> → 2MgO + C"
+            ] },
+            { symbol: "Al", name: "铝", color: "#99ccff", equations: [
+                "2Al + 6HCl → 2AlCl<sub>3</sub> + 3H<sub>2</sub>↑",
+                "Al(OH)<sub>3</sub> + 3HCl → AlCl<sub>3</sub> + 3H<sub>2</sub>O",
+                "2Al + 2NaOH + 2H<sub>2</sub>O → 2NaAlO<sub>2</sub> + 3H<sub>2</sub>↑",
+                "4Al + 3O<sub>2</sub> → 2Al<sub>2</sub>O<sub>3</sub>",
+                "2Al + Fe<sub>2</sub>O<sub>3</sub> → Al<sub>2</sub>O<sub>3</sub> + 2Fe",
+                "AlCl<sub>3</sub> + 3NH<sub>3</sub>·H<sub>2</sub>O → Al(OH)<sub>3</sub>↓ + 3NH<sub>4</sub>Cl"
+            ] },
+            { symbol: "Fe", name: "铁", color: "#ff8866", equations: [
+                "3Fe + 2O<sub>2</sub> → Fe<sub>3</sub>O<sub>4</sub>",
+                "Fe + CuSO<sub>4</sub> → FeSO<sub>4</sub> + Cu",
+                "Fe<sub>2</sub>O<sub>3</sub> + 3CO → 2Fe + 3CO<sub>2</sub>",
+                "Fe + 2HCl → FeCl<sub>2</sub> + H<sub>2</sub>↑",
+                "2FeCl<sub>3</sub> + Fe → 3FeCl<sub>2</sub>",
+                "Fe + S → FeS",
+                "4Fe(OH)<sub>2</sub> + O<sub>2</sub> + 2H<sub>2</sub>O → 4Fe(OH)<sub>3</sub>",
+                "2Fe + 3Cl<sub>2</sub> → 2FeCl<sub>3</sub>"
+            ] },
+            { symbol: "Cu", name: "铜", color: "#ff9966", equations: [
+                "CuO + H<sub>2</sub> → Cu + H<sub>2</sub>O",
+                "2Cu + O<sub>2</sub> → 2CuO",
+                "Fe + CuSO<sub>4</sub> → FeSO<sub>4</sub> + Cu",
+                "Cu + 2AgNO<sub>3</sub> → Cu(NO<sub>3</sub>)<sub>2</sub> + 2Ag",
+                "Cu + 2H<sub>2</sub>SO<sub>4</sub>(浓) → CuSO<sub>4</sub> + SO<sub>2</sub>↑ + 2H<sub>2</sub>O",
+                "Cu + 4HNO<sub>3</sub>(浓) → Cu(NO<sub>3</sub>)<sub>2</sub> + 2NO<sub>2</sub>↑ + 2H<sub>2</sub>O"
+            ] },
+            { symbol: "Zn", name: "锌", color: "#88ddff", equations: [
+                "Zn + H<sub>2</sub>SO<sub>4</sub> → ZnSO<sub>4</sub> + H<sub>2</sub>↑",
+                "Zn + CuSO<sub>4</sub> → ZnSO<sub>4</sub> + Cu",
+                "Zn + 2HCl → ZnCl<sub>2</sub> + H<sub>2</sub>↑",
+                "2Zn + O<sub>2</sub> → 2ZnO",
+                "ZnO + H<sub>2</sub>SO<sub>4</sub> → ZnSO<sub>4</sub> + H<sub>2</sub>O"
+            ] },
+            { symbol: "Cl", name: "氯", color: "#77ffaa", equations: [
+                "Cl<sub>2</sub> + H<sub>2</sub>O → HCl + HClO",
+                "2Na + Cl<sub>2</sub> → 2NaCl",
+                "H<sub>2</sub> + Cl<sub>2</sub> → 2HCl",
+                "2Fe + 3Cl<sub>2</sub> → 2FeCl<sub>3</sub>",
+                "Cl<sub>2</sub> + 2NaOH → NaCl + NaClO + H<sub>2</sub>O",
+                "MnO<sub>2</sub> + 4HCl → MnCl<sub>2</sub> + Cl<sub>2</sub>↑ + 2H<sub>2</sub>O"
+            ] },
+            { symbol: "Ca", name: "钙", color: "#ffcc99", equations: [
+                "CaCO<sub>3</sub> → CaO + CO<sub>2</sub>↑",
+                "Ca(OH)<sub>2</sub> + CO<sub>2</sub> → CaCO<sub>3</sub>↓ + H<sub>2</sub>O",
+                "CaO + H<sub>2</sub>O → Ca(OH)<sub>2</sub>",
+                "Ca + 2H<sub>2</sub>O → Ca(OH)<sub>2</sub> + H<sub>2</sub>↑",
+                "CaCO<sub>3</sub> + 2HCl → CaCl<sub>2</sub> + CO<sub>2</sub>↑ + H<sub>2</sub>O"
+            ] },
+            { symbol: "N", name: "氮", color: "#aaffdd", equations: [
+                "N<sub>2</sub> + 3H<sub>2</sub> ⇌ 2NH<sub>3</sub>",
+                "4NH<sub>3</sub> + 5O<sub>2</sub> → 4NO + 6H<sub>2</sub>O",
+                "2NO + O<sub>2</sub> → 2NO<sub>2</sub>",
+                "NH<sub>3</sub> + HCl → NH<sub>4</sub>Cl",
+                "3NO<sub>2</sub> + H<sub>2</sub>O → 2HNO<sub>3</sub> + NO"
+            ] },
+            { symbol: "S", name: "硫", color: "#ffdd88", equations: [
+                "S + O<sub>2</sub> → SO<sub>2</sub>",
+                "2SO<sub>2</sub> + O<sub>2</sub> ⇌ 2SO<sub>3</sub>",
+                "Fe + S → FeS",
+                "SO<sub>3</sub> + H<sub>2</sub>O → H<sub>2</sub>SO<sub>4</sub>",
+                "BaCl<sub>2</sub> + H<sub>2</sub>SO<sub>4</sub> → BaSO<sub>4</sub>↓ + 2HCl"
+            ] },
+            { symbol: "Ag", name: "银", color: "#ccccff", equations: [
+                "AgNO<sub>3</sub> + NaCl → AgCl↓ + NaNO<sub>3</sub>",
+                "Cu + 2AgNO<sub>3</sub> → Cu(NO<sub>3</sub>)<sub>2</sub> + 2Ag",
+                "Zn + 2AgNO<sub>3</sub> → Zn(NO<sub>3</sub>)<sub>2</sub> + 2Ag"
+            ] },
+            { symbol: "K", name: "钾", color: "#ff99cc", equations: [
+                "2K + 2H<sub>2</sub>O → 2KOH + H<sub>2</sub>↑",
+                "2KClO<sub>3</sub> → 2KCl + 3O<sub>2</sub>↑",
+                "KOH + HCl → KCl + H<sub>2</sub>O"
+            ] },
+            { symbol: "Si", name: "硅", color: "#aaccff", equations: [
+                "Si + O<sub>2</sub> → SiO<sub>2</sub>",
+                "SiO<sub>2</sub> + 2C → Si + 2CO↑",
+                "SiO<sub>2</sub> + 4HF → SiF<sub>4</sub>↑ + 2H<sub>2</sub>O"
+            ] },
+            { symbol: "P", name: "磷", color: "#ffaa77", equations: [
+                "4P + 5O<sub>2</sub> → 2P<sub>2</sub>O<sub>5</sub>",
+                "P<sub>2</sub>O<sub>5</sub> + 3H<sub>2</sub>O → 2H<sub>3</sub>PO<sub>4</sub>"
+            ] },
+            { symbol: "Br", name: "溴", color: "#ffaa99", equations: [
+                "Br<sub>2</sub> + H<sub>2</sub>O ⇌ HBr + HBrO",
+                "2NaBr + Cl<sub>2</sub> → 2NaCl + Br<sub>2</sub>",
+                "Br<sub>2</sub> + 2KI → 2KBr + I<sub>2</sub>"
+            ] }
+        ];
+
+        // ========== 初始化场景 ==========
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050b1a);
+        scene.fog = new THREE.FogExp2(0x050b1a, SP.fogDensity);
+
+        const camera = new THREE.PerspectiveCamera(SP.cameraFOV, DeviceAdapter.width / DeviceAdapter.height, 0.1, 1000);
+        camera.position.set(0, 1.5, SP.cameraDistance);
+        camera.lookAt(0, 0, 0);
+
+        const webglRenderer = new THREE.WebGLRenderer({ antialias: !DeviceAdapter.isMobile, powerPreference: DeviceAdapter.isMobile ? 'low-power' : 'high-performance' });
+        webglRenderer.setSize(DeviceAdapter.width, DeviceAdapter.height);
+        webglRenderer.setPixelRatio(Math.min(DeviceAdapter.dpr, DeviceAdapter.isMobile ? 2 : 2.5));
+        webglRenderer.setClearColor(0x050b1a, 1.0);
+        document.body.appendChild(webglRenderer.domElement);
+
+        const css2DRenderer = new CSS2DRenderer();
+        css2DRenderer.setSize(DeviceAdapter.width, DeviceAdapter.height);
+        css2DRenderer.domElement.style.position = 'absolute';
+        css2DRenderer.domElement.style.top = '0px';
+        css2DRenderer.domElement.style.left = '0px';
+        css2DRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(css2DRenderer.domElement);
+
+        const controls = new OrbitControls(camera, webglRenderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = DeviceAdapter.isMobile ? 0.08 : 0.05;
+        controls.rotateSpeed = DeviceAdapter.isMobile ? 0.8 : 1.0;
+        controls.zoomSpeed = DeviceAdapter.isMobile ? 1.5 : 1.2;
+        controls.enableZoom = true;
+        controls.enablePan = false;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = SP.autoRotateSpeed;
+        controls.target.set(0, 0, 0);
+        controls.minDistance = SP.minDist;
+        controls.maxDistance = SP.maxDist;
+        controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+
+        const autoRotateBtn = document.getElementById('autoRotateBtn');
+        let autoRotateEnabled = true;
+        autoRotateBtn.addEventListener('click', () => {
+            autoRotateEnabled = !autoRotateEnabled;
+            controls.autoRotate = autoRotateEnabled;
+            autoRotateBtn.innerHTML = autoRotateEnabled ? '⏵ 自动旋转 ON' : '⏸ 自动旋转 OFF';
+            if (autoRotateEnabled) autoRotateBtn.classList.add('toggle-active');
+            else autoRotateBtn.classList.remove('toggle-active');
+        });
+        autoRotateBtn.classList.add('toggle-active');
+
+        // ========== 粒子系统（使用自适应参数） ==========
+        const particleCount = SP.particleCount;
+        const particlesGeometry = new THREE.BufferGeometry();
+        const positionsArray = new Float32Array(particleCount * 3);
+        const colorsArray = new Float32Array(particleCount * 3);
+        const originalParticlePos = new Float32Array(particleCount * 3);
+
+        for (let i = 0; i < particleCount; i++) {
+            const rad = 4.8 + Math.random() * 1.7;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            const x = rad * Math.sin(phi) * Math.cos(theta);
+            const y = rad * Math.sin(phi) * Math.sin(theta);
+            const z = rad * Math.cos(phi);
+            positionsArray[i*3] = x; positionsArray[i*3+1] = y; positionsArray[i*3+2] = z;
+            originalParticlePos[i*3] = x; originalParticlePos[i*3+1] = y; originalParticlePos[i*3+2] = z;
+            const color = new THREE.Color().setHSL(0.55 + Math.random()*0.15, 0.9, 0.5 + Math.random()*0.3);
+            colorsArray[i*3] = color.r; colorsArray[i*3+1] = color.g; colorsArray[i*3+2] = color.b;
+        }
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positionsArray, 3));
+        particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorsArray, 3));
+        const particleMaterial = new THREE.PointsMaterial({
+            size: SP.particleSize, vertexColors: true, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending
+        });
+        const particleSystem = new THREE.Points(particlesGeometry, particleMaterial);
+        scene.add(particleSystem);
+
+        const flowParticleCount = SP.flowParticleCount;
+        const flowGeometry = new THREE.BufferGeometry();
+        const flowPositions = new Float32Array(flowParticleCount * 3);
+        for (let i = 0; i < flowParticleCount; i++) {
+            const angle = (i / flowParticleCount) * Math.PI * 2;
+            flowPositions[i*3] = Math.cos(angle) * 5.4;
+            flowPositions[i*3+1] = Math.sin(angle * 3) * 1.2;
+            flowPositions[i*3+2] = Math.sin(angle) * 5.4;
+        }
+        flowGeometry.setAttribute('position', new THREE.BufferAttribute(flowPositions, 3));
+        const flowRing = new THREE.Points(flowGeometry, new THREE.PointsMaterial({
+            color: 0x44aaff, size: SP.flowParticleSize, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending
+        }));
+        scene.add(flowRing);
+
+        const starCount = SP.starCount;
+        const starGeo = new THREE.BufferGeometry();
+        const starPos = [];
+        for (let i = 0; i < starCount; i++) {
+            starPos.push((Math.random()-0.5)*200, (Math.random()-0.5)*100, (Math.random()-0.5)*80-40);
+        }
+        starGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(starPos), 3));
+        const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({
+            color: 0xffffff, size: SP.starSize, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending
+        }));
+        scene.add(stars);
+
+        const coreGlow = new THREE.Mesh(
+            new THREE.SphereGeometry(SP.coreSize, 16, 16),
+            new THREE.MeshBasicMaterial({ color: 0x88aaff, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending })
+        );
+        scene.add(coreGlow);
+
+        scene.add(new THREE.Mesh(
+            new THREE.SphereGeometry(SP.sphereRadius + 0.1, 32, 16),
+            new THREE.MeshBasicMaterial({ color: 0x4488cc, wireframe: true, transparent: true, opacity: 0.1 })
+        ));
+
+        const innerGlowSphere = new THREE.Mesh(
+            new THREE.SphereGeometry(4.8, DeviceAdapter.isMobile ? 24 : 48, DeviceAdapter.isMobile ? 12 : 24),
+            new THREE.MeshBasicMaterial({ color: 0x2266aa, transparent: true, opacity: 0.03, side: THREE.BackSide })
+        );
+        scene.add(innerGlowSphere);
+
+        // ========== 球面分布 ==========
+        function getSpherePoints(n, radius) {
+            const points = [];
+            const r = radius || SP.sphereRadius;
+            const minLat = -70 * Math.PI / 180, maxLat = 70 * Math.PI / 180;
+            const sinMin = Math.sin(minLat), sinMax = Math.sin(maxLat);
+            for (let i = 0; i < n; i++) {
+                const lon = Math.random() * Math.PI * 2;
+                const sinLat = sinMin + Math.random() * (sinMax - sinMin);
+                const lat = Math.asin(sinLat);
+                points.push(new THREE.Vector3(
+                    r * Math.cos(lat) * Math.cos(lon),
+                    r * Math.sin(lat),
+                    r * Math.cos(lat) * Math.sin(lon)
+                ));
+            }
+            return points;
+        }
+
+        // ========== 标签管理（使用自适应字体缩放） ==========
+        let currentLabels = [];
+        let currentState = 'elements';
+        let animating = false;
+        const backBtn = document.getElementById('backBtn');
+        const magnifierDiv = document.getElementById('equationMagnifier');
+
+        function showMagnifier(html) { magnifierDiv.innerHTML = html; magnifierDiv.style.display = 'block'; }
+        function hideMagnifier() { magnifierDiv.style.display = 'none'; }
+
+        function createElementLabels() {
+            const labels = [];
+            const positions = getSpherePoints(elements.length, SP.sphereRadius);
+            elements.forEach((elem, idx) => {
+                const div = document.createElement('div');
+                div.className = 'label-base element-label';
+                const bf = (1.0 + Math.random() * 0.9) * SP.labelFontScale;
+                div.innerHTML = `<span style="font-weight:bold;font-size:${bf}rem;">${elem.symbol}</span><span style="font-size:${Math.max(0.5,bf*0.6)}rem;margin-left:${4 * SP.labelFontScale}px;opacity:0.8;">${elem.name}</span>`;
+                div.style.borderColor = elem.color;
+                div.style.color = elem.color;
+                div.style.boxShadow = `0 0 12px rgba(0,0,0,0.4), 0 0 6px ${elem.color}80`;
+                div.style.pointerEvents = 'auto';
+                div.addEventListener('click', e => { e.stopPropagation(); if (!animating && currentState === 'elements') transitionToEquations(elem); });
+                div.addEventListener('pointerdown', e => e.stopPropagation());
+                div.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+                const label = new CSS2DObject(div);
+                label.position.copy(positions[idx]);
+                label.userData = { originalPos: positions[idx].clone(), floatSpeed: 0.4+Math.random()*0.8, floatPhase: Math.random()*Math.PI*2, floatAmplitude: SP.floatAmplitude };
+                scene.add(label);
+                labels.push(label);
+            });
+            return labels;
+        }
+
+        function createEquationLabels(element) {
+            const equations = element.equations;
+            if (!equations.length) return [];
+            const positions = getSpherePoints(equations.length, SP.sphereRadius);
+            const labels = [];
+            equations.forEach((eq, idx) => {
+                const div = document.createElement('div');
+                div.className = 'label-base equation-label';
+                div.innerHTML = eq;
+                const baseFontSize = (0.72 + Math.random() * 0.43) * SP.eqFontScale;
+                div.style.fontSize = `${baseFontSize}rem`;
+                div.style.pointerEvents = 'auto';
+                div.addEventListener('mouseenter', () => showMagnifier(eq));
+                div.addEventListener('mouseleave', () => hideMagnifier());
+                div.addEventListener('click', e => { e.stopPropagation(); showMagnifier(eq); setTimeout(hideMagnifier, 3000); });
+                div.addEventListener('pointerdown', e => e.stopPropagation());
+                div.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+                const label = new CSS2DObject(div);
+                label.position.copy(positions[idx]);
+                label.userData = { originalPos: positions[idx].clone(), floatSpeed: 0.5+Math.random()*0.7, floatPhase: Math.random()*Math.PI*2, floatAmplitude: SP.floatAmplitude * 1.2 };
+                scene.add(label);
+                labels.push(label);
+            });
+            return labels;
+        }
+
+        function shrinkLabels(labels, cb) {
+            if (!labels.length) { cb(); return; }
+            const dur = 480, start = performance.now(), sp = labels.map(l => l.position.clone());
+            function upd(now) {
+                const t = Math.min(1, (now-start)/dur), e = 1-Math.pow(1-t,3);
+                labels.forEach((l,i) => { l.position.copy(sp[i].clone().lerp(new THREE.Vector3(),e)); l.element.style.transform=`scale(${1-e})`; l.element.style.opacity=1-e; });
+                if (t < 1) requestAnimationFrame(upd); else { labels.forEach(l => scene.remove(l)); cb(); }
+            }
+            requestAnimationFrame(upd);
+        }
+
+        function expandLabels(labels, tp, cb) {
+            if (!labels.length) { cb(); return; }
+            const dur = 500, start = performance.now();
+            labels.forEach(l => { l.position.set(0,0,0); l.element.style.transform='scale(0)'; l.element.style.opacity='0'; });
+            function upd(now) {
+                const t = Math.min(1,(now-start)/dur), e = 1-Math.pow(1-t,2);
+                labels.forEach((l,i) => { l.position.copy(new THREE.Vector3().lerp(tp[i],e)); l.element.style.transform=`scale(${e})`; l.element.style.opacity=e; });
+                if (t < 1) requestAnimationFrame(upd);
+                else { labels.forEach((l,i) => { l.position.copy(tp[i]); l.element.style.transform='scale(1)'; l.element.style.opacity='1'; }); cb(); }
+            }
+            requestAnimationFrame(upd);
+        }
+
+        function transitionToEquations(element) {
+            if (animating) return; animating = true; backBtn.style.display = 'inline-block'; hideMagnifier();
+            shrinkLabels(currentLabels, () => {
+                currentLabels.forEach(l => scene.remove(l)); currentLabels = [];
+                const nl = createEquationLabels(element);
+                expandLabels(nl, nl.map(l=>l.userData.originalPos), () => { currentLabels=nl; currentState='equations'; animating=false; });
+            });
+        }
+
+        function transitionToElements() {
+            if (animating || currentState !== 'equations') return; animating = true; backBtn.style.display = 'none'; hideMagnifier();
+            shrinkLabels(currentLabels, () => {
+                currentLabels.forEach(l => scene.remove(l)); currentLabels = [];
+                const nl = createElementLabels();
+                expandLabels(nl, nl.map(l=>l.userData.originalPos), () => { currentLabels=nl; currentState='elements'; animating=false; });
+            });
+        }
+
+        backBtn.addEventListener('click', transitionToElements);
+        currentLabels = createElementLabels();
+
+        document.getElementById('home-btn').addEventListener('click', () => { window.location.href = "../../主页.html"; });
+        const challengeBtn = document.getElementById('challenge-btn');
+        if (challengeBtn) challengeBtn.addEventListener('click', () => { window.location.href = "test.html"; });
+
+        // ========== 交互效果系统 ==========
+        const raycaster = new THREE.Raycaster();
+        const pointerNDC = new THREE.Vector2();
+        const hitSphere = new THREE.Mesh(new THREE.SphereGeometry(6.0, 32, 32), new THREE.MeshBasicMaterial({ visible: false }));
+        scene.add(hitSphere);
+
+        function createScreenRipple(cx, cy, color='rgba(136,221,255,0.8)') {
+            const r = document.createElement('div'); r.className='touch-ripple';
+            r.style.left=(cx-5)+'px'; r.style.top=(cy-5)+'px'; r.style.borderColor=color;
+            document.body.appendChild(r); r.addEventListener('animationend', ()=>r.remove());
+        }
+        function createTrailDot(cx, cy) {
+            const d = document.createElement('div'); d.className='touch-trail-dot';
+            d.style.left=(cx-4)+'px'; d.style.top=(cy-4)+'px';
+            document.body.appendChild(d); d.addEventListener('animationend', ()=>d.remove());
+        }
+        function createZoomPulse(isIn) {
+            const p = document.createElement('div'); p.className='zoom-pulse';
+            p.style.borderColor = isIn ? 'rgba(136,255,170,0.6)' : 'rgba(255,136,100,0.6)';
+            document.body.appendChild(p); p.addEventListener('animationend', ()=>p.remove());
+        }
+
+        const ripple3DPool = [];
+        const MAX_3D_RIPPLES = DeviceAdapter.isMobile ? 15 : 30;
+        function create3DRipple(worldPos) {
+            const ring = new THREE.Mesh(
+                new THREE.RingGeometry(0.02, 0.08, DeviceAdapter.isMobile ? 16 : 32),
+                new THREE.MeshBasicMaterial({ color: 0x88ddff, transparent: true, opacity: 0.9, side: THREE.DoubleSide, blending: THREE.AdditiveBlending })
+            );
+            ring.position.copy(worldPos); ring.lookAt(camera.position);
+            ring.userData = { life: 1.0 }; scene.add(ring); ripple3DPool.push(ring);
+            if (ripple3DPool.length > MAX_3D_RIPPLES) { const old = ripple3DPool.shift(); scene.remove(old); old.geometry.dispose(); old.material.dispose(); }
+        }
+
+        const particleDisplacements = new Float32Array(particleCount * 3);
+        const DISTURBANCE_RADIUS = 2.5, DISTURBANCE_STRENGTH = 0.12, RETURN_SPEED = 0.04;
+
+        function disturbParticlesAt(worldPoint) {
+            const inv = new THREE.Matrix4().copy(particleSystem.matrixWorld).invert();
+            const lp = worldPoint.clone().applyMatrix4(inv);
+            for (let i = 0; i < particleCount; i++) {
+                const dx = originalParticlePos[i*3]+particleDisplacements[i*3]-lp.x;
+                const dy = originalParticlePos[i*3+1]+particleDisplacements[i*3+1]-lp.y;
+                const dz = originalParticlePos[i*3+2]+particleDisplacements[i*3+2]-lp.z;
+                const dist = Math.sqrt(dx*dx+dy*dy+dz*dz);
+                if (dist < DISTURBANCE_RADIUS && dist > 0.01) {
+                    const f = (1-dist/DISTURBANCE_RADIUS)*DISTURBANCE_STRENGTH;
+                    particleDisplacements[i*3]+=dx/dist*f; particleDisplacements[i*3+1]+=dy/dist*f; particleDisplacements[i*3+2]+=dz/dist*f;
+                }
+            }
+        }
+
+        function updateParticleDisplacements() {
+            const pos = particlesGeometry.attributes.position.array;
+            for (let i = 0; i < particleCount; i++) {
+                particleDisplacements[i*3]*=(1-RETURN_SPEED); particleDisplacements[i*3+1]*=(1-RETURN_SPEED); particleDisplacements[i*3+2]*=(1-RETURN_SPEED);
+                pos[i*3]=originalParticlePos[i*3]+particleDisplacements[i*3];
+                pos[i*3+1]=originalParticlePos[i*3+1]+particleDisplacements[i*3+1];
+                pos[i*3+2]=originalParticlePos[i*3+2]+particleDisplacements[i*3+2];
+            }
+            particlesGeometry.attributes.position.needsUpdate = true;
+        }
+
+        function update3DRipples() {
+            for (let i = ripple3DPool.length-1; i >= 0; i--) {
+                const r = ripple3DPool[i]; r.userData.life -= 0.025;
+                const s = 1+(1-r.userData.life)*3; r.scale.set(s,s,s);
+                r.material.opacity = r.userData.life*0.7; r.lookAt(camera.position);
+                if (r.userData.life <= 0) { scene.remove(r); r.geometry.dispose(); r.material.dispose(); ripple3DPool.splice(i,1); }
+            }
+        }
+
+        function screenToWorld(cx, cy) {
+            pointerNDC.x = (cx/window.innerWidth)*2-1; pointerNDC.y = -(cy/window.innerHeight)*2+1;
+            raycaster.setFromCamera(pointerNDC, camera);
+            const hits = raycaster.intersectObject(hitSphere);
+            return hits.length > 0 ? hits[0].point.clone() : null;
+        }
+
+        let gestureToastTimer = null;
+        const gestureToast = document.getElementById('gestureToast');
+        function showGestureToast(msg, dur=1200) {
+            gestureToast.textContent = msg; gestureToast.classList.add('show');
+            clearTimeout(gestureToastTimer);
+            gestureToastTimer = setTimeout(() => gestureToast.classList.remove('show'), dur);
+        }
+
+        // 触摸 / 鼠标事件
+        const canvas = webglRenderer.domElement;
+        let isTouching=false, touchCount=0, lastPinchDist=0, lastTouchX=0, lastTouchY=0, touchMoveCount=0;
+
+        canvas.addEventListener('touchstart', e => {
+            touchCount=e.touches.length; isTouching=true; touchMoveCount=0;
+            if (touchCount===1) { const t=e.touches[0]; lastTouchX=t.clientX; lastTouchY=t.clientY; createScreenRipple(t.clientX,t.clientY); const wp=screenToWorld(t.clientX,t.clientY); if(wp){create3DRipple(wp);disturbParticlesAt(wp);} if(autoRotateEnabled) controls.autoRotate=false; }
+            if (touchCount===2) { lastPinchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); }
+        }, { passive: true });
+        canvas.addEventListener('touchmove', e => {
+            touchCount=e.touches.length; touchMoveCount++;
+            if (touchCount===1) { const t=e.touches[0]; if(touchMoveCount%3===0){createTrailDot(t.clientX,t.clientY);const wp=screenToWorld(t.clientX,t.clientY);if(wp)disturbParticlesAt(wp);} lastTouchX=t.clientX;lastTouchY=t.clientY; }
+            if (touchCount===2) { const cd=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); const d=cd-lastPinchDist; if(Math.abs(d)>15){createZoomPulse(d>0);lastPinchDist=cd;coreGlow.scale.setScalar(d>0?1.3:0.7);} }
+        }, { passive: true });
+        canvas.addEventListener('touchend', e => {
+            touchCount=e.touches.length; if(touchCount===0){isTouching=false;if(autoRotateEnabled)controls.autoRotate=true; createScreenRipple(lastTouchX,lastTouchY,'rgba(255,200,100,0.6)');const wp=screenToWorld(lastTouchX,lastTouchY);if(wp)create3DRipple(wp);}
+        }, { passive: true });
+
+        let isMouseDown = false;
+        canvas.addEventListener('mousedown', e => { isMouseDown=true; createScreenRipple(e.clientX,e.clientY); const wp=screenToWorld(e.clientX,e.clientY); if(wp){create3DRipple(wp);disturbParticlesAt(wp);} });
+        canvas.addEventListener('mousemove', e => { if(!isMouseDown)return; if(Math.random()>0.5)createTrailDot(e.clientX,e.clientY); const wp=screenToWorld(e.clientX,e.clientY);if(wp)disturbParticlesAt(wp); });
+        canvas.addEventListener('mouseup', () => { isMouseDown=false; });
+        canvas.addEventListener('wheel', e => { createZoomPulse(e.deltaY<0); }, { passive: true });
+
+        // 设备特定欢迎提示
+        if (DeviceAdapter.isMobile) {
+            setTimeout(() => showGestureToast('👆 单指旋转  🤏 双指缩放  点击元素查看方程式', 3000), 1500);
+        } else if (DeviceAdapter.isTablet) {
+            setTimeout(() => showGestureToast('👆 触摸旋转  🤏 捏合缩放  点击元素查看方程式', 3000), 1500);
+        }
+
+        // ================================================================
+        // ★★★★★ 摄像头手势控制系统 ★★★★★
+        // ================================================================
+        const cameraContainer = document.getElementById('camera-container');
+        const videoEl = document.getElementById('camera-video');
+        const camCanvas = document.getElementById('camera-canvas');
+        const camCtx = camCanvas.getContext('2d');
+        const camStatus = document.getElementById('camera-status');
+        const handCursor = document.getElementById('hand-cursor');
+        const handCursorLabel = document.getElementById('hand-cursor-label');
+        const cameraToggleBtn = document.getElementById('cameraToggleBtn');
+        const handleCameraToggle = () => {
+            if (handTrackingActive) {
+                stopHandTracking();
+                return;
+            }
+            camStatus.textContent = '📷 请求摄像头...';
+            cameraContainer.classList.add('visible');
+            cameraToggleBtn.textContent = '📷 启动中...';
+            startHandTracking();
+        };
+        window.__chemicalEquationHandleCameraToggle = handleCameraToggle;
+
+        let handTrackingActive = false;
+        let handTrackingStarting = false;
+        let handLandmarker = null;
+        let handLandmarkerInitPromise = null;
+        let tfBackendReady = false;
+
+        const HAND_CONNS = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+        const FINGER_TIPS = [4, 8, 12, 16, 20];
+
+        let smoothHandX = 0.5, smoothHandY = 0.5;
+        let smoothOpenness = 0;
+        let prevHandCenter = null;
+        let prevOpenness = null;
+        let handLostTimer = null;
+        let frameCounter = 0;
+        let handFrameErrorCount = 0;
+        let triedCpuFallback = false;
+        let consecutiveHandFrames = 0;
+        const POSITION_SMOOTH = 0.22;
+        const OPENNESS_SMOOTH = 0.18;
+        const HAND_STABLE_FRAMES = 3;
+        const OPEN_THRESHOLD = 2.3;
+        const CLOSED_THRESHOLD = 1.45;
+        const ROTATION_DEADZONE = 0.008;
+        const ZOOM_DEADZONE = 0.02;
+        const ZOOM_PULSE_THRESHOLD = 0.05;
+        const ZOOM_SPEED = 34;
+
+        function drawHandSkeleton(ctx, lm, w, h) {
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(136, 221, 255, 0.7)';
+            HAND_CONNS.forEach(([a, b]) => {
+                ctx.beginPath();
+                ctx.moveTo(lm[a].x * w, lm[a].y * h);
+                ctx.lineTo(lm[b].x * w, lm[b].y * h);
+                ctx.stroke();
+            });
+            lm.forEach((p, i) => {
+                ctx.beginPath();
+                ctx.arc(p.x * w, p.y * h, FINGER_TIPS.includes(i) ? 5 : 3, 0, Math.PI * 2);
+                ctx.fillStyle = FINGER_TIPS.includes(i) ? '#ff6688' : '#88ddff';
+                ctx.fill();
+            });
+        }
+
+        function calcOpenness(lm) {
+            const wrist = lm[0];
+            const mcp = lm[9];
+            const palmSize = Math.hypot(wrist.x - mcp.x, wrist.y - mcp.y) + 0.001;
+            let sum = 0;
+            FINGER_TIPS.forEach(i => { sum += Math.hypot(lm[i].x - wrist.x, lm[i].y - wrist.y); });
+            return sum / (palmSize * FINGER_TIPS.length);
+        }
+
+        function createBurstEffect(x, y) {
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const bx = Math.cos(angle) * 80;
+                const by = Math.sin(angle) * 80;
+                const dot = document.createElement('div');
+                dot.className = 'hand-burst';
+                dot.style.left = x + 'px'; dot.style.top = y + 'px';
+                dot.style.background = `hsl(${180 + i * 20}, 80%, 65%)`;
+                dot.style.setProperty('--bx', bx + 'px');
+                dot.style.setProperty('--by', by + 'px');
+                document.body.appendChild(dot);
+                dot.addEventListener('animationend', () => dot.remove());
+            }
+            createScreenRipple(x, y, 'rgba(102,255,136,0.8)');
+            const wp = screenToWorld(x, y);
+            if (wp) {
+                for (let j = 0; j < 4; j++) {
+                    create3DRipple(wp.clone().add(new THREE.Vector3((Math.random()-0.5)*1.5, (Math.random()-0.5)*1.5, (Math.random()-0.5)*1.5)));
+                }
+                for (let k = 0; k < 3; k++) disturbParticlesAt(wp);
+            }
+        }
+
+        function onHandResults(results) {
+            camCtx.save();
+            camCtx.clearRect(0, 0, camCanvas.width, camCanvas.height);
+            camCtx.drawImage(results.image, 0, 0, camCanvas.width, camCanvas.height);
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                const lm = results.multiHandLandmarks[0];
+                drawHandSkeleton(camCtx, lm, camCanvas.width, camCanvas.height);
+                cameraContainer.classList.add('hand-detected');
+                clearTimeout(handLostTimer);
+                controls.autoRotate = false;
+                consecutiveHandFrames += 1;
+
+                const palmX = (lm[0].x + lm[5].x + lm[9].x + lm[13].x + lm[17].x) / 5;
+                const palmY = (lm[0].y + lm[5].y + lm[9].y + lm[13].y + lm[17].y) / 5;
+                const hx = 1 - palmX;
+                const hy = palmY;
+
+                smoothHandX += (hx - smoothHandX) * POSITION_SMOOTH;
+                smoothHandY += (hy - smoothHandY) * POSITION_SMOOTH;
+
+                const screenX = smoothHandX * window.innerWidth;
+                const screenY = smoothHandY * window.innerHeight;
+
+                const rawOpen = calcOpenness(lm);
+                smoothOpenness += (rawOpen - smoothOpenness) * OPENNESS_SMOOTH;
+
+                const isOpen = smoothOpenness > OPEN_THRESHOLD;
+                const isClosed = smoothOpenness < CLOSED_THRESHOLD;
+                const handStable = consecutiveHandFrames >= HAND_STABLE_FRAMES;
+
+                handCursor.style.display = 'block';
+                handCursor.style.left = screenX + 'px';
+                handCursor.style.top = screenY + 'px';
+                handCursor.className = isOpen ? 'open' : (isClosed ? 'closed' : '');
+                handCursor.id = 'hand-cursor';
+
+                if (handStable) {
+                    const worldPt = screenToWorld(screenX, screenY);
+                    if (worldPt) {
+                        disturbParticlesAt(worldPt);
+                        if (frameCounter % 8 === 0) create3DRipple(worldPt);
+                    }
+                    if (frameCounter % 5 === 0) createTrailDot(screenX, screenY);
+                }
+
+                if (handStable && prevOpenness !== null) {
+                    const delta = smoothOpenness - prevOpenness;
+                    if (Math.abs(delta) > ZOOM_DEADZONE) {
+                        const dir = camera.position.clone().sub(controls.target).normalize();
+                        const curDist = camera.position.distanceTo(controls.target);
+                        const newDist = Math.max(controls.minDistance, Math.min(controls.maxDistance, curDist - delta * ZOOM_SPEED));
+                        camera.position.copy(controls.target.clone().add(dir.multiplyScalar(newDist)));
+                        coreGlow.scale.setScalar(delta > 0 ? 1.2 : 0.8);
+                        if (Math.abs(delta) > ZOOM_PULSE_THRESHOLD) createZoomPulse(delta > 0);
+                    }
+                    if (delta > 0.08) createBurstEffect(screenX, screenY);
+                }
+
+                if (handStable && prevHandCenter !== null) {
+                    const dx = smoothHandX - prevHandCenter.x;
+                    const dy = smoothHandY - prevHandCenter.y;
+                    if (Math.abs(dx) > ROTATION_DEADZONE || Math.abs(dy) > ROTATION_DEADZONE) {
+                        const pos = camera.position.clone().sub(controls.target);
+                        const sph = new THREE.Spherical().setFromVector3(pos);
+                        sph.theta -= dx * 1.7;
+                        sph.phi += dy * 1.2;
+                        sph.phi = Math.max(0.3, Math.min(Math.PI - 0.3, sph.phi));
+                        camera.position.copy(new THREE.Vector3().setFromSpherical(sph).add(controls.target));
+                        camera.lookAt(controls.target);
+                    }
+                }
+
+                let statusText = '✋ ';
+                if (!handStable) statusText += '手部已检测，稳定中...';
+                else if (isOpen) statusText += '张开 → 放大';
+                else if (isClosed) statusText += '握拳 → 缩小';
+                else statusText += '滑动中...';
+                camStatus.textContent = statusText;
+
+                if (handStable && Math.abs((prevOpenness || smoothOpenness) - smoothOpenness) > ZOOM_PULSE_THRESHOLD) {
+                    handCursorLabel.style.display = 'block';
+                    handCursorLabel.style.left = screenX + 'px';
+                    handCursorLabel.style.top = (screenY - 35) + 'px';
+                    handCursorLabel.textContent = smoothOpenness > prevOpenness ? '🔍 放大' : '🔍 缩小';
+                    handCursorLabel.style.opacity = '1';
+                } else {
+                    handCursorLabel.style.opacity = '0';
+                }
+
+                prevHandCenter = { x: smoothHandX, y: smoothHandY };
+                prevOpenness = smoothOpenness;
+                frameCounter++;
+            } else {
+                cameraContainer.classList.remove('hand-detected');
+                handCursor.style.display = 'none';
+                handCursorLabel.style.opacity = '0';
+                prevHandCenter = null;
+                prevOpenness = null;
+                consecutiveHandFrames = 0;
+                camStatus.textContent = '🖐️ 未识别到手，请将手掌移入镜头中央';
+                clearTimeout(handLostTimer);
+                handLostTimer = setTimeout(() => { if (autoRotateEnabled && handTrackingActive) controls.autoRotate = true; }, 2000);
+            }
+            camCtx.restore();
+        }
+
+        // ====== 内嵌模型兜底加载（file:// 下浏览器拦截 fetch，改用 <script> 注入的 base64 数据）======
+        let embeddedScriptPromise = null;
+        function loadEmbeddedModelScript() {
+            if (window.__HANDPOSE_EMBEDDED__) return Promise.resolve();
+            if (!embeddedScriptPromise) {
+                embeddedScriptPromise = new Promise((resolve, reject) => {
+                    const s = document.createElement('script');
+                    s.src = './vendor/models/handpose_embedded.js';
+                    s.onload = () => window.__HANDPOSE_EMBEDDED__ ? resolve() : reject(new Error('内嵌模型数据无效'));
+                    s.onerror = () => reject(new Error('内嵌模型文件加载失败'));
+                    document.head.appendChild(s);
+                });
+            }
+            return embeddedScriptPromise;
+        }
+
+        function b64ToArrayBuffer(b64) {
+            const bin = atob(b64);
+            const len = bin.length;
+            const buf = new Uint8Array(len);
+            for (let i = 0; i < len; i++) buf[i] = bin.charCodeAt(i);
+            return buf.buffer;
+        }
+
+        function makeEmbeddedIOHandler(data, prefix) {
+            const modelJson = JSON.parse(atob(data[prefix + '/model.json']));
+            const modelTopology = modelJson.modelTopology || modelJson;
+            const weightSpecs = [];
+            const shardPaths = [];
+            (modelJson.weightsManifest || []).forEach(group => {
+                group.paths.forEach(p => shardPaths.push(p));
+                group.weights.forEach(w => weightSpecs.push(w));
+            });
+            const parts = shardPaths.map(p => new Uint8Array(b64ToArrayBuffer(data[prefix + '/' + p])));
+            const total = parts.reduce((s, b) => s + b.byteLength, 0);
+            const merged = new Uint8Array(total);
+            let off = 0;
+            parts.forEach(b => { merged.set(b, off); off += b.byteLength; });
+            return { load: async () => ({ modelTopology, weightSpecs, weightData: merged.buffer }) };
+        }
+
+        async function loadHandposeFromEmbedded() {
+            await loadEmbeddedModelScript();
+            const data = window.__HANDPOSE_EMBEDDED__;
+            const origLoadGraphModel = tf.loadGraphModel.bind(tf);
+            const origFetch = tf.util.fetch.bind(tf.util);
+            tf.loadGraphModel = (url, opts) => {
+                if (typeof url === 'string') {
+                    if (url.indexOf('handpose/detector/model.json') !== -1) return origLoadGraphModel(makeEmbeddedIOHandler(data, 'detector'), opts);
+                    if (url.indexOf('handpose/skeleton/model.json') !== -1) return origLoadGraphModel(makeEmbeddedIOHandler(data, 'skeleton'), opts);
+                }
+                return origLoadGraphModel(url, opts);
+            };
+            tf.util.fetch = (url, opts) => {
+                if (typeof url === 'string' && url.indexOf('handpose/anchors.json') !== -1) {
+                    const json = JSON.parse(atob(data['anchors.json']));
+                    return Promise.resolve({ json: () => Promise.resolve(json) });
+                }
+                return origFetch(url, opts);
+            };
+            try {
+                return await handpose.load();
+            } finally {
+                tf.loadGraphModel = origLoadGraphModel;
+                tf.util.fetch = origFetch;
+            }
+        }
+
+        async function ensureHandLandmarker() {
+            if (handLandmarker) return handLandmarker;
+            if (!handLandmarkerInitPromise) {
+                handLandmarkerInitPromise = (async () => {
+                    if (!tfBackendReady) {
+                        if (!tf || !handpose) {
+                            throw new Error('手势识别库加载失败');
+                        }
+                        try {
+                            const webglOk = await tf.setBackend('webgl');
+                            if (!webglOk) throw new Error('WebGL 后端不可用');
+                        } catch (error) {
+                            await tf.setBackend('cpu');
+                        }
+                        await tf.ready();
+                        tfBackendReady = true;
+                    }
+                    try {
+                        handLandmarker = await handpose.load();
+                    } catch (firstErr) {
+                        console.warn('常规手势模型加载失败，改用内嵌模型数据兜底:', firstErr);
+                        camStatus.textContent = '🔄 正在加载内嵌手势模型（约 17MB，首次需数秒）...';
+                        handLandmarker = await loadHandposeFromEmbedded();
+                    }
+                    return handLandmarker;
+                })().catch((error) => {
+                    handLandmarkerInitPromise = null;
+                    throw error;
+                });
+            }
+            return handLandmarkerInitPromise;
+        }
+
+        function withTimeout(promise, ms, message) {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms))
+            ]);
+        }
+
+        async function processVideoFrame() {
+            if (!handTrackingActive || !handLandmarker) return;
+            if (videoEl.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || videoEl.videoWidth === 0 || videoEl.videoHeight === 0) {
+                if (handTrackingActive) requestAnimationFrame(processVideoFrame);
+                return;
+            }
+            try {
+                const detectedHands = await handLandmarker.estimateHands(videoEl, true);
+                onHandResults({
+                    image: videoEl,
+                    multiHandLandmarks: (detectedHands || []).map((hand) =>
+                        (hand.landmarks || []).map((point) => ({
+                            x: point[0] / videoEl.videoWidth,
+                            y: point[1] / videoEl.videoHeight,
+                            z: point[2] || 0
+                        }))
+                    )
+                });
+                handFrameErrorCount = 0;
+            } catch (e) {
+                handFrameErrorCount += 1;
+                if (handFrameErrorCount === 1 || handFrameErrorCount % 30 === 0) {
+                    console.error('手势追踪帧处理失败:', e);
+                }
+                // WebGL 后端可能初始化假成功、推理时才崩溃：连续失败后自动切换 CPU 兼容模式重试一次
+                if (!triedCpuFallback && handFrameErrorCount >= 5 && tf.getBackend && tf.getBackend() === 'webgl') {
+                    triedCpuFallback = true;
+                    handFrameErrorCount = 0;
+                    camStatus.textContent = '🔄 显卡加速异常，切换兼容模式...';
+                    try { await tf.setBackend('cpu'); await tf.ready(); } catch (_) {}
+                } else if (handFrameErrorCount >= 5) {
+                    const detail = e && e.message ? e.message : String(e);
+                    camStatus.textContent = '❌ 手势识别异常: ' + detail;
+                }
+            }
+            if (handTrackingActive) requestAnimationFrame(processVideoFrame);
+        }
+
+        function waitForVideoReady(video) {
+            if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
+                return Promise.resolve();
+            }
+            return new Promise((resolve, reject) => {
+                const timeoutId = setTimeout(() => {
+                    cleanup();
+                    reject(new Error('摄像头视频流未就绪'));
+                }, 5000);
+
+                function onReady() {
+                    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
+                        cleanup();
+                        resolve();
+                    }
+                }
+
+                function cleanup() {
+                    clearTimeout(timeoutId);
+                    video.removeEventListener('loadedmetadata', onReady);
+                    video.removeEventListener('loadeddata', onReady);
+                    video.removeEventListener('canplay', onReady);
+                    video.removeEventListener('playing', onReady);
+                }
+
+                video.addEventListener('loadedmetadata', onReady);
+                video.addEventListener('loadeddata', onReady);
+                video.addEventListener('canplay', onReady);
+                video.addEventListener('playing', onReady);
+            });
+        }
+
+        function getUserMediaCompat() {
+            if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+                return (constraints) => navigator.mediaDevices.getUserMedia(constraints);
+            }
+            const legacyGetUserMedia =
+                navigator.getUserMedia ||
+                navigator.webkitGetUserMedia ||
+                navigator.mozGetUserMedia ||
+                navigator.msGetUserMedia;
+            if (!legacyGetUserMedia) return null;
+            return (constraints) => new Promise((resolve, reject) => {
+                legacyGetUserMedia.call(navigator, constraints, resolve, reject);
+            });
+        }
+
+        async function startHandTracking() {
+            if (handTrackingStarting || handTrackingActive) return;
+            handTrackingStarting = true;
+            try {
+                camStatus.textContent = '📷 请求摄像头...';
+                cameraContainer.classList.add('visible');
+
+                // 摄像头分辨率根据设备调整
+                const camRes = DeviceAdapter.isMobile ? { width: 480, height: 360 } : { width: 640, height: 480 };
+                const requestCamera = getUserMediaCompat();
+                if (!requestCamera) {
+                    const needsSecureContext = !window.isSecureContext;
+                    throw new Error(needsSecureContext ? '当前浏览器仅在 HTTPS 或 localhost 下开放摄像头接口' : '当前浏览器不支持摄像头接口');
+                }
+                const stream = await withTimeout(
+                    requestCamera({
+                        video: { facingMode: 'user', width: { ideal: camRes.width }, height: { ideal: camRes.height } }
+                    }),
+                    15000,
+                    '摄像头请求超时，请检查摄像头是否被其他程序占用，并允许浏览器摄像头权限'
+                );
+                handFrameErrorCount = 0;
+                videoEl.srcObject = stream;
+                videoEl.muted = true;
+                videoEl.playsInline = true;
+                await videoEl.play();
+                await waitForVideoReady(videoEl);
+                camCanvas.width = videoEl.videoWidth || camRes.width;
+                camCanvas.height = videoEl.videoHeight || camRes.height;
+                camStatus.textContent = '🔄 加载手势模型（首次加载可能较慢）...';
+                try {
+                    await withTimeout(ensureHandLandmarker(), 60000, '手势模型加载超时，请稍后重试');
+                } catch (modelErr) {
+                    // file:// 下部分浏览器会拦截模型文件读取，只有真正失败时才提示改用本地服务器
+                    if (location.protocol === 'file:') {
+                        throw new Error('浏览器拦截了手势模型文件读取。请在本目录运行 python -m http.server 8000 后访问 http://localhost:8000 ，或换用允许本地文件读取的浏览器');
+                    }
+                    throw modelErr;
+                }
+                handTrackingActive = true;
+                cameraToggleBtn.classList.add('toggle-active');
+                cameraToggleBtn.textContent = '📷 手势 ON';
+                camStatus.textContent = '🖐️ 未识别到手，请将手掌移入镜头中央';
+                showGestureToast('✋ 张开/握拳=缩放 | 滑动=推动粒子+旋转', 3500);
+                requestAnimationFrame(processVideoFrame);
+            } catch (err) {
+                console.error('手势追踪初始化失败:', err);
+                if (videoEl.srcObject) { videoEl.srcObject.getTracks().forEach(t => t.stop()); videoEl.srcObject = null; }
+                cameraToggleBtn.classList.remove('toggle-active');
+                cameraToggleBtn.textContent = '📷 手势控制';
+                let msg = '❌ 初始化失败';
+                if (err.name === 'NotAllowedError') msg = '❌ 摄像头权限被拒绝，请在浏览器地址栏左侧权限设置中允许摄像头';
+                else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') msg = '❌ 未找到摄像头设备';
+                else if (err.name === 'NotReadableError' || /device in use/i.test(err.message || '')) msg = '❌ 摄像头被其他程序占用，请关闭微信/QQ视频、会议软件、相机应用或其他浏览器标签页后重试';
+                else if (err.name === 'OverconstrainedError') msg = '❌ 摄像头不支持请求的分辨率';
+                else msg = '❌ ' + err.message;
+                camStatus.textContent = msg;
+                showGestureToast(msg, 3000);
+                setTimeout(() => { if (!handTrackingActive) cameraContainer.classList.remove('visible'); }, 3000);
+            } finally {
+                handTrackingStarting = false;
+            }
+        }
+
+        function stopHandTracking() {
+            handTrackingActive = false;
+            if (videoEl.srcObject) { videoEl.srcObject.getTracks().forEach(t => t.stop()); videoEl.srcObject = null; }
+            handCursor.style.display = 'none';
+            handCursorLabel.style.opacity = '0';
+            cameraContainer.classList.remove('visible', 'hand-detected');
+            cameraToggleBtn.classList.remove('toggle-active');
+            cameraToggleBtn.textContent = '📷 手势控制';
+            prevHandCenter = null; prevOpenness = null;
+            if (autoRotateEnabled) controls.autoRotate = true;
+        }
+
+        setTimeout(() => {
+            ensureHandLandmarker().catch(() => {});
+        }, 1200);
+
+        if (window.__chemicalEquationPendingCameraToggle) {
+            window.__chemicalEquationPendingCameraToggle = false;
+            handleCameraToggle();
+        }
+
+        // ========== 主动画循环 ==========
+        let time = 0;
+        let firstFrameRendered = false;
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.012;
+
+            if (!animating) {
+                currentLabels.forEach(label => {
+                    const d = label.userData;
+                    if (d && d.originalPos) {
+                        const off = Math.sin(time * d.floatSpeed + d.floatPhase) * d.floatAmplitude;
+                        const rad = d.originalPos.clone().normalize();
+                        const tan = new THREE.Vector3(-rad.z, rad.x, rad.y).normalize();
+                        const bit = rad.clone().cross(tan).normalize();
+                        const mv = rad.clone().multiplyScalar(off*0.5)
+                            .add(tan.clone().multiplyScalar(Math.sin(time*1.2+d.floatPhase)*0.04))
+                            .add(bit.clone().multiplyScalar(Math.cos(time*1.5+d.floatPhase)*0.04));
+                        label.position.x=d.originalPos.x+mv.x; label.position.y=d.originalPos.y+mv.y; label.position.z=d.originalPos.z+mv.z;
+                    }
+                });
+            }
+
+            particleSystem.rotation.y = time * 0.08;
+            particleSystem.rotation.x = Math.sin(time * 0.15) * 0.1;
+            particleSystem.rotation.z = Math.cos(time * 0.1) * 0.05;
+
+            updateParticleDisplacements();
+            update3DRipples();
+
+            flowRing.rotation.y = time*0.2;
+            flowRing.rotation.x = Math.sin(time*0.3)*0.2;
+            flowRing.rotation.z = Math.cos(time*0.25)*0.1;
+
+            stars.rotation.y += 0.0006;
+            stars.rotation.x += 0.0004;
+
+            const tgtScale = 1 + Math.sin(time*2.2)*0.06;
+            const curScale = coreGlow.scale.x;
+            coreGlow.scale.setScalar(curScale + (tgtScale-curScale)*0.05);
+
+            innerGlowSphere.scale.setScalar(1 + Math.sin(time*1.2)*0.02);
+
+            controls.update();
+            webglRenderer.render(scene, camera);
+            css2DRenderer.render(scene, camera);
+            if (!firstFrameRendered) {
+                firstFrameRendered = true;
+                hidePageLoadingOverlay();
+            }
+        }
+        animate();
+
+        // ========== 窗口 resize 自适应 ==========
+        let resizeTimeout;
+        function handleResize() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            webglRenderer.setSize(w, h);
+            css2DRenderer.setSize(w, h);
+
+            // 动态更新相机距离（根据屏幕纵横比调整远近，确保内容不裁切）
+            const aspectFactor = Math.max(1, 1.2 / (w / h));
+            const baseDist = SP.cameraDistance;
+            const newDist = baseDist * aspectFactor;
+            const dir = camera.position.clone().sub(controls.target).normalize();
+            camera.position.copy(controls.target.clone().add(dir.multiplyScalar(newDist)));
+
+            // 更新提示文字（可能横竖屏切换了）
+            const isNowLandscape = w > h;
+            if (DeviceAdapter.isMobile || DeviceAdapter.isTablet) {
+                document.getElementById('info').innerHTML = DeviceAdapter.getInfoText();
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(handleResize, 150);
+        });
+
+        // 屏幕方向变化
+        if (screen.orientation) {
+            screen.orientation.addEventListener('change', () => {
+                setTimeout(handleResize, 300);
+            });
+        } else {
+            window.addEventListener('orientationchange', () => {
+                setTimeout(handleResize, 500);
+            });
+        }
+
+        // 初始调整一次
+        handleResize();
+
+        console.log(`✨ 化学词云 | 设备: ${DeviceAdapter.deviceType} | 尺寸级: ${DeviceAdapter.sizeClass} | ${DeviceAdapter.width}×${DeviceAdapter.height} @${DeviceAdapter.dpr}x`);
+    </script>
+</body>
+</html>

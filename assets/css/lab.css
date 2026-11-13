@@ -1,0 +1,3546 @@
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e8ba3 100%);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            padding: 10px;
+            gap: 10px;
+        }
+
+        /* 左侧面板 */
+        .sidebar {
+            width: 300px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar h2 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+            font-size: 20px;
+            border-bottom: 3px solid #1e3c72;
+            padding-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .category {
+            margin-bottom: 20px;
+        }
+
+        .category h3 {
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: linear-gradient(90deg, #f0f0f0, transparent);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .item {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: grab;
+            transition: all 0.3s;
+            user-select: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .item:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(30, 60, 114, 0.4);
+            border-color: #1e3c72;
+            background: linear-gradient(145deg, #ffffff, #e8f0ff);
+        }
+
+        .item:active {
+            cursor: grabbing;
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        /* 广口瓶图标样式 */
+        .wide-bottle-icon {
+            width: 50px;
+            height: 60px;
+            margin: 0 auto 5px;
+            position: relative;
+        }
+
+        .bottle-icon-body {
+            width: 100%;
+            height: 48px;
+            background: linear-gradient(to right,
+                rgba(255, 255, 255, 0.5),
+                rgba(220, 220, 220, 0.7),
+                rgba(255, 255, 255, 0.5)
+            );
+            border: 2px solid rgba(120, 120, 120, 0.6);
+            border-radius: 6px;
+            position: absolute;
+            bottom: 0;
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .bottle-icon-cap {
+            width: 30px;
+            height: 12px;
+            background: linear-gradient(to bottom, #b89968, #8b6914);
+            border-radius: 6px 6px 3px 3px;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .bottle-icon-solid {
+            position: absolute;
+            bottom: 3px;
+            left: 3px;
+            right: 3px;
+            height: 45%;
+            border-radius: 2px 2px 4px 4px;
+            box-shadow: inset -2px -2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .bottle-icon-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 7px;
+            color: #000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2px 4px;
+            border-radius: 2px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        /* 试剂瓶图标样式 */
+        .reagent-bottle-icon {
+            width: 40px;
+            height: 50px;
+            margin: 0 auto 5px;
+            position: relative;
+        }
+
+        .reagent-icon-body {
+            width: 100%;
+            height: 40px;
+            background: linear-gradient(to right,
+                rgba(255, 255, 255, 0.4),
+                rgba(200, 200, 200, 0.6),
+                rgba(255, 255, 255, 0.4)
+            );
+            border: 2px solid rgba(100, 100, 100, 0.5);
+            border-radius: 4px;
+            position: absolute;
+            bottom: 0;
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .reagent-icon-cap {
+            width: 22px;
+            height: 10px;
+            background: linear-gradient(to bottom, #a0826d, #8b4513);
+            border-radius: 4px;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .reagent-icon-liquid {
+            position: absolute;
+            bottom: 2px;
+            left: 2px;
+            right: 2px;
+            height: 70%;
+            border-radius: 2px;
+            box-shadow: inset -2px 0 5px rgba(255, 255, 255, 0.5);
+        }
+
+        .item-name {
+            font-size: 11px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* 3D实验台 */
+        .workbench {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            perspective: 1200px;
+        }
+
+        .scene-3d {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            background: 
+                radial-gradient(ellipse at center top, 
+                    rgba(135, 206, 250, 0.3) 0%, 
+                    rgba(70, 130, 180, 0.2) 50%, 
+                    transparent 100%),
+                linear-gradient(to bottom, 
+                    #87CEEB 0%, 
+                    #B0D4E3 30%,
+                    #D2B48C 70%, 
+                    #8B7355 100%);
+        }
+
+        /* 3D地板 */
+        .floor-3d {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            background: 
+                repeating-linear-gradient(
+                    90deg,
+                    #8B4513 0px,
+                    #8B4513 50px,
+                    #A0522D 50px,
+                    #A0522D 100px
+                ),
+                linear-gradient(to bottom,
+                    rgba(139, 69, 19, 0.9) 0%,
+                    rgba(101, 67, 33, 1) 100%
+                );
+            transform: rotateX(60deg) translateY(100px);
+            transform-origin: bottom;
+            box-shadow: 
+                0 -5px 20px rgba(0,0,0,0.3),
+                inset 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .wall-shelf {
+            position: absolute;
+            top: 15%;
+            left: 10%;
+            width: 80%;
+            height: 8px;
+            background: linear-gradient(to bottom, #654321, #4a3218);
+            border-radius: 4px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+
+        /* 拖拽区域 */
+        .drop-zone {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+
+        /* 3D实验器材基础样式 */
+        .lab-equipment-3d {
+            position: absolute;
+            cursor: move;
+            z-index: 100;
+            transition: filter 0.2s, transform 0.1s ease-out;
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+
+        .lab-equipment-3d.dragging {
+            cursor: grabbing;
+            z-index: 999;
+            filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.6));
+            transform: scale(1.05);
+        }
+
+        .lab-equipment-3d:hover:not(.dragging) {
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
+            transform: translateY(-3px);
+        }
+
+        .lab-equipment-3d.selected {
+            filter: drop-shadow(0 0 15px #FFD700);
+            z-index: 200;
+        }
+
+        .lab-equipment-3d.attached {
+            cursor: default;
+            filter: drop-shadow(0 0 10px #4CAF50);
+        }
+
+        /* 3D烧杯 */
+        .beaker-3d {
+            width: 120px;
+            height: 140px;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .beaker-body {
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(to right,
+                    rgba(255, 255, 255, 0.1) 0%,
+                    rgba(200, 230, 255, 0.3) 20%,
+                    rgba(200, 230, 255, 0.5) 50%,
+                    rgba(200, 230, 255, 0.3) 80%,
+                    rgba(255, 255, 255, 0.1) 100%
+                );
+            border: 3px solid rgba(150, 180, 220, 0.8);
+            border-radius: 0 0 20px 20px;
+            position: relative;
+            box-shadow: 
+                inset -5px 0 15px rgba(255, 255, 255, 0.6),
+                inset 5px 0 15px rgba(0, 100, 200, 0.2),
+                5px 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .beaker-rim {
+            position: absolute;
+            top: -5px;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(to bottom, 
+                rgba(150, 180, 220, 0.9), 
+                rgba(100, 150, 200, 0.7));
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .beaker-liquid {
+            position: absolute;
+            bottom: 3px;
+            left: 3px;
+            right: 3px;
+            height: 0%;
+            background: blue;
+            border-radius: 0 0 17px 17px;
+            transition: height 0.5s ease, background 0.5s ease;
+            box-shadow: 
+                inset -3px 0 10px rgba(255, 255, 255, 0.5),
+                inset 3px 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 容器内的固体颗粒 */
+        .solid-particles-container {
+            position: absolute;
+            bottom: 3px;
+            left: 3px;
+            right: 3px;
+            height: 30px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .solid-particle {
+            position: absolute;
+            border-radius: 50%;
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+            animation: settle 1s ease-out forwards;
+        }
+
+        @keyframes settle {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(0) rotate(360deg);
+                opacity: 1;
+            }
+        }
+
+        /* 3D试管 */
+        .test-tube-3d {
+            width: 50px;
+            height: 130px;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .test-tube-body {
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(to right,
+                    rgba(255, 255, 255, 0.2) 0%,
+                    rgba(200, 230, 255, 0.4) 30%,
+                    rgba(200, 230, 255, 0.6) 50%,
+                    rgba(200, 230, 255, 0.4) 70%,
+                    rgba(255, 255, 255, 0.2) 100%
+                );
+            border: 2.5px solid rgba(150, 180, 220, 0.8);
+            border-radius: 0 0 25px 25px;
+            position: relative;
+            box-shadow: 
+                inset -3px 0 10px rgba(255, 255, 255, 0.7),
+                inset 3px 0 10px rgba(0, 100, 200, 0.2),
+                3px 3px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .test-tube-liquid {
+            position: absolute;
+            bottom: 2px;
+            left: 2px;
+            right: 2px;
+            height: 0%;
+            border-radius: 0 0 23px 23px;
+            transition: height 0.5s ease, background 0.5s ease;
+            box-shadow: inset -2px 0 8px rgba(255, 255, 255, 0.5);
+        }
+
+        /* 3D锥形瓶 */
+        .flask-3d {
+            width: 110px;
+            height: 130px;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .flask-neck-3d {
+            width: 25px;
+            height: 40px;
+            background: 
+                linear-gradient(to right,
+                    rgba(255, 255, 255, 0.3),
+                    rgba(200, 230, 255, 0.4),
+                    rgba(255, 255, 255, 0.3)
+                );
+            border: 2px solid rgba(150, 180, 220, 0.8);
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 
+                inset -2px 0 5px rgba(255, 255, 255, 0.6),
+                2px 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .flask-body-3d {
+            width: 110px;
+            height: 95px;
+            background: 
+                linear-gradient(to right,
+                    rgba(255, 255, 255, 0.2) 0%,
+                    rgba(200, 230, 255, 0.4) 30%,
+                    rgba(200, 230, 255, 0.6) 50%,
+                    rgba(200, 230, 255, 0.4) 70%,
+                    rgba(255, 255, 255, 0.2) 100%
+                );
+            border: 3px solid rgba(150, 180, 220, 0.8);
+            clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%);
+            position: absolute;
+            bottom: 0;
+            box-shadow: 
+                inset -5px 0 15px rgba(255, 255, 255, 0.6),
+                inset 5px 0 15px rgba(0, 100, 200, 0.2),
+                5px 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .flask-liquid {
+            position: absolute;
+            bottom: 3px;
+            left: 3px;
+            right: 3px;
+            height: 0%;
+            clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%);
+            transition: height 0.5s ease, background 0.5s ease;
+            box-shadow: inset -3px 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        /* 容量瓶 */
+        .volumetric-flask {
+            width: 90px;
+            height: 140px;
+            position: relative;
+        }
+
+        .volumetric-bulb {
+            width: 90px;
+            height: 90px;
+            background: 
+                radial-gradient(ellipse at 30% 30%,
+                    rgba(255, 255, 255, 0.6) 0%,
+                    rgba(200, 230, 255, 0.4) 40%,
+                    rgba(200, 230, 255, 0.6) 100%
+                );
+            border: 3px solid rgba(150, 180, 220, 0.8);
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            box-shadow: 
+                inset -8px -8px 20px rgba(255, 255, 255, 0.7),
+                inset 8px 8px 20px rgba(0, 100, 200, 0.2),
+                5px 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .volumetric-neck {
+            width: 20px;
+            height: 55px;
+            background: 
+                linear-gradient(to right,
+                    rgba(255, 255, 255, 0.3),
+                    rgba(200, 230, 255, 0.4),
+                    rgba(255, 255, 255, 0.3)
+                );
+            border: 2px solid rgba(150, 180, 220, 0.8);
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .volumetric-liquid {
+            position: absolute;
+            bottom: 3px;
+            left: 3px;
+            right: 3px;
+            height: 0%;
+            border-radius: 50%;
+            transition: height 0.5s ease, background 0.5s ease;
+            box-shadow: inset -5px -5px 15px rgba(255, 255, 255, 0.6);
+        }
+
+        /* 量筒 */
+        .graduated-cylinder {
+            width: 60px;
+            height: 140px;
+            position: relative;
+        }
+
+        .cylinder-body {
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(to right,
+                    rgba(255, 255, 255, 0.2),
+                    rgba(200, 230, 255, 0.5),
+                    rgba(255, 255, 255, 0.2)
+                );
+            border: 2.5px solid rgba(150, 180, 220, 0.8);
+            border-radius: 0 0 5px 5px;
+            box-shadow: 
+                inset -3px 0 10px rgba(255, 255, 255, 0.7),
+                3px 3px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .cylinder-liquid {
+            position: absolute;
+            bottom: 2px;
+            left: 2px;
+            right: 2px;
+            height: 0%;
+            border-radius: 0 0 3px 3px;
+            transition: height 0.5s ease, background 0.5s ease;
+        }
+
+        /* 3D圆底烧瓶（新增） */
+        .round-bottom-flask {
+            width: 100px;
+            height: 140px;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .round-flask-neck {
+            width: 22px;
+            height: 50px;
+            background: 
+                linear-gradient(to right,
+                    rgba(255, 255, 255, 0.3),
+                    rgba(200, 230, 255, 0.4),
+                    rgba(255, 255, 255, 0.3)
+                );
+            border: 2px solid rgba(150, 180, 220, 0.8);
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 
+                inset -2px 0 5px rgba(255, 255, 255, 0.6),
+                2px 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .round-flask-body {
+            width: 100px;
+            height: 100px;
+            background: 
+                radial-gradient(ellipse at 30% 30%,
+                    rgba(255, 255, 255, 0.6) 0%,
+                    rgba(200, 230, 255, 0.4) 40%,
+                    rgba(200, 230, 255, 0.6) 100%
+                );
+            border: 3px solid rgba(150, 180, 220, 0.8);
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            box-shadow: 
+                inset -8px -8px 20px rgba(255, 255, 255, 0.7),
+                inset 8px 8px 20px rgba(0, 100, 200, 0.2),
+                5px 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .round-flask-liquid {
+            position: absolute;
+            bottom: 3px;
+            left: 3px;
+            right: 3px;
+            height: 0%;
+            border-radius: 50%;
+            transition: height 0.5s ease, background 0.5s ease;
+            box-shadow: inset -5px -5px 15px rgba(255, 255, 255, 0.6);
+        }
+
+        /* 3D酒精灯 */
+        .alcohol-lamp-3d {
+            width: 70px;
+            height: 90px;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .lamp-base-3d {
+            width: 70px;
+            height: 55px;
+            background: 
+                radial-gradient(ellipse at 30% 30%,
+                    #ff8888 0%,
+                    #ff6b6b 40%,
+                    #ee5555 100%
+                );
+            border-radius: 0 0 35px 35px;
+            position: absolute;
+            bottom: 0;
+            border: 2.5px solid #cc4444;
+            box-shadow: 
+                inset -5px -5px 15px rgba(255, 255, 255, 0.4),
+                inset 5px 5px 15px rgba(0, 0, 0, 0.3),
+                3px 5px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .lamp-wick-3d {
+            width: 10px;
+            height: 30px;
+            background: linear-gradient(to bottom, #555, #333);
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .flame-3d {
+            width: 40px;
+            height: 50px;
+            position: absolute;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: 
+                radial-gradient(ellipse at center,
+                    #ffff00 0%,
+                    #ffaa00 30%,
+                    #ff6600 60%,
+                    rgba(255, 102, 0, 0.3) 85%,
+                    transparent 100%
+                );
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            opacity: 0;
+            transition: opacity 0.3s;
+            filter: blur(3px);
+            animation: flicker-3d 0.15s infinite;
+            box-shadow: 
+                0 0 20px rgba(255, 165, 0, 0.8),
+                0 0 40px rgba(255, 140, 0, 0.5);
+        }
+
+        .alcohol-lamp-3d.lit .flame-3d {
+            opacity: 1;
+        }
+
+        @keyframes flicker-3d {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.05, 0.95); }
+        }
+
+        /* 试管架 */
+        .test-tube-rack {
+            width: 150px;
+            height: 80px;
+            position: relative;
+        }
+
+        .rack-base {
+            width: 100%;
+            height: 15px;
+            background: linear-gradient(to bottom, #8B4513, #654321);
+            border-radius: 3px;
+            position: absolute;
+            bottom: 0;
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .rack-holes {
+            display: flex;
+            justify-content: space-around;
+            position: absolute;
+            bottom: 15px;
+            width: 100%;
+        }
+
+        .rack-hole {
+            width: 25px;
+            height: 60px;
+            background: 
+                linear-gradient(to right,
+                    #8B4513,
+                    #A0522D,
+                    #8B4513
+                );
+            border-radius: 50% 50% 0 0;
+            box-shadow: 
+                inset 2px 2px 5px rgba(0, 0, 0, 0.4),
+                2px 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 铁架台 */
+        .iron-stand {
+            width: 120px;
+            height: 180px;
+            position: relative;
+        }
+
+        .stand-base {
+            width: 120px;
+            height: 20px;
+            background: linear-gradient(to bottom, #666, #444);
+            border-radius: 5px;
+            position: absolute;
+            bottom: 0;
+            box-shadow: 3px 3px 15px rgba(0, 0, 0, 0.6);
+        }
+
+        .stand-rod {
+            width: 12px;
+            height: 160px;
+            background: linear-gradient(to right, #888, #666, #888);
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+            box-shadow: 
+                inset -2px 0 5px rgba(255, 255, 255, 0.3),
+                2px 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .stand-clamp {
+            width: 50px;
+            height: 8px;
+            background: linear-gradient(to bottom, #777, #555);
+            position: absolute;
+            right: 0;
+            top: 60px;
+            border-radius: 2px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+        }
+
+        .stand-clamp.has-equipment {
+            background: linear-gradient(to bottom, #4CAF50, #45a049);
+        }
+
+        .stand-attachments {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* 三角架 - 修复错位和透视 */
+        .tripod {
+            width: 100px;
+            height: 80px;
+            position: relative;
+        }
+        
+        .tripod-ring {
+            width: 100px;
+            height: 25px;
+            border: 4px solid #666;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.6),
+                0 2px 4px rgba(0, 0, 0, 0.4);
+            z-index: 2;
+        }
+        
+        .tripod-legs {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .tripod-leg {
+            width: 6px;
+            height: 70px;
+            background: linear-gradient(to right, #999, #555);
+            position: absolute;
+            top: 12px;
+            border-radius: 3px;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+        }
+        
+        .tripod-leg:nth-child(1) {
+            left: 15px;
+            transform: rotate(12deg);
+            z-index: 3;
+        }
+        
+        .tripod-leg:nth-child(2) {
+            right: 15px;
+            transform: rotate(-12deg);
+            z-index: 3;
+        }
+        
+        .tripod-leg:nth-child(3) {
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+            height: 65px;
+            background: linear-gradient(to right, #777, #333);
+        }
+
+        /* 石棉网 - 扁平侧视图 */
+        .asbestos-net {
+            width: 110px;
+            height: 15px;
+            position: relative;
+        }
+        
+        .net-frame {
+            width: 100%;
+            height: 100%;
+            background: #ccc;
+            border: 2px solid #888;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+        }
+        
+        .net-mesh {
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(100,100,100,0.4) 2px, rgba(100,100,100,0.4) 3px),
+                repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(100,100,100,0.4) 2px, rgba(100,100,100,0.4) 3px);
+        }
+        
+        .net-center {
+            width: 60px;
+            height: 8px;
+            background: radial-gradient(ellipse at center, rgba(255, 255, 255, 1) 0%, rgba(230, 230, 230, 0.9) 100%);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 药匙 */
+        .medicine-spoon {
+            width: 100px;
+            height: 25px;
+            position: relative;
+        }
+
+        .spoon-handle {
+            width: 70px;
+            height: 4px;
+            background: linear-gradient(to right, #888, #666);
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 2px;
+        }
+
+        .spoon-head {
+            width: 30px;
+            height: 20px;
+            background: 
+                radial-gradient(ellipse at 40% 40%,
+                    #aaa,
+                    #888
+                );
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 50%;
+            border: 2px solid #666;
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .spoon-head.has-solid {
+            background: 
+                radial-gradient(ellipse at 40% 40%,
+                    var(--solid-color, #888),
+                    var(--solid-color, #666)
+                );
+        }
+
+        /* 滴管 */
+        .dropper {
+            width: 30px;
+            height: 120px;
+            position: relative;
+        }
+
+        .dropper-bulb {
+            width: 30px;
+            height: 35px;
+            background: 
+                radial-gradient(circle at 30% 30%,
+                    #ff9999,
+                    #ff6666
+                );
+            border-radius: 50% 50% 40% 40%;
+            position: absolute;
+            top: 0;
+            box-shadow: 
+                inset -3px -3px 8px rgba(255, 255, 255, 0.4),
+                2px 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .dropper-tube {
+            width: 8px;
+            height: 85px;
+            background: 
+                linear-gradient(to right,
+                    rgba(200, 230, 255, 0.4),
+                    rgba(200, 230, 255, 0.7),
+                    rgba(200, 230, 255, 0.4)
+                );
+            border: 2px solid rgba(150, 180, 220, 0.8);
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 0 0 3px 3px;
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .dropper-liquid {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 0%;
+            border-radius: 0 0 2px 2px;
+            transition: height 0.3s ease;
+            opacity: 0.8;
+        }
+
+        /* 温度计 */
+        .thermometer {
+            width: 30px;
+            height: 120px;
+            position: relative;
+        }
+
+        .thermo-tube {
+            width: 12px;
+            height: 100%;
+            background: 
+                linear-gradient(to right,
+                    rgba(200, 230, 255, 0.4),
+                    rgba(200, 230, 255, 0.7),
+                    rgba(200, 230, 255, 0.4)
+                );
+            border: 2px solid rgba(150, 180, 220, 0.8);
+            border-radius: 6px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .thermo-bulb {
+            width: 25px;
+            height: 25px;
+            background: 
+                radial-gradient(circle at 35% 35%,
+                    #ff6666,
+                    #cc0000
+                );
+            border-radius: 50%;
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 
+                inset -3px -3px 8px rgba(255, 255, 255, 0.4),
+                2px 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        /* 3D试剂瓶（液体） */
+        .reagent-bottle-3d {
+            width: 60px;
+            height: 85px;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .bottle-body-3d {
+            width: 60px;
+            height: 70px;
+            background: 
+                linear-gradient(to right,
+                    rgba(255, 255, 255, 0.3) 0%,
+                    rgba(200, 200, 200, 0.5) 50%,
+                    rgba(255, 255, 255, 0.3) 100%
+                );
+            border: 2.5px solid rgba(100, 100, 100, 0.6);
+            border-radius: 5px;
+            position: absolute;
+            bottom: 0;
+            box-shadow: 
+                inset -5px 0 15px rgba(255, 255, 255, 0.6),
+                inset 5px 0 10px rgba(0, 0, 0, 0.2),
+                3px 5px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .bottle-cap-3d {
+            width: 35px;
+            height: 18px;
+            background: 
+                radial-gradient(ellipse at 40% 30%,
+                    #a0826d,
+                    #8b4513
+                );
+            border-radius: 5px;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 
+                inset -2px -2px 5px rgba(255, 255, 255, 0.3),
+                2px 3px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .bottle-liquid-3d {
+            position: absolute;
+            bottom: 2px;
+            left: 2px;
+            right: 2px;
+            height: 70%;
+            border-radius: 3px;
+            box-shadow: inset -3px 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .bottle-label-3d {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            color: #000;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 3px 6px;
+            border-radius: 3px;
+            white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            font-weight: 600;
+        }
+
+        /* 广口瓶（固体试剂） */
+        .wide-mouth-bottle {
+            width: 80px;
+            height: 100px;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .wide-bottle-body {
+            width: 80px;
+            height: 85px;
+            background: 
+                linear-gradient(to right,
+                    rgba(255, 255, 255, 0.4) 0%,
+                    rgba(220, 220, 220, 0.6) 50%,
+                    rgba(255, 255, 255, 0.4) 100%
+                );
+            border: 3px solid rgba(120, 120, 120, 0.7);
+            border-radius: 8px;
+            position: absolute;
+            bottom: 0;
+            box-shadow: 
+                inset -6px 0 18px rgba(255, 255, 255, 0.7),
+                inset 6px 0 12px rgba(0, 0, 0, 0.2),
+                4px 6px 18px rgba(0, 0, 0, 0.4);
+        }
+
+        .wide-bottle-cap {
+            width: 50px;
+            height: 20px;
+            background: 
+                radial-gradient(ellipse at 40% 30%,
+                    #b89968,
+                    #8b6914
+                );
+            border-radius: 8px 8px 5px 5px;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 
+                inset -3px -3px 6px rgba(255, 255, 255, 0.4),
+                3px 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .wide-bottle-solid {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            right: 5px;
+            height: 40%;
+            border-radius: 3px 3px 5px 5px;
+            box-shadow: 
+                inset -4px -4px 12px rgba(0, 0, 0, 0.3),
+                inset 4px 4px 12px rgba(255, 255, 255, 0.3);
+        }
+
+        .wide-bottle-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10px;
+            color: #000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 4px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            font-weight: 700;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        /* 返回主页按钮 */
+        .home-button {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1001;
+            backdrop-filter: blur(10px);
+            text-decoration: none;
+        }
+
+        .home-button:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 25px rgba(245, 87, 108, 0.6);
+        }
+
+        .home-button:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        .home-button .icon {
+            font-size: 18px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            50% {
+                transform: translateX(-3px);
+            }
+        }
+
+        /* 控制面板 */
+        .controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5555 100%);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn.danger:hover {
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+        }
+
+        .btn.success {
+            background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);
+            box-shadow: 0 4px 15px rgba(81, 207, 102, 0.4);
+        }
+
+        /* 反应效果 */
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, 
+                rgba(255, 255, 255, 0.9), 
+                rgba(200, 230, 255, 0.6));
+            box-shadow: 
+                inset -2px -2px 5px rgba(255, 255, 255, 0.8),
+                2px 2px 5px rgba(0, 0, 0, 0.2);
+            animation: rise 2.5s infinite;
+        }
+
+        @keyframes rise {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-120px) scale(1.8);
+                opacity: 0;
+            }
+        }
+
+        .precipitate {
+            position: absolute;
+            border-radius: 50%;
+            animation: fall 3s infinite;
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-60px) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(80px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .steam {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle, 
+                rgba(255, 255, 255, 0.6) 0%, 
+                rgba(200, 230, 255, 0.3) 50%,
+                transparent 100%);
+            border-radius: 50%;
+            filter: blur(8px);
+            animation: steam-rise 3s infinite;
+        }
+
+        @keyframes steam-rise {
+            0% {
+                transform: translateY(0) scale(0.5);
+                opacity: 0;
+            }
+            20% {
+                opacity: 0.8;
+            }
+            80% {
+                opacity: 0.5;
+            }
+            100% {
+                transform: translateY(-100px) scale(2);
+                opacity: 0;
+            }
+        }
+
+        /* 实验说明 */
+        .experiment-info {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 15px 20px;
+            border-radius: 10px;
+            max-width: 500px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            backdrop-filter: blur(10px);
+            border-left: 4px solid #667eea;
+        }
+
+        .experiment-info.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .experiment-info h3 {
+            color: #1e3c72;
+            margin-bottom: 8px;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .experiment-info p {
+            color: #555;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        /* 删除区域 */
+        .delete-zone {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 70px;
+            height: 70px;
+            background: 
+                radial-gradient(circle at 30% 30%,
+                    rgba(255, 107, 107, 1),
+                    rgba(238, 85, 85, 1)
+                );
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: white;
+            z-index: 1000;
+            transition: all 0.3s;
+            opacity: 0.6;
+            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.5);
+        }
+
+        .delete-zone:hover, .delete-zone.active {
+            opacity: 1;
+            transform: scale(1.15);
+            box-shadow: 0 8px 30px rgba(255, 107, 107, 0.8);
+        }
+
+        /* 滚动条 */
+        .sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(240, 240, 240, 0.5);
+            border-radius: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5568d3, #6a3f8f);
+        }
+
+        /* ========== 下拉面板样式 ========== */
+        /* 按钮容器 - 相对定位 */
+        .dropdown-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* 下拉面板 */
+        .dropdown-panel {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            min-width: 280px;
+            max-width: 320px;
+            max-height: 60vh;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
+                        0 8px 24px rgba(0, 0, 0, 0.2);
+            padding: 16px;
+            z-index: 1001;
+            opacity: 0;
+            transform: translateY(-10px);
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out,
+                        transform 0.3s ease-in-out,
+                        visibility 0.3s ease-in-out;
+            /* 关键：面板背景区域事件穿透 */
+            pointer-events: none;
+        }
+
+        .dropdown-panel.show {
+            opacity: 1;
+            transform: translateY(0);
+            visibility: visible;
+        }
+
+        /* 面板内容区域 - 允许交互 */
+        .dropdown-content {
+            pointer-events: auto;
+            overflow-y: auto;
+            max-height: calc(60vh - 32px);
+            color: #FFFFFF;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* 面板滚动条 */
+        .dropdown-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .dropdown-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .dropdown-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        /* 指示箭头 */
+        .dropdown-arrow {
+            position: absolute;
+            top: -8px;
+            right: 20px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 8px solid rgba(0, 0, 0, 0.85);
+        }
+
+        /* 面板标题 */
+        .dropdown-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #FFFFFF;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 8px;
+        }
+
+        /* 面板列表项 */
+        .dropdown-content ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .dropdown-content li {
+            margin-bottom: 8px;
+        }
+
+        .dropdown-content strong {
+            color: #667eea;
+        }
+
+        .dropdown-content .warning {
+            color: #ffaa00;
+        }
+
+        .dropdown-content .success {
+            color: #51cf66;
+        }
+
+        /* 响应式处理 */
+        @media (max-width: 768px) {
+            .dropdown-panel {
+                max-width: calc(80vw - 20px);
+                right: 50%;
+                transform: translateX(50%) translateY(-10px);
+            }
+
+            .dropdown-panel.show {
+                transform: translateX(50%) translateY(0);
+            }
+
+            .dropdown-arrow {
+                right: 50%;
+                transform: translateX(50%);
+            }
+        }
+
+        /* ====== 横屏模式提示遮罩 ====== */
+        .landscape-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(30, 60, 114, 0.98) 0%, rgba(42, 82, 152, 0.98) 100%);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .landscape-overlay.show {
+            display: flex;
+        }
+
+        .landscape-icon {
+            font-size: 6rem;
+            animation: rotateDevice 2s ease-in-out infinite;
+            margin-bottom: 1.5rem;
+        }
+
+        @keyframes rotateDevice {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-90deg); }
+            50% { transform: rotate(-90deg); }
+            75% { transform: rotate(0deg); }
+        }
+
+        .landscape-title {
+            font-size: 2rem;
+            color: #ffffff;
+            margin-bottom: 1rem;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+        }
+
+        .landscape-message {
+            font-size: 1.1rem;
+            color: #e0e6ed;
+            text-align: center;
+            max-width: 300px;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .landscape-hint {
+            font-size: 0.9rem;
+            color: #64ffda;
+            opacity: 0.8;
+            animation: pulseHint 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulseHint {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* 移动端按钮优化 */
+        .home-button, .btn {
+            min-height: 44px;
+            min-width: 80px;
+        }
+
+        /* 安全区域适配 */
+        @supports (padding: env(safe-area-inset-bottom)) {
+            .home-button {
+                left: max(15px, env(safe-area-inset-left));
+            }
+            .controls {
+                right: max(15px, env(safe-area-inset-right));
+            }
+        }
+
+        /* ====== 移动端拖拽相关样式 ====== */
+        /* 拖拽预览元素 */
+        .drag-preview {
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            transition: transform 0.1s ease;
+        }
+
+        /* 操作区域拖拽覆盖状态 */
+        #dropZone.drag-over {
+            border: 3px dashed #64ffda !important;
+            background: rgba(100, 255, 218, 0.1) !important;
+        }
+
+        /* 移动端仪器栏项目触摸反馈 */
+        .item:active {
+            transform: scale(0.95);
+        }
+
+        /* ====== 实验安全提示系统 ====== */
+        /* 试剂卡片作为危险性徽章的定位容器 */
+        .item {
+            position: relative;
+        }
+
+        /* 试剂瓶右上角的危险性标识徽章 */
+        .safety-badge {
+            position: absolute;
+            top: 3px;
+            right: 4px;
+            font-size: 13px;
+            line-height: 1;
+            pointer-events: none;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+        }
+
+        /* 顶部滑入式安全提示条 */
+        #safetyAlert {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translate(-50%, -160%);
+            min-width: 260px;
+            max-width: min(90vw, 520px);
+            padding: 12px 18px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #fff4e5, #ffe0b2);
+            border: 2px solid #ff9f43;
+            box-shadow: 0 10px 30px rgba(255, 120, 0, 0.35);
+            color: #7a3e00;
+            font-size: 13px;
+            line-height: 1.6;
+            z-index: 9000;
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.35s;
+        }
+
+        #safetyAlert.show {
+            transform: translate(-50%, 0);
+            opacity: 1;
+        }
+
+        #safetyAlert .safety-alert-title {
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #d9480f;
+        }
+
+        /* 异常操作提示条：红色警示，与常规安全提示区分 */
+        #safetyAlert.danger {
+            background: linear-gradient(135deg, #ffebee, #ffcdd2);
+            border-color: #e53935;
+            box-shadow: 0 10px 30px rgba(229, 57, 53, 0.4);
+            color: #7f1d1d;
+        }
+
+        #safetyAlert.danger .safety-alert-title {
+            color: #b91c1c;
+        }
+
+        /* 异常容器：红色警示脉冲。只改 filter，避免覆盖器皿定位用的 transform */
+        .lab-hazard {
+            animation: labHazardPulse 0.65s ease-in-out 4;
+        }
+
+        @keyframes labHazardPulse {
+            0%, 100% { filter: drop-shadow(0 0 0 rgba(229, 57, 53, 0)); }
+            50% { filter: drop-shadow(0 0 14px rgba(229, 57, 53, 0.9)) brightness(1.2); }
+        }
+
+        /* 异常烟雾：浑浊灰白烟团向上飘散 */
+        .hazard-smoke {
+            position: absolute;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(190, 190, 190, 0.8), rgba(130, 130, 130, 0));
+            pointer-events: none;
+            animation: hazardSmokeUp 2.2s ease-out forwards;
+        }
+
+        @keyframes hazardSmokeUp {
+            0% { opacity: 0; transform: translateY(0) scale(0.6); }
+            25% { opacity: 0.85; }
+            100% { opacity: 0; transform: translateY(-70px) scale(1.9); }
+        }
+
+        /* 首次进入实验室的安全须知弹窗 */
+        .safety-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(10, 25, 45, 0.72);
+            backdrop-filter: blur(6px);
+        }
+
+        .safety-modal.show {
+            display: flex;
+        }
+
+        .safety-modal-card {
+            width: min(560px, 94vw);
+            max-height: 88vh;
+            overflow-y: auto;
+            padding: 24px 28px 20px;
+            border-radius: 20px;
+            background: #fff;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+            animation: safetyPop 0.3s ease-out;
+        }
+
+        @keyframes safetyPop {
+            from { transform: scale(0.94); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .safety-modal-card h2 {
+            font-size: 19px;
+            color: #2b3a67;
+            margin-bottom: 6px;
+        }
+
+        .safety-modal-sub {
+            font-size: 13px;
+            color: #7a869a;
+            margin-bottom: 16px;
+        }
+
+        .safety-rule-list {
+            list-style: none;
+            display: grid;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .safety-rule-list li {
+            display: flex;
+            gap: 10px;
+            padding: 9px 12px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #34495e;
+            background: #f6f8fc;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+        }
+
+        .safety-ack {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #34495e;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .safety-ack input {
+            width: 18px;
+            height: 18px;
+            accent-color: #51cf66;
+            cursor: pointer;
+        }
+
+        .safety-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .safety-modal-actions .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* 安全须知按钮 */
+        .btn.warning {
+            background: linear-gradient(135deg, #ffa94d 0%, #f76707 100%);
+            box-shadow: 0 4px 15px rgba(247, 103, 7, 0.4);
+        }
+
+        .btn.warning:hover {
+            box-shadow: 0 6px 20px rgba(247, 103, 7, 0.6);
+        }
+
+        /* 安全面板内的危险性标识图例 */
+        .ghs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 6px 0;
+        }
+
+        .ghs-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 8px;
+            font-size: 12px;
+            color: #444;
+            background: #f7f7fa;
+            border-radius: 6px;
+        }
+
+        /* ============================================================
+           科幻实验室主题层
+           设计语言：深空底色 + 青色 HUD 描边 + 等宽字标注
+           说明：本层统一覆盖上方基础配色，不改变任何布局与交互逻辑
+           ============================================================ */
+        :root {
+            --sci-bg-deep: #050b13;
+            --sci-panel: rgba(10, 24, 40, 0.9);
+            --sci-line: rgba(46, 230, 255, 0.22);
+            --sci-line-strong: rgba(46, 230, 255, 0.55);
+            --sci-cyan: #2ee6ff;
+            --sci-text: #d6ecf7;
+            --sci-text-dim: #8aa9bd;
+            --sci-mono: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+        }
+
+        body {
+            background:
+                radial-gradient(ellipse at 50% -10%, rgba(46, 230, 255, 0.14), transparent 55%),
+                radial-gradient(ellipse at 85% 110%, rgba(120, 90, 255, 0.10), transparent 60%),
+                linear-gradient(160deg, #050b13 0%, #0a1524 55%, #060d18 100%);
+            color: var(--sci-text);
+        }
+
+        /* 全局细网格，营造 HUD 背景质感 */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(46, 230, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(46, 230, 255, 0.04) 1px, transparent 1px);
+            background-size: 44px 44px;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ---------- 左侧器材侧栏 ---------- */
+        .sidebar {
+            background: linear-gradient(180deg, rgba(12, 28, 46, 0.92), rgba(7, 17, 30, 0.92));
+            border: 1px solid var(--sci-line);
+            border-radius: 14px;
+            box-shadow:
+                0 18px 50px rgba(0, 0, 0, 0.55),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(14px);
+            position: relative;
+        }
+
+        /* 侧栏顶部发光条 */
+        .sidebar::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 14px;
+            right: 14px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--sci-cyan), transparent);
+            opacity: 0.75;
+        }
+
+        .sidebar h2 {
+            color: var(--sci-cyan);
+            font-family: var(--sci-mono);
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            border-bottom: 1px solid var(--sci-line);
+            padding-bottom: 10px;
+            text-shadow: 0 0 18px rgba(46, 230, 255, 0.55);
+        }
+
+        .category h3 {
+            color: var(--sci-text-dim);
+            font-family: var(--sci-mono);
+            font-size: 11px;
+            letter-spacing: 0.16em;
+            background: none;
+            border-left: 2px solid var(--sci-line-strong);
+            border-radius: 0;
+            padding: 3px 0 3px 9px;
+        }
+
+        .item {
+            background: linear-gradient(160deg, rgba(20, 40, 62, 0.9), rgba(11, 24, 40, 0.9));
+            border: 1px solid rgba(46, 230, 255, 0.14);
+            border-radius: 9px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .item:hover {
+            background: linear-gradient(160deg, rgba(28, 56, 84, 0.95), rgba(14, 31, 50, 0.95));
+            border-color: var(--sci-line-strong);
+            box-shadow:
+                0 0 0 1px rgba(46, 230, 255, 0.18),
+                0 8px 24px rgba(0, 0, 0, 0.5),
+                0 0 22px rgba(46, 230, 255, 0.28);
+        }
+
+        .item-name {
+            color: #bcd8e8;
+            letter-spacing: 0.04em;
+        }
+
+        /* 器材图标在深色底上的冷光描边 */
+        .item .item-icon {
+            filter: drop-shadow(0 0 6px rgba(46, 230, 255, 0.35));
+        }
+
+        .item .reagent-icon-body,
+        .item .bottle-icon-body {
+            box-shadow:
+                inset 0 0 10px rgba(46, 230, 255, 0.25),
+                2px 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        /* ---------- 右侧 3D 实验台 ---------- */
+        .workbench {
+            background:
+                radial-gradient(ellipse at 50% 20%, rgba(46, 230, 255, 0.06), transparent 60%),
+                rgba(5, 12, 22, 0.6);
+            border: 1px solid rgba(46, 230, 255, 0.14);
+            border-radius: 14px;
+            box-shadow:
+                0 18px 60px rgba(0, 0, 0, 0.6),
+                inset 0 0 80px rgba(46, 230, 255, 0.05);
+        }
+
+        .scene-3d {
+            background:
+                radial-gradient(ellipse at 50% 0%, rgba(46, 230, 255, 0.16) 0%, transparent 55%),
+                radial-gradient(ellipse at 50% 45%, rgba(20, 60, 90, 0.45) 0%, transparent 70%),
+                linear-gradient(to bottom, #071120 0%, #0a1a2c 45%, #071322 100%);
+        }
+
+        /* 地板：青色透视网格，替代原木质地板 */
+        .floor-3d {
+            background:
+                repeating-linear-gradient(90deg, rgba(46, 230, 255, 0.16) 0 1px, transparent 1px 60px),
+                repeating-linear-gradient(0deg, rgba(46, 230, 255, 0.12) 0 1px, transparent 1px 60px),
+                linear-gradient(to bottom, rgba(6, 18, 32, 0.9) 0%, rgba(4, 10, 20, 1) 100%);
+            box-shadow:
+                0 -1px 0 rgba(46, 230, 255, 0.35),
+                0 -20px 60px rgba(46, 230, 255, 0.12);
+        }
+
+        .wall-shelf {
+            height: 6px;
+            background: linear-gradient(to bottom, rgba(46, 230, 255, 0.55), rgba(46, 230, 255, 0.1));
+            border-radius: 3px;
+            box-shadow:
+                0 0 18px rgba(46, 230, 255, 0.45),
+                0 4px 16px rgba(0, 0, 0, 0.6);
+        }
+
+        /* 实验台四角 HUD 标记 */
+        .workbench::before,
+        .workbench::after {
+            content: "";
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            z-index: 5;
+            pointer-events: none;
+            border-style: solid;
+            border-color: rgba(46, 230, 255, 0.5);
+        }
+
+        .workbench::before {
+            top: 10px;
+            left: 10px;
+            border-width: 1px 0 0 1px;
+        }
+
+        .workbench::after {
+            bottom: 10px;
+            right: 10px;
+            border-width: 0 1px 1px 0;
+        }
+
+        /* 缓慢下移的扫描线 */
+        .scene-3d::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            z-index: 6;
+            opacity: 0;
+            pointer-events: none;
+            background: linear-gradient(90deg, transparent, rgba(46, 230, 255, 0.55), transparent);
+            animation: hudScan 9s linear infinite;
+        }
+
+        @keyframes hudScan {
+            0%   { top: 0;    opacity: 0; }
+            8%   { opacity: 0.55; }
+            92%  { opacity: 0.55; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* ---------- 顶部按钮与 HUD ---------- */
+        .home-button {
+            background: rgba(46, 230, 255, 0.08);
+            border: 1px solid rgba(46, 230, 255, 0.4);
+            border-radius: 8px;
+            color: #bfeaf8;
+            font-family: var(--sci-mono);
+            letter-spacing: 0.05em;
+            box-shadow: 0 0 20px rgba(46, 230, 255, 0.18);
+        }
+
+        .home-button:hover {
+            background: rgba(46, 230, 255, 0.18);
+            border-color: rgba(46, 230, 255, 0.85);
+            box-shadow: 0 0 26px rgba(46, 230, 255, 0.45);
+        }
+
+        .controls {
+            background: linear-gradient(180deg, rgba(12, 28, 46, 0.92), rgba(7, 17, 30, 0.92));
+            border: 1px solid rgba(46, 230, 255, 0.2);
+            border-radius: 12px;
+            box-shadow:
+                0 12px 36px rgba(0, 0, 0, 0.55),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+        }
+
+        .btn {
+            background: rgba(46, 230, 255, 0.08);
+            color: #b9e9f7;
+            border: 1px solid rgba(46, 230, 255, 0.38);
+            border-radius: 7px;
+            font-family: var(--sci-mono);
+            font-size: 12px;
+            letter-spacing: 0.06em;
+            box-shadow: 0 0 0 rgba(46, 230, 255, 0);
+        }
+
+        .btn:hover {
+            background: rgba(46, 230, 255, 0.18);
+            color: #eafcff;
+            border-color: rgba(46, 230, 255, 0.8);
+            box-shadow: 0 0 18px rgba(46, 230, 255, 0.4);
+        }
+
+        .btn.danger {
+            background: rgba(255, 92, 108, 0.1);
+            color: #ffb3ba;
+            border-color: rgba(255, 92, 108, 0.45);
+            box-shadow: 0 0 16px rgba(255, 92, 108, 0.16);
+        }
+
+        .btn.danger:hover {
+            background: rgba(255, 92, 108, 0.22);
+            color: #ffe3e6;
+            border-color: rgba(255, 92, 108, 0.85);
+            box-shadow: 0 0 18px rgba(255, 92, 108, 0.45);
+        }
+
+        .btn.success {
+            background: rgba(52, 211, 153, 0.1);
+            color: #9cf0cd;
+            border-color: rgba(52, 211, 153, 0.45);
+            box-shadow: 0 0 16px rgba(52, 211, 153, 0.16);
+        }
+
+        .btn.success:hover {
+            background: rgba(52, 211, 153, 0.22);
+            color: #d9fff0;
+            border-color: rgba(52, 211, 153, 0.85);
+            box-shadow: 0 0 18px rgba(52, 211, 153, 0.45);
+        }
+
+        .btn.warning {
+            background: rgba(251, 191, 36, 0.1);
+            color: #ffe1a3;
+            border-color: rgba(251, 191, 36, 0.45);
+            box-shadow: 0 0 16px rgba(251, 191, 36, 0.16);
+        }
+
+        .btn.warning:hover {
+            background: rgba(251, 191, 36, 0.22);
+            color: #fff3d1;
+            border-color: rgba(251, 191, 36, 0.85);
+            box-shadow: 0 0 18px rgba(251, 191, 36, 0.45);
+        }
+
+        /* ---------- 实验提示 HUD ---------- */
+        .experiment-info {
+            background: linear-gradient(180deg, rgba(10, 26, 44, 0.95), rgba(6, 15, 26, 0.95));
+            border: 1px solid rgba(46, 230, 255, 0.25);
+            border-left: 3px solid var(--sci-cyan);
+            border-radius: 10px;
+            box-shadow:
+                0 14px 40px rgba(0, 0, 0, 0.6),
+                0 0 26px rgba(46, 230, 255, 0.12);
+            backdrop-filter: blur(12px);
+        }
+
+        .experiment-info h3 {
+            color: var(--sci-cyan);
+            font-family: var(--sci-mono);
+            font-size: 12px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .experiment-info p {
+            color: var(--sci-text);
+        }
+
+        /* ---------- 删除区 ---------- */
+        .delete-zone {
+            background: radial-gradient(circle at 30% 30%, rgba(255, 92, 108, 0.9), rgba(150, 24, 38, 0.95));
+            border: 1px solid rgba(255, 92, 108, 0.6);
+            box-shadow:
+                0 0 26px rgba(255, 92, 108, 0.42),
+                inset 0 0 18px rgba(255, 255, 255, 0.12);
+        }
+
+        .delete-zone:hover,
+        .delete-zone.active {
+            border-color: rgba(255, 150, 160, 0.95);
+            box-shadow: 0 0 40px rgba(255, 92, 108, 0.75);
+        }
+
+        /* ---------- 下拉面板 ---------- */
+        .dropdown-panel {
+            background: linear-gradient(180deg, rgba(9, 22, 38, 0.97), rgba(5, 13, 24, 0.97));
+            border: 1px solid rgba(46, 230, 255, 0.28);
+            border-radius: 10px;
+            box-shadow:
+                0 18px 46px rgba(0, 0, 0, 0.65),
+                0 0 30px rgba(46, 230, 255, 0.14);
+        }
+
+        .dropdown-arrow {
+            border-bottom-color: rgba(9, 22, 38, 0.97);
+        }
+
+        .dropdown-title {
+            color: var(--sci-cyan);
+            font-family: var(--sci-mono);
+            font-size: 13px;
+            letter-spacing: 0.12em;
+            border-bottom: 1px solid rgba(46, 230, 255, 0.22);
+        }
+
+        .dropdown-content {
+            color: #c6dfec;
+            font-size: 13px;
+        }
+
+        .dropdown-content strong {
+            color: #7fe9ff;
+        }
+
+        .dropdown-content .warning {
+            color: #ffc978;
+        }
+
+        .dropdown-content .success {
+            color: #7ce8b8;
+        }
+
+        .ghs-item {
+            background: rgba(46, 230, 255, 0.07);
+            border: 1px solid rgba(46, 230, 255, 0.15);
+            color: #c6dfec;
+        }
+
+        /* ---------- 滚动条 ---------- */
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(46, 230, 255, 0.06);
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, rgba(46, 230, 255, 0.55), rgba(46, 230, 255, 0.25));
+        }
+
+        /* ---------- 安全须知弹窗同步深色化 ---------- */
+        .safety-modal {
+            background: rgba(3, 9, 16, 0.82);
+        }
+
+        .safety-modal-card {
+            background: linear-gradient(180deg, rgba(10, 24, 40, 0.97), rgba(5, 12, 22, 0.98));
+            border: 1px solid rgba(46, 230, 255, 0.3);
+            box-shadow:
+                0 30px 80px rgba(0, 0, 0, 0.7),
+                0 0 60px rgba(46, 230, 255, 0.12);
+            color: var(--sci-text);
+        }
+
+        .safety-modal-card h2 {
+            color: var(--sci-cyan);
+            font-family: var(--sci-mono);
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 20px rgba(46, 230, 255, 0.5);
+        }
+
+        .safety-modal-sub {
+            color: var(--sci-text-dim);
+        }
+
+        .safety-rule-list li {
+            background: rgba(46, 230, 255, 0.05);
+            border-left: 2px solid rgba(46, 230, 255, 0.55);
+            color: #c6dfec;
+        }
+
+        .safety-ack {
+            color: #c6dfec;
+        }
+
+        /* 侧栏标题英文副标，强化专业感 */
+        .sidebar h2 .sci-sub {
+            display: block;
+            margin-top: 4px;
+            font-size: 9px;
+            font-weight: 400;
+            letter-spacing: 0.28em;
+            color: rgba(138, 169, 189, 0.85);
+            text-shadow: none;
+        }
+
+        /* 横屏提示遮罩同步深空配色 */
+        .landscape-overlay {
+            background:
+                radial-gradient(ellipse at 50% 30%, rgba(46, 230, 255, 0.12), transparent 60%),
+                linear-gradient(160deg, #050b13 0%, #0a1524 60%, #060d18 100%);
+        }
+
+        .landscape-title {
+            color: var(--sci-cyan);
+            font-family: var(--sci-mono);
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 24px rgba(46, 230, 255, 0.5);
+        }
+
+        .landscape-message,
+        .landscape-hint {
+            color: var(--sci-text-dim);
+        }
+
+        /* ---------- 功能分区 ---------- */
+        .zone-block {
+            margin-bottom: 16px;
+            padding: 10px 10px 4px;
+            border: 1px solid rgba(46, 230, 255, 0.12);
+            border-radius: 10px;
+            background: rgba(46, 230, 255, 0.025);
+        }
+
+        .zone-head {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding-bottom: 7px;
+            border-bottom: 1px dashed rgba(46, 230, 255, 0.16);
+        }
+
+        .zone-icon {
+            font-size: 15px;
+        }
+
+        .zone-name {
+            color: #9fe8fa;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+        }
+
+        .zone-tag {
+            margin-left: auto;
+            padding: 1px 6px;
+            font-family: var(--sci-mono);
+            font-size: 8px;
+            letter-spacing: 0.18em;
+            color: rgba(46, 230, 255, 0.7);
+            border: 1px solid rgba(46, 230, 255, 0.25);
+            border-radius: 4px;
+        }
+
+        .zone-desc {
+            margin: 7px 0 10px;
+            font-size: 10px;
+            line-height: 1.55;
+            color: #6f8fa5;
+        }
+
+        .zone-block .category {
+            margin-bottom: 12px;
+        }
+
+        .zone-block .category h3 {
+            font-size: 10px;
+            margin-bottom: 7px;
+        }
+
+        /* 卡片规格徽标 */
+        .item-spec {
+            display: block;
+            margin-top: 3px;
+            font-family: var(--sci-mono);
+            font-size: 8px;
+            color: #7fb4cc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 通用器材渲染（未单独建模的器材统一用图标 + 名称卡片表示） */
+        .eq-generic {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            width: 72px;
+            height: 72px;
+            border-radius: 12px;
+            border: 1px solid rgba(46, 230, 255, 0.3);
+            background: rgba(10, 24, 40, 0.72);
+            box-shadow:
+                0 6px 18px rgba(0, 0, 0, 0.45),
+                inset 0 0 16px rgba(46, 230, 255, 0.12);
+            backdrop-filter: blur(6px);
+        }
+
+        .eq-glyph {
+            font-size: 26px;
+            line-height: 1;
+        }
+
+        .eq-tag {
+            font-size: 9px;
+            color: #9fe8fa;
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+        }
+
+        /* ============================================================
+           扩展器材实物绘制
+           与基础器材（烧杯/试管/锥形瓶）保持同一套玻璃与金属材质语言
+           ============================================================ */
+
+        /* 蒸发皿 */
+        .evap-dish {
+            position: relative;
+            width: 116px;
+            height: 58px;
+            border-radius: 0 0 58px 58px / 0 0 48px 48px;
+            background: linear-gradient(to right,
+                rgba(255, 255, 255, 0.55) 0%,
+                rgba(232, 240, 250, 0.95) 22%,
+                rgba(250, 252, 255, 1) 50%,
+                rgba(232, 240, 250, 0.95) 78%,
+                rgba(255, 255, 255, 0.55) 100%);
+            border: 2px solid rgba(190, 175, 150, 0.9);
+            box-shadow:
+                inset -4px -6px 14px rgba(0, 0, 0, 0.16),
+                4px 6px 16px rgba(0, 0, 0, 0.35);
+        }
+
+        .evap-dish-rim {
+            position: absolute;
+            top: -6px;
+            left: -4px;
+            right: -4px;
+            height: 14px;
+            border-radius: 50%;
+            background: linear-gradient(to bottom, #f7f4ee, #cfc4b2);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+        }
+
+        .evap-dish-liquid {
+            position: absolute;
+            bottom: 4px;
+            left: 8px;
+            right: 8px;
+            height: 18px;
+            border-radius: 0 0 50px 50px / 0 0 40px 40px;
+            background: rgba(120, 190, 240, 0.55);
+        }
+
+        /* 坩埚 */
+        .crucible {
+            position: relative;
+            width: 82px;
+            height: 76px;
+            background: linear-gradient(to right, #e9e6df, #ffffff 42%, #d5d0c6);
+            clip-path: polygon(4% 0, 96% 0, 78% 100%, 22% 100%);
+            filter: drop-shadow(3px 5px 10px rgba(0, 0, 0, 0.4));
+        }
+
+        .crucible::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 11px;
+            background: linear-gradient(to bottom, rgba(115, 110, 100, 0.5), transparent);
+        }
+
+        /* 表面皿 */
+        .watch-glass {
+            width: 96px;
+            height: 28px;
+            border-radius: 50%;
+            background: radial-gradient(ellipse at 50% 35%,
+                rgba(255, 255, 255, 0.88),
+                rgba(190, 220, 245, 0.45) 60%,
+                rgba(140, 180, 220, 0.35));
+            border: 2px solid rgba(160, 195, 230, 0.9);
+            box-shadow:
+                inset -4px -4px 10px rgba(255, 255, 255, 0.6),
+                3px 5px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 玻璃棒 */
+        .glass-rod {
+            width: 14px;
+            height: 130px;
+            border-radius: 7px;
+            background: linear-gradient(to right,
+                rgba(255, 255, 255, 0.15),
+                rgba(210, 235, 255, 0.75) 45%,
+                rgba(160, 200, 235, 0.5) 70%,
+                rgba(255, 255, 255, 0.2));
+            border: 1.5px solid rgba(150, 185, 220, 0.85);
+            box-shadow: 2px 3px 10px rgba(0, 0, 0, 0.3);
+            transform: rotate(12deg);
+        }
+
+        /* 漏斗 */
+        .funnel {
+            width: 92px;
+        }
+
+        .funnel-cone {
+            width: 92px;
+            height: 64px;
+            background: linear-gradient(to right,
+                rgba(255, 255, 255, 0.25),
+                rgba(200, 230, 255, 0.6) 50%,
+                rgba(255, 255, 255, 0.25));
+            border: 2px solid rgba(150, 180, 220, 0.85);
+            clip-path: polygon(0 0, 100% 0, 56% 100%, 44% 100%);
+            filter: drop-shadow(2px 4px 8px rgba(0, 0, 0, 0.35));
+        }
+
+        .funnel-stem {
+            width: 12px;
+            height: 46px;
+            margin: -2px auto 0;
+            background: linear-gradient(to right,
+                rgba(255, 255, 255, 0.25),
+                rgba(200, 230, 255, 0.55),
+                rgba(255, 255, 255, 0.25));
+            border: 2px solid rgba(150, 180, 220, 0.85);
+            border-top: none;
+        }
+
+        /* 分液漏斗 */
+        .sep-funnel {
+            position: relative;
+            width: 92px;
+            padding-top: 14px;
+        }
+
+        .sep-funnel-body {
+            width: 92px;
+            height: 92px;
+            border-radius: 50% 50% 46% 46% / 42% 42% 58% 58%;
+            background: linear-gradient(to right,
+                rgba(255, 255, 255, 0.2),
+                rgba(200, 230, 255, 0.6) 50%,
+                rgba(255, 255, 255, 0.2));
+            border: 2px solid rgba(150, 180, 220, 0.85);
+            box-shadow:
+                inset -5px 0 14px rgba(255, 255, 255, 0.5),
+                3px 4px 14px rgba(0, 0, 0, 0.3);
+        }
+
+        .sep-funnel-stopcock {
+            width: 26px;
+            height: 12px;
+            margin: 0 auto;
+            border-radius: 3px;
+            background: linear-gradient(to bottom, #d8e6f2, #a9c4da);
+            border: 1.5px solid rgba(120, 160, 200, 0.9);
+        }
+
+        .sep-funnel-stem {
+            width: 10px;
+            height: 26px;
+            margin: 0 auto;
+            background: rgba(200, 230, 255, 0.55);
+            border: 1.5px solid rgba(150, 180, 220, 0.85);
+            border-top: none;
+        }
+
+        .sep-funnel-stopper {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 26px;
+            height: 14px;
+            border-radius: 5px 5px 2px 2px;
+            background: linear-gradient(to bottom, #f0f6fc, #c3d7e8);
+            border: 1.5px solid rgba(120, 160, 200, 0.9);
+        }
+
+        /* 集气瓶 */
+        .gas-jar {
+            position: relative;
+            width: 86px;
+            height: 104px;
+        }
+
+        .gas-jar-body {
+            width: 100%;
+            height: 100%;
+            border-radius: 6px 6px 12px 12px;
+            background: linear-gradient(to right,
+                rgba(255, 255, 255, 0.14),
+                rgba(200, 230, 255, 0.42) 50%,
+                rgba(255, 255, 255, 0.14));
+            border: 2.5px solid rgba(150, 180, 220, 0.8);
+            box-shadow:
+                inset -5px 0 14px rgba(255, 255, 255, 0.55),
+                3px 4px 14px rgba(0, 0, 0, 0.3);
+        }
+
+        .gas-jar-plate {
+            position: absolute;
+            top: -8px;
+            left: -5px;
+            right: -5px;
+            height: 10px;
+            border-radius: 3px;
+            background: linear-gradient(to bottom, rgba(235, 245, 255, 0.9), rgba(175, 205, 230, 0.8));
+            border: 1.5px solid rgba(140, 175, 210, 0.9);
+        }
+
+        /* 燃烧匙 */
+        .comb-spoon {
+            position: relative;
+            width: 130px;
+            height: 26px;
+        }
+
+        .comb-spoon-handle {
+            position: absolute;
+            left: 0;
+            top: 10px;
+            width: 96px;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to bottom, #b9c6d4, #7d8fa3);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .comb-spoon-head {
+            position: absolute;
+            right: 0;
+            top: 2px;
+            width: 34px;
+            height: 22px;
+            border-radius: 0 0 50% 50% / 0 0 70% 70%;
+            background: linear-gradient(to bottom, #d9b96a, #a8863c);
+            border: 1.5px solid rgba(120, 95, 40, 0.9);
+        }
+
+        /* 试管夹 */
+        .tube-clamp {
+            position: relative;
+            width: 84px;
+            height: 116px;
+        }
+
+        .tube-clamp-handle {
+            position: absolute;
+            left: 34px;
+            top: 0;
+            width: 16px;
+            height: 70px;
+            border-radius: 7px;
+            background: linear-gradient(to right, #c9a06a, #8d6535);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .tube-clamp-jaw {
+            position: absolute;
+            bottom: 26px;
+            width: 16px;
+            height: 48px;
+            border-radius: 8px;
+            background: linear-gradient(to right, #d8b47c, #96703c);
+        }
+
+        .tube-clamp-jaw.left {
+            left: 17px;
+            transform: rotate(14deg);
+        }
+
+        .tube-clamp-jaw.right {
+            right: 17px;
+            transform: rotate(-14deg);
+        }
+
+        /* 坩埚钳 */
+        .crucible-tongs {
+            position: relative;
+            width: 132px;
+            height: 40px;
+        }
+
+        .tong-arm {
+            position: absolute;
+            left: 0;
+            top: 16px;
+            width: 120px;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to bottom, #cfd8e2, #7f8e9e);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .tong-arm.top {
+            transform: rotate(-8deg);
+        }
+
+        .tong-arm.bottom {
+            transform: rotate(8deg);
+        }
+
+        .tong-joint {
+            position: absolute;
+            left: 6px;
+            top: 12px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #6f7d8c;
+            border: 2px solid #4d5a68;
+        }
+
+        /* 镊子 */
+        .tweezers {
+            position: relative;
+            width: 116px;
+            height: 34px;
+        }
+
+        .tweezer-arm {
+            position: absolute;
+            left: 0;
+            width: 110px;
+            height: 5px;
+            border-radius: 3px;
+            background: linear-gradient(to bottom, #dfe8f0, #93a3b3);
+        }
+
+        .tweezer-arm.top {
+            top: 8px;
+            transform: rotate(5deg);
+        }
+
+        .tweezer-arm.bottom {
+            top: 20px;
+            transform: rotate(-5deg);
+        }
+
+        /* 研钵 */
+        .mortar {
+            position: relative;
+            width: 100px;
+            height: 78px;
+        }
+
+        .mortar-bowl {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100px;
+            height: 54px;
+            border-radius: 50% 50% 14px 14px / 70% 70% 30% 30%;
+            background: linear-gradient(to right, #e7e3da, #ffffff 45%, #cdc8bd);
+            border: 2px solid rgba(150, 145, 135, 0.9);
+            box-shadow:
+                inset -6px 0 14px rgba(0, 0, 0, 0.15),
+                3px 5px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .mortar-pestle {
+            position: absolute;
+            right: 2px;
+            top: 0;
+            width: 16px;
+            height: 56px;
+            border-radius: 8px;
+            background: linear-gradient(to right, #d6ccbd, #a08b6d);
+            box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.35);
+            transform: rotate(22deg);
+        }
+
+        /* 托盘天平 */
+        .balance {
+            position: relative;
+            width: 142px;
+            height: 112px;
+        }
+
+        .balance-base {
+            position: absolute;
+            bottom: 0;
+            left: 8px;
+            width: 126px;
+            height: 16px;
+            border-radius: 6px;
+            background: linear-gradient(to bottom, #8e9aa8, #4f5a66);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .balance-pillar {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 52px;
+            background: linear-gradient(to right, #b9c4d0, #6c7a88);
+        }
+
+        .balance-beam {
+            position: absolute;
+            top: 26px;
+            left: 6px;
+            width: 130px;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to bottom, #d5dee8, #8b98a6);
+        }
+
+        .balance-pan {
+            position: absolute;
+            top: 32px;
+            width: 46px;
+            height: 11px;
+            border-radius: 50%;
+            background: linear-gradient(to bottom, #e6edf4, #a6b4c2);
+            border: 1px solid rgba(110, 125, 140, 0.8);
+        }
+
+        .balance-pan.left {
+            left: 0;
+        }
+
+        .balance-pan.right {
+            right: 0;
+        }
+
+        /* 洗瓶 */
+        .wash-bottle {
+            position: relative;
+            width: 78px;
+            height: 128px;
+        }
+
+        .wash-bottle-body {
+            position: absolute;
+            bottom: 0;
+            left: 4px;
+            width: 70px;
+            height: 96px;
+            border-radius: 10px 10px 16px 16px;
+            background: linear-gradient(to right,
+                rgba(255, 255, 255, 0.35),
+                rgba(210, 240, 255, 0.6) 50%,
+                rgba(255, 255, 255, 0.35));
+            border: 2px solid rgba(150, 185, 220, 0.85);
+            box-shadow:
+                inset -4px 0 12px rgba(255, 255, 255, 0.6),
+                3px 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .wash-bottle-liquid {
+            position: absolute;
+            bottom: 3px;
+            left: 6px;
+            right: 6px;
+            height: 44px;
+            border-radius: 0 0 14px 14px;
+            background: rgba(120, 200, 240, 0.45);
+        }
+
+        .wash-bottle-cap {
+            position: absolute;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 28px;
+            height: 16px;
+            border-radius: 5px;
+            background: linear-gradient(to bottom, #6fd6ff, #2f9fd0);
+        }
+
+        .wash-bottle-tube {
+            position: absolute;
+            top: 0;
+            left: 40px;
+            width: 8px;
+            height: 44px;
+            border-radius: 4px;
+            background: linear-gradient(to right, rgba(220, 245, 255, 0.9), rgba(150, 205, 235, 0.8));
+            border: 1px solid rgba(140, 185, 220, 0.8);
+            transform: rotate(-14deg);
+            transform-origin: bottom center;
+        }
+
+        /* 试管刷 */
+        .tube-brush {
+            position: relative;
+            width: 44px;
+            height: 136px;
+        }
+
+        .tube-brush-handle {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 74px;
+            border-radius: 5px;
+            background: linear-gradient(to right, #d6c19a, #9a8055);
+        }
+
+        .tube-brush-bristles {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 38px;
+            height: 58px;
+            border-radius: 8px 8px 18px 18px;
+            background: repeating-linear-gradient(90deg,
+                rgba(230, 235, 240, 0.95) 0 3px,
+                rgba(160, 175, 190, 0.85) 3px 6px);
+            border: 1px solid rgba(140, 155, 170, 0.8);
+        }
+
+        /* 晾干架 */
+        .drying-rack {
+            position: relative;
+            width: 140px;
+            height: 112px;
+        }
+
+        .drying-rack-base {
+            position: absolute;
+            bottom: 0;
+            left: 6px;
+            width: 128px;
+            height: 10px;
+            border-radius: 4px;
+            background: linear-gradient(to bottom, #cfd9e3, #7d8b99);
+        }
+
+        .drying-rack-pillar {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 92px;
+            background: linear-gradient(to right, #d8e2ec, #8b98a6);
+        }
+
+        .drying-rack-bar {
+            position: absolute;
+            left: 18px;
+            width: 104px;
+            height: 5px;
+            border-radius: 3px;
+            background: linear-gradient(to bottom, #dbe5ef, #93a1af);
+        }
+
+        .drying-rack-bar.b1 { top: 24px; }
+        .drying-rack-bar.b2 { top: 52px; }
+        .drying-rack-bar.b3 { top: 80px; }
+
+        /* 抹布 */
+        .cloth-wrap {
+            position: relative;
+            width: 96px;
+            height: 66px;
+        }
+
+        .cloth-fold {
+            position: absolute;
+            inset: 0;
+            border-radius: 6px;
+            background:
+                repeating-linear-gradient(45deg,
+                    rgba(255, 255, 255, 0.12) 0 6px,
+                    rgba(255, 255, 255, 0) 6px 12px),
+                linear-gradient(to bottom right, #6fa8c9, #3f7592);
+            border: 1px solid rgba(40, 80, 105, 0.7);
+            box-shadow: 3px 4px 10px rgba(0, 0, 0, 0.35);
+            transform: rotate(-6deg);
+        }
+
+        .cloth-fold::after {
+            content: "";
+            position: absolute;
+            left: 8%;
+            right: 8%;
+            top: 46%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.28);
+            box-shadow: 0 8px 0 rgba(255, 255, 255, 0.18);
+        }
+
+        /* 废液缸 / 废固桶（共用桶体，靠配色区分） */
+        .waste-bin {
+            position: relative;
+            width: 92px;
+            height: 112px;
+        }
+
+        .waste-bin-body {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 98px;
+            overflow: hidden;
+            border-radius: 8px 8px 14px 14px;
+            background: linear-gradient(to right,
+                rgba(255, 255, 255, 0.18),
+                rgba(200, 230, 255, 0.5) 50%,
+                rgba(255, 255, 255, 0.18));
+            border: 2.5px solid rgba(120, 170, 210, 0.85);
+            box-shadow:
+                inset -5px 0 14px rgba(255, 255, 255, 0.5),
+                3px 5px 14px rgba(0, 0, 0, 0.35);
+        }
+
+        .waste-bin-liquid {
+            position: absolute;
+            bottom: 2px;
+            left: 2px;
+            right: 2px;
+            height: 46px;
+            background: rgba(150, 205, 120, 0.55);
+        }
+
+        .waste-bin-label {
+            position: absolute;
+            bottom: 36px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 600;
+            white-space: nowrap;
+            color: #2f6b3f;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .waste-bin.solid .waste-bin-body {
+            background: linear-gradient(to right,
+                rgba(255, 255, 255, 0.16),
+                rgba(190, 200, 210, 0.5) 50%,
+                rgba(255, 255, 255, 0.16));
+            border-color: rgba(120, 135, 150, 0.85);
+        }
+
+        .waste-bin.solid .waste-bin-label {
+            color: #4a5560;
+        }
+
+        .waste-bin-lid {
+            position: absolute;
+            top: 0;
+            left: -4px;
+            right: -4px;
+            height: 14px;
+            border-radius: 5px;
+            background: linear-gradient(to bottom, #cfe0ee, #8fa8bd);
+            border: 2px solid rgba(110, 145, 175, 0.9);
+        }
+
+        .waste-bin.solid .waste-bin-lid {
+            background: linear-gradient(to bottom, #d3d9df, #919ba5);
+            border-color: rgba(105, 118, 132, 0.9);
+        }
+
+        /* 锐器盒 */
+        .sharps-box {
+            position: relative;
+            width: 92px;
+            height: 86px;
+            border-radius: 8px;
+            background: linear-gradient(to bottom, #ffd166, #e6a828);
+            border: 2px solid rgba(150, 105, 10, 0.85);
+            box-shadow: 3px 5px 14px rgba(0, 0, 0, 0.35);
+        }
+
+        .sharps-box::before {
+            content: "⚠";
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            color: rgba(90, 60, 0, 0.72);
+        }
+
+        .sharps-box-lid {
+            position: absolute;
+            top: -11px;
+            left: -4px;
+            right: -4px;
+            height: 16px;
+            border-radius: 5px;
+            background: linear-gradient(to bottom, #ffe08a, #d9a115);
+            border: 2px solid rgba(150, 105, 10, 0.85);
+        }
+
+        /* 仪器分析区：固定安装设备 */
+        .item.static {
+            cursor: not-allowed;
+            border-style: dashed;
+            border-color: rgba(167, 139, 250, 0.3);
+            background: linear-gradient(160deg, rgba(38, 30, 66, 0.9), rgba(16, 14, 32, 0.9));
+            draggable: false;
+        }
+
+        .item.static:hover {
+            border-color: rgba(167, 139, 250, 0.7);
+            box-shadow: 0 0 18px rgba(167, 139, 250, 0.3);
+        }
+
+        .item.static .item-name {
+            color: #c4b5fd;
+        }
+
+        .item.static::after {
+            content: "固定";
+            position: absolute;
+            top: 3px;
+            right: 4px;
+            padding: 0 3px;
+            font-size: 8px;
+            color: rgba(167, 139, 250, 0.8);
+            border: 1px solid rgba(167, 139, 250, 0.35);
+            border-radius: 3px;
+            background: rgba(30, 24, 52, 0.8);
+        }
+
+        /* ---------- 实验室大面板（规范体系 / 配置清单） ---------- */
+        .lab-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 10050;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(3, 9, 16, 0.85);
+            backdrop-filter: blur(8px);
+        }
+
+        .lab-modal.show {
+            display: flex;
+        }
+
+        .lab-modal-card {
+            width: min(1000px, 96vw);
+            max-height: 88vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: 14px;
+            border: 1px solid rgba(46, 230, 255, 0.3);
+            background: linear-gradient(180deg, rgba(10, 24, 40, 0.98), rgba(5, 12, 22, 0.99));
+            box-shadow:
+                0 30px 80px rgba(0, 0, 0, 0.75),
+                0 0 60px rgba(46, 230, 255, 0.1);
+        }
+
+        .lab-modal-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(46, 230, 255, 0.16);
+        }
+
+        .lab-modal-head h2 {
+            font-family: var(--sci-mono);
+            font-size: 14px;
+            letter-spacing: 0.12em;
+            color: var(--sci-cyan);
+            text-shadow: 0 0 18px rgba(46, 230, 255, 0.45);
+        }
+
+        .lab-modal-close {
+            margin-left: auto;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: 1px solid rgba(46, 230, 255, 0.3);
+            background: rgba(46, 230, 255, 0.08);
+            color: #9fe8fa;
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 1;
+        }
+
+        .lab-modal-close:hover {
+            background: rgba(255, 92, 108, 0.2);
+            border-color: rgba(255, 92, 108, 0.7);
+            color: #ffd7db;
+        }
+
+        .lab-modal-body {
+            padding: 16px 20px 20px;
+            overflow-y: auto;
+        }
+
+        /* 规范体系标签页 */
+        .rule-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .rule-tab {
+            padding: 6px 12px;
+            font-family: var(--sci-mono);
+            font-size: 11px;
+            letter-spacing: 0.05em;
+            color: #8fb8cc;
+            background: rgba(46, 230, 255, 0.05);
+            border: 1px solid rgba(46, 230, 255, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .rule-tab:hover {
+            color: #d6f6ff;
+            border-color: rgba(46, 230, 255, 0.55);
+        }
+
+        .rule-tab.active {
+            font-weight: 700;
+            color: #04121d;
+            background: linear-gradient(135deg, #2ee6ff, #4fd1c5);
+            border-color: transparent;
+        }
+
+        .rule-pane {
+            display: none;
+        }
+
+        .rule-pane.active {
+            display: block;
+        }
+
+        .rule-section {
+            margin-bottom: 14px;
+            padding: 12px 14px;
+            border-left: 2px solid rgba(46, 230, 255, 0.45);
+            background: rgba(46, 230, 255, 0.035);
+            border-radius: 0 8px 8px 0;
+        }
+
+        .rule-section h4 {
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #9fe8fa;
+            letter-spacing: 0.06em;
+        }
+
+        .rule-list {
+            list-style: none;
+            display: grid;
+            gap: 6px;
+        }
+
+        .rule-list li {
+            display: flex;
+            gap: 8px;
+            font-size: 12px;
+            line-height: 1.65;
+            color: #bdd7e6;
+        }
+
+        .rule-list li::before {
+            content: "▸";
+            flex: none;
+            color: rgba(46, 230, 255, 0.6);
+        }
+
+        .rule-list li b {
+            font-weight: 600;
+            color: #ffe1a3;
+        }
+
+        /* 配置清单 */
+        .cfg-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .cfg-stat {
+            padding: 4px 9px;
+            font-family: var(--sci-mono);
+            font-size: 10px;
+            color: #7fb4cc;
+            border: 1px solid rgba(46, 230, 255, 0.2);
+            border-radius: 5px;
+        }
+
+        .cfg-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        .cfg-table th {
+            position: sticky;
+            top: 0;
+            padding: 8px 10px;
+            text-align: left;
+            white-space: nowrap;
+            font-family: var(--sci-mono);
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            color: #9fe8fa;
+            background: rgba(9, 22, 38, 0.98);
+            border-bottom: 1px solid rgba(46, 230, 255, 0.28);
+        }
+
+        .cfg-table td {
+            padding: 7px 10px;
+            vertical-align: top;
+            color: #bdd7e6;
+            border-bottom: 1px solid rgba(46, 230, 255, 0.08);
+        }
+
+        .cfg-table tr:hover td {
+            background: rgba(46, 230, 255, 0.05);
+        }
+
+        .cfg-zone {
+            white-space: nowrap;
+            font-weight: 600;
+            color: #c4b5fd;
+        }
+
+        .cfg-usage {
+            color: #8fb8cc;
+        }
+
+        /* 移动端：收敛圆角与光晕强度，避免小屏过载 */
+        @media (max-width: 768px) {
+            .sidebar,
+            .workbench {
+                border-radius: 12px;
+            }
+
+            .btn {
+                font-size: 11px;
+            }
+        }
+
+        /* 手机端（含横屏）：返回主页与操作面板分行排列，避免按钮相互重叠 */
+        @media (max-width: 1024px), (max-height: 600px) {
+            .home-button {
+                top: 10px;
+                left: 10px;
+                padding: 8px 14px;
+                font-size: 13px;
+                white-space: nowrap;
+            }
+
+            .controls {
+                top: 62px;
+                left: 10px;
+                right: 10px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px;
+                padding: 8px;
+                max-height: calc(100% - 80px);
+                overflow-y: auto;
+            }
+
+            .controls .btn {
+                padding: 8px 12px;
+                font-size: 12px;
+                min-width: 0;
+                margin: 2px;
+            }
+        }
+
+        /* 手机横屏：收窄器材侧栏，操作按钮并成一行，把空间尽量留给实验区 */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .container {
+                padding: 6px;
+                gap: 6px;
+            }
+
+            .sidebar {
+                width: 200px;
+                padding: 10px;
+                border-radius: 10px;
+            }
+
+            .sidebar h2 {
+                font-size: 13px;
+                margin-bottom: 8px;
+                padding-bottom: 6px;
+                letter-spacing: 0.08em;
+            }
+
+            .sidebar h2 .sci-sub {
+                display: none;
+            }
+
+            .zone-desc {
+                display: none;
+            }
+
+            .category {
+                margin-bottom: 10px;
+            }
+
+            .category h3 {
+                font-size: 10px;
+                margin-bottom: 6px;
+                padding: 2px 0 2px 7px;
+            }
+
+            .items-grid {
+                gap: 5px;
+            }
+
+            .item {
+                padding: 6px 4px;
+            }
+
+            .item-icon {
+                font-size: 20px;
+                margin-bottom: 2px;
+            }
+
+            .item-name {
+                font-size: 11px;
+            }
+
+            .home-button {
+                top: 6px;
+                left: 6px;
+                padding: 6px 10px;
+                font-size: 12px;
+                min-height: 38px;
+                gap: 5px;
+            }
+
+            .home-button .icon {
+                font-size: 14px;
+            }
+
+            .controls {
+                top: 6px;
+                left: 108px;
+                right: 6px;
+                display: flex;
+                flex-wrap: nowrap;
+                gap: 3px;
+                padding: 4px 6px;
+                max-height: none;
+                overflow-x: auto;
+                overflow-y: hidden;
+            }
+
+            .controls .btn {
+                flex: 0 0 auto;
+                padding: 5px 8px;
+                font-size: 11px;
+                min-width: 0;
+                min-height: 34px;
+                margin: 0;
+                white-space: nowrap;
+            }
+
+            .dropdown-panel {
+                max-height: calc(100vh - 130px);
+                overflow-y: auto;
+            }
+
+            /* 窄屏横屏：操作按钮允许换行，避免按钮被裁切 */
+            @media (max-width: 760px) {
+                .controls {
+                    flex-wrap: wrap;
+                    overflow-x: visible;
+                }
+            }
+
+            .experiment-info {
+                bottom: 6px;
+                left: 6px;
+                padding: 6px 10px;
+                max-width: calc(100% - 92px);
+            }
+
+            .experiment-info h3 {
+                font-size: 12px;
+                margin-bottom: 2px;
+            }
+
+            .experiment-info p {
+                font-size: 11px;
+                line-height: 1.4;
+            }
+
+            .delete-zone {
+                width: 56px;
+                height: 56px;
+                bottom: 8px;
+                right: 8px;
+                font-size: 24px;
+            }
+        }

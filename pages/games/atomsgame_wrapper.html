@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>元素幻语 - 元素符号速配</title>
+    <link rel="stylesheet" href="../../assets/css/atomsgame-wrapper.css">
+</head>
+<body>
+    <!-- 视频背景 -->
+    <div class="video-container">
+        <video autoplay muted loop playsinline preload="metadata">
+            <source src="../../assets/background.mp4" type="video/mp4">
+        </video>
+    </div>
+    <div class="overlay"></div>
+
+    <!-- 移动端竖屏提示 -->
+    <div class="landscape-overlay" id="landscapeOverlay">
+        <div class="landscape-icon">📱</div>
+        <h2 class="landscape-title">请横屏游玩</h2>
+        <p class="landscape-desc">为获得最佳游戏体验，请将设备旋转为横屏模式</p>
+        <p class="landscape-hint">旋转后将自动开始游戏</p>
+    </div>
+
+    <!-- 头部 -->
+    <div class="header">
+        <button class="back-btn" onclick="goBack()">← 返回</button>
+        <div class="title-container">
+            <h1 class="title">⚛️ 元素符号速配</h1>
+        </div>
+        <div style="width: 80px;"></div>
+    </div>
+
+    <!-- 游戏区域 -->
+    <div class="game-container">
+        <div class="game-wrapper">
+            <iframe src="atomsgame/index.html" frameborder="0" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <script src="../../assets/js/atomsgame-wrapper.js"></script>
+</body>
+</html>
