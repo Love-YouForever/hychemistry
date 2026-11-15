@@ -1367,15 +1367,23 @@ window.addEventListener('toggle-chat-panel', () => {
         surprised: './images/amazing.png', // 惊讶
         angry: './images/angry.png',     // 生气
         cry: './images/cry.png',         // 哭泣
+        afraid: './images/afraid.png',   // 害怕
+        amazed: './images/amazing2.png', // 惊叹
+        care: './images/care.png',       // 关心
+        hi: './images/hi.png',           // 打招呼
+        salute: './images/salute.png',   // 敬礼
+        tired: './images/tierd.png',     // 疲惫
         pull: './images/pull.png'        // 被拖拽
     };
-    const EXPRESSIONS = ['happy', 'idle', 'shy', 'surprised', 'sleepy', 'angry', 'cool', 'love', 'dizzy', 'excited', 'thinking', 'cry'];
+    const EXPRESSIONS = ['happy', 'idle', 'shy', 'surprised', 'sleepy', 'angry', 'cool', 'love', 'dizzy', 'excited', 'thinking', 'cry', 'afraid', 'amazed', 'care', 'hi', 'salute', 'tired'];
     const ACTIONS = ['jump', 'spin', 'wave', 'shake', 'heart', 'bounce', 'flip', 'wiggle', 'fall', 'dance', 'nod', 'cheer', 'roll', 'salute'];
     // 表情 → 形象图片映射：有专属图片的用专属图，其余回退到 normal1/normal2
     const EXPR_IMG = {
         happy: 'happy', idle: 'idle', shy: 'shy', surprised: 'surprised',
         sleepy: 'idle', angry: 'angry', cool: 'happy', love: 'happy',
-        dizzy: 'idle', excited: 'happy', thinking: 'idle', cry: 'cry'
+        dizzy: 'idle', excited: 'happy', thinking: 'idle', cry: 'cry',
+        afraid: 'afraid', amazed: 'amazed', care: 'care', hi: 'hi',
+        salute: 'salute', tired: 'tired'
     };
 
     // 状态
