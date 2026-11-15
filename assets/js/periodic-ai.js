@@ -213,6 +213,7 @@
         root.appendChild(evidenceMask);
         document.body.appendChild(root);
 
+        bindPanelDrag(head);
         renderPresets();
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {
@@ -255,6 +256,98 @@
             showPresets();
             setTimeout(() => inputEl && inputEl.focus({ preventScroll: true }), 220);
         }
+    }
+
+    /* ------------------------------------------------------------
+       面板拖动：以头部为手柄，支持鼠标 / 触摸，钳制在视口内
+       ------------------------------------------------------------ */
+    function bindPanelDrag(headEl) {
+        if (!headEl || !panel) return;
+
+        // 移动端面板接近全宽，无需拖动
+        const isSmallScreen = () => window.matchMedia('(max-width: 768px)').matches;
+
+        let dragging = false;
+        let moved = false;
+        let startX = 0;
+        let startY = 0;
+        let origLeft = 0;
+        let origTop = 0;
+
+        // 关闭按钮的按下事件不冒泡到头部，避免误触发拖动
+        const closeBtn = headEl.querySelector('.pt-ai-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('pointerdown', (event) => event.stopPropagation());
+        }
+
+        headEl.style.touchAction = 'none';
+
+        function clampToViewport(left, top) {
+            const panelW = panel.offsetWidth || 0;
+            const panelH = panel.offsetHeight || 0;
+            const maxLeft = Math.max(0, window.innerWidth - panelW);
+            const maxTop = Math.max(0, window.innerHeight - panelH);
+            return {
+                left: Math.max(0, Math.min(left, maxLeft)),
+                top: Math.max(0, Math.min(top, maxTop))
+            };
+        }
+
+        function switchToLeftTop() {
+            const rect = panel.getBoundingClientRect();
+            panel.style.left = rect.left + 'px';
+            panel.style.top = rect.top + 'px';
+            panel.style.right = 'auto';
+            panel.style.bottom = 'auto';
+        }
+
+        function onPointerDown(event) {
+            if (event.button !== undefined && event.button !== 0) return;
+            if (isSmallScreen()) return;
+            dragging = true;
+            moved = false;
+            switchToLeftTop();
+            const rect = panel.getBoundingClientRect();
+            origLeft = rect.left;
+            origTop = rect.top;
+            startX = event.clientX;
+            startY = event.clientY;
+            panel.classList.add('dragging');
+            try { headEl.setPointerCapture(event.pointerId); } catch (err) { /* 忽略 */ }
+            event.preventDefault();
+        }
+
+        function onPointerMove(event) {
+            if (!dragging) return;
+            const dx = event.clientX - startX;
+            const dy = event.clientY - startY;
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+            const pos = clampToViewport(origLeft + dx, origTop + dy);
+            panel.style.left = pos.left + 'px';
+            panel.style.top = pos.top + 'px';
+        }
+
+        function onPointerUp(event) {
+            if (!dragging) return;
+            dragging = false;
+            panel.classList.remove('dragging');
+            try { headEl.releasePointerCapture(event.pointerId); } catch (err) { /* 忽略 */ }
+        }
+
+        headEl.addEventListener('pointerdown', onPointerDown);
+        headEl.addEventListener('pointermove', onPointerMove);
+        headEl.addEventListener('pointerup', onPointerUp);
+        headEl.addEventListener('pointercancel', onPointerUp);
+
+        // 窗口尺寸变化时，把已拖动的面板收回视口内
+        window.addEventListener('resize', () => {
+            if (isSmallScreen()) return;
+            if (panel.style.left === '' && panel.style.top === '') return;
+            const rect = panel.getBoundingClientRect();
+            const pos = clampToViewport(rect.left, rect.top);
+            panel.style.left = pos.left + 'px';
+            panel.style.top = pos.top + 'px';
+        });
     }
 
     /* ------------------------------------------------------------

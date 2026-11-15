@@ -101,6 +101,12 @@
     pointer-events: auto;
 }
 
+/* 拖动状态：禁用文本选择与过渡动画，避免抖动 */
+.pt-ai-panel.dragging {
+    user-select: none;
+    transition: none !important;
+}
+
 .pt-ai-head {
     display: flex;
     align-items: flex-start;
@@ -109,6 +115,12 @@
     padding: 14px 16px 12px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(255, 255, 255, 0.02);
+    cursor: grab;
+    user-select: none;
+}
+
+.pt-ai-panel.dragging .pt-ai-head {
+    cursor: grabbing;
 }
 
 .pt-ai-title {

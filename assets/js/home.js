@@ -237,6 +237,8 @@
 
         let sourceAttached = false;
         let interactionBound = false;
+        let retryCount = 0;
+        const MAX_RETRIES = 2;
 
         // 硬降级：明确不该加载视频的场景（省流量 / 2G、3G / 窄屏），保持 poster 静态帧
         function hardDegrade() {
@@ -293,8 +295,16 @@
             markReady();
             if (video.paused) tryPlay();
         });
-        // 加载失败时保留静态海报，避免整块背景变成黑屏
+        // 加载失败时先指数退避重试，仍失败再保留静态海报，避免整块背景变成黑屏
         video.addEventListener('error', () => {
+            if (retryCount < MAX_RETRIES) {
+                retryCount += 1;
+                const delay = 700 * retryCount;
+                console.warn('背景视频加载失败，' + delay + 'ms 后第 ' + retryCount + ' 次重试');
+                sourceAttached = false;
+                setTimeout(attachSource, delay);
+                return;
+            }
             console.warn('背景视频加载失败，已保留静态海报');
             sourceAttached = false;
             markPoster();
@@ -319,14 +329,13 @@
             bindFirstInteraction();
         }
 
-        // 刷新后必须保证视频源被挂载：空闲回调、load 事件与硬兜底三者取最早
-        if ('requestIdleCallback' in window) {
-            window.requestIdleCallback(attachSource, { timeout: 1500 });
-        } else {
-            setTimeout(attachSource, 400);
+        // 立即挂载视频源，不再只等空闲回调，避免 preload=auto 下仍迟迟不加载
+        attachSource();
+
+        // 兜底：load 事件与超时再次确保挂载（sourceAttached 会去重）
+        if (document.readyState !== 'complete') {
+            window.addEventListener('load', attachSource, { once: true });
         }
-        if (document.readyState === 'complete') attachSource();
-        else window.addEventListener('load', attachSource, { once: true });
         setTimeout(attachSource, 3000);
     })();
 

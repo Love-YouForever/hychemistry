@@ -1014,6 +1014,9 @@
             
             // 显示信息卡片
             card.classList.add('active');
+            keepSubCardClearOfAiPanel(card, { allowMove: true });
+            // 点击元素时小幻语面板可能在同一轮事件里自动打开，稍后再校正一次位置
+            requestAnimationFrame(() => keepSubCardClearOfAiPanel(card, { allowMove: true }));
 
             // 切换元素时收起已展开的子内容
             card.querySelectorAll('.property.interactive').forEach(row => {
@@ -1040,6 +1043,52 @@
             setupInteractiveRowToggle();
         }
 
+        // 子信息卡片（电子排布 / 晶体结构）默认向信息卡右侧展开，
+        // 小幻语面板打开时会占用右侧空间，这里按可用空间重新安排位置。
+        // allowMove：允许移动信息卡（仅在刚打开卡片时使用，hover 中移动会让指针离开触发行）
+        // allowHide：左右都放不下时允许收起小幻语面板（仅在展开子卡片时使用）
+        function keepSubCardClearOfAiPanel(card, options) {
+            if (!card) return;
+            const allowMove = Boolean(options && options.allowMove);
+            const allowHide = Boolean(options && options.allowHide);
+
+            const panel = document.querySelector('.pt-ai-panel.open');
+            if (!panel) return;
+
+            const subCardSpace = 320; // 子卡片 300px + 20px 间距
+            const rightLimit = panel.getBoundingClientRect().left - 12;
+            const rect = card.getBoundingClientRect();
+
+            // 右侧仍能完整放下子卡片
+            if (rect.right + subCardSpace <= rightLimit) return;
+
+            // 信息卡被面板遮住时，先整体左移，保证卡片本身可见
+            const shiftLeft = rightLimit - rect.width - subCardSpace;
+            if (allowMove && rect.right > rightLimit && shiftLeft >= 8) {
+                card.style.left = shiftLeft + 'px';
+                card.classList.remove('right-edge');
+                return;
+            }
+
+            // 翻到信息卡左侧，且子卡片整体不进入面板区域
+            if (rect.left - subCardSpace >= 8 && rect.left <= rightLimit) {
+                card.classList.add('right-edge');
+                return;
+            }
+
+            // 信息卡未被遮挡，仅需小幅左移即可放下子卡片
+            if (allowMove && shiftLeft >= 8 && shiftLeft < rect.left) {
+                card.style.left = shiftLeft + 'px';
+                card.classList.remove('right-edge');
+                return;
+            }
+
+            // 视口过窄、左右都放不下时，优先保证晶胞结构完整可见
+            if (!allowHide) return;
+            const closeBtn = panel.querySelector('.pt-ai-close');
+            if (closeBtn) closeBtn.click();
+        }
+
         // 移动端：触屏没有 hover，点击“价电子排布 / 晶体类型”行时在卡片内展开子内容
         function setupInteractiveRowToggle() {
             const card = document.getElementById('infoCard');
@@ -1047,6 +1096,8 @@
             card.dataset.rowToggleBound = '1';
 
             card.querySelectorAll('.property.interactive').forEach(row => {
+                // 桌面端依靠 hover 展开，展开前先确认子卡片不会压到小幻语面板
+                row.addEventListener('mouseenter', () => keepSubCardClearOfAiPanel(card, { allowHide: true }));
                 row.addEventListener('click', function(event) {
                     if (event.target.closest('.sub-info-card')) return;
                     if (window.innerWidth > 768 && window.innerHeight > 500) return;
@@ -1055,6 +1106,7 @@
                     card.querySelectorAll('.property.interactive').forEach(r => r.classList.remove('mobile-open'));
                     if (isOpen) return;
 
+                    keepSubCardClearOfAiPanel(card, { allowHide: true });
                     row.classList.add('mobile-open');
 
                     // 容器从 display:none 变为可见后，需要重新计算 Three.js 渲染尺寸
