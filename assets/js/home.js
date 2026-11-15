@@ -312,7 +312,7 @@
                 document.removeEventListener('touchstart', handler);
                 interactionBound = false;
                 hidePlayButton();
-                tryPlay();
+                playMedia();
             };
             document.addEventListener('click', handler, { passive: true });
             document.addEventListener('touchstart', handler, { passive: true });
@@ -352,17 +352,26 @@
             return;
         }
 
+        // 播放视频 + 背景音乐
+        function playMedia() {
+            tryPlay();
+            const audio = document.getElementById('bgMusic');
+            if (audio && audio.paused) {
+                audio.play().catch(() => {});
+            }
+        }
+
         video.addEventListener('playing', () => {
             markReady();
             hidePlayButton();
         });
 
-        // 播放按钮点击后播放
+        // 播放按钮点击后播放视频和音乐
         const playBtn = document.getElementById('video-play-btn');
         if (playBtn) {
             playBtn.addEventListener('click', () => {
                 hidePlayButton();
-                tryPlay();
+                playMedia();
             });
         }
         video.addEventListener('loadeddata', () => { if (video.readyState >= 2) markReady(); });
