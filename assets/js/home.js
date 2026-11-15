@@ -230,6 +230,76 @@
         const video = document.getElementById('bgVideo');
         if (!video) return;
 
+        // ===== Canvas 兜底：百度/UC/QQ/夸克 等浏览器会将 <video> 弹出为独立播放器，
+        // 用 <canvas> 渲染视频帧作为背景——canvas 不会被浏览器劫持弹出。
+        // 仅对问题浏览器启用，微信/Chrome/Safari/Firefox/Edge 等走原生 video，完全不受影响。 =====
+        const ua = navigator.userAgent;
+        const isHijackBrowser = /Baidu|baidubrowser|UCBrowser|MQQBrowser|Quark|LieBaoFast|Mb2345Browser|MiuiBrowser/i.test(ua);
+        let bgCanvas = null, bgCtx = null, canvasRafId = null;
+
+        if (isHijackBrowser) {
+            // 创建 canvas 并插入 video-container
+            bgCanvas = document.createElement('canvas');
+            bgCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;pointer-events:none;display:block;';
+            video.parentElement.appendChild(bgCanvas);
+            bgCtx = bgCanvas.getContext('2d');
+
+            // 将原生 video 移到屏幕外并缩小到 1x1，避免被浏览器识别为"主视频"弹出
+            // 不能用 display:none——部分浏览器会因此暂停播放，无法提供 canvas 帧
+            video.style.position = 'fixed';
+            video.style.left = '-9999px';
+            video.style.top = '0';
+            video.style.width = '1px';
+            video.style.height = '1px';
+            video.style.opacity = '0';
+            video.style.pointerEvents = 'none';
+
+            function resizeCanvas() {
+                const container = video.parentElement;
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                bgCanvas.width = container.clientWidth * dpr;
+                bgCanvas.height = container.clientHeight * dpr;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            // object-fit: cover 的 canvas 绘制实现
+            function drawFrame() {
+                try {
+                    if (video.readyState >= 2 && video.videoWidth > 0) {
+                        const cw = bgCanvas.width, ch = bgCanvas.height;
+                        const vw = video.videoWidth, vh = video.videoHeight;
+                        const scale = Math.max(cw / vw, ch / vh);
+                        const dw = vw * scale, dh = vh * scale;
+                        bgCtx.drawImage(video, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+                    }
+                } catch (e) {}
+                canvasRafId = requestAnimationFrame(drawFrame);
+            }
+
+            // 先绘制 poster 作为首帧占位
+            const poster = video.getAttribute('poster');
+            if (poster) {
+                const img = new Image();
+                img.onload = () => {
+                    if (bgCanvas.width > 0) {
+                        const cw = bgCanvas.width, ch = bgCanvas.height;
+                        const iw = img.width, ih = img.height;
+                        const scale = Math.max(cw / iw, ch / ih);
+                        const dw = iw * scale, dh = ih * scale;
+                        bgCtx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+                    }
+                };
+                img.src = poster;
+            }
+
+            video.addEventListener('playing', () => { if (!canvasRafId) drawFrame(); });
+            video.addEventListener('pause', () => {
+                if (canvasRafId) { cancelAnimationFrame(canvasRafId); canvasRafId = null; }
+            });
+        }
+        // ===== Canvas 兜底结束 =====
+
         // 网络/降级检测（必须在调试面板之前定义，供 updateDebug 读取）
         const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
         const slowNetwork = !!connection.saveData || /(^|-)2g$|(^|-)3g$/.test(connection.effectiveType || '');
@@ -270,6 +340,8 @@
                     WeixinJSBridge: typeof WeixinJSBridge,
                     slowNetwork: slowNetwork,
                     reduceMotion: reduceMotion,
+                    isHijackBrowser: isHijackBrowser,
+                    canvasMode: !!bgCanvas,
                     bodyClasses: document.body.className,
                     userAgent: navigator.userAgent.substring(0, 80)
                 };
