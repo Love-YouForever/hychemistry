@@ -310,12 +310,16 @@
             const handler = () => {
                 document.removeEventListener('click', handler);
                 document.removeEventListener('touchstart', handler);
+                document.removeEventListener('mousedown', handler);
+                document.removeEventListener('pointerdown', handler);
                 interactionBound = false;
                 hidePlayButton();
                 playMedia();
             };
             document.addEventListener('click', handler, { passive: true });
             document.addEventListener('touchstart', handler, { passive: true });
+            document.addEventListener('mousedown', handler, { passive: true });
+            document.addEventListener('pointerdown', handler, { passive: true });
         }
 
         // 微信内置浏览器（X5 内核 / WKWebView）需在 WeixinJSBridgeReady 后才能自动播放
@@ -323,12 +327,18 @@
             function wechatPlay() {
                 // 确保视频源已挂载
                 if (!sourceAttached) attachSource();
+                // 微信可能在 JSBridge 就绪前无法启动视频加载：若尚未加载则再次触发 load()
+                // readyState===0(HAVE_NOTHING) 或 networkState===0(NETWORK_EMPTY) 表示未开始加载
+                if (video.readyState === 0 || video.networkState === 0) {
+                    video.load();
+                }
                 // 先直接尝试播放（桌面微信 + 已授权的移动端微信可直接播放）
                 tryPlay();
                 // X5 内核（手机微信）需要通过 invoke 激活媒体播放权限，作为补充
                 if (typeof WeixinJSBridge !== 'undefined' && WeixinJSBridge.invoke) {
                     try {
                         WeixinJSBridge.invoke('getNetworkType', {}, function () {
+                            if (video.readyState === 0 || video.networkState === 0) video.load();
                             tryPlay();
                             setTimeout(tryPlay, 300);
                         });
@@ -387,8 +397,11 @@
                 const delay = 700 * retryCount;
                 console.warn('背景视频加载失败，' + delay + 'ms 后第 ' + retryCount + ' 次重试');
                 if (hasSource) {
-                    // source 已在 HTML 中，只需重试播放，不重置 sourceAttached 也不重复 load()
-                    setTimeout(() => { if (video.paused) tryPlay(); }, delay);
+                    // source 已在 HTML 中：若尚未加载到任何数据则重新 load()，否则只重试播放
+                    setTimeout(() => {
+                        if (video.readyState === 0 || video.networkState === 0) video.load();
+                        if (video.paused) tryPlay();
+                    }, delay);
                 } else {
                     sourceAttached = false;
                     setTimeout(attachSource, delay);
@@ -430,7 +443,17 @@
         if (document.readyState !== 'complete') {
             window.addEventListener('load', () => { if (video.paused) tryPlay(); }, { once: true });
         }
-        setTimeout(() => { if (video.paused && sourceAttached) tryPlay(); }, 3000);
+        // 微信等环境可能延迟加载：3 秒后若仍未加载到任何数据，再触发一次 load（仅一次，避免 ERR_ABORTED）
+        let fallbackLoadDone = false;
+        setTimeout(() => {
+            if (video.paused && sourceAttached && !fallbackLoadDone) {
+                if (video.readyState === 0 || video.networkState === 0) {
+                    fallbackLoadDone = true;
+                    video.load();
+                }
+                tryPlay();
+            }
+        }, 3000);
     })();
 
 
