@@ -230,6 +230,49 @@
         const video = document.getElementById('bgVideo');
         if (!video) return;
 
+        // ===== 调试面板：在页面右上角显示视频状态（按 Ctrl+Shift+D 切换显示） =====
+        const debugPanel = document.createElement('div');
+        debugPanel.id = 'video-debug-panel';
+        debugPanel.style.cssText = 'position:fixed;top:10px;right:10px;z-index:2147483647;background:rgba(0,0,0,0.85);color:#0f0;font-family:monospace;font-size:12px;padding:10px 14px;border-radius:6px;line-height:1.6;max-width:340px;word-break:break-all;display:block;';
+        document.body.appendChild(debugPanel);
+        let debugVisible = false;
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
+                e.preventDefault();
+                debugVisible = !debugVisible;
+                debugPanel.style.display = debugVisible ? 'block' : 'none';
+            }
+        });
+        // 捕获 console.error/warn 到调试面板
+        const debugLogs = [];
+        const origError = console.error;
+        const origWarn = console.warn;
+        console.error = function() { debugLogs.push('[ERR] ' + Array.from(arguments).join(' ')); updateDebug(); origError.apply(console, arguments); };
+        console.warn = function() { debugLogs.push('[WARN] ' + Array.from(arguments).join(' ')); updateDebug(); origWarn.apply(console, arguments); };
+        function updateDebug() {
+            const state = {
+                readyState: video.readyState,
+                networkState: video.networkState,
+                paused: video.paused,
+                currentTime: video.currentTime.toFixed(2),
+                duration: video.duration,
+                error: video.error ? video.error.code + ':' + video.error.message : 'null',
+                currentSrc: video.currentSrc || '(empty)',
+                srcAttr: video.getAttribute('src') || '(none)',
+                sourceCount: video.querySelectorAll('source').length,
+                buffered: video.buffered.length,
+                WeixinJSBridge: typeof WeixinJSBridge,
+                userAgent: navigator.userAgent.substring(0, 60)
+            };
+            let html = '<b>Video Debug</b><br>';
+            for (const k in state) html += k + ': ' + state[k] + '<br>';
+            html += '<b>Logs:</b><br>' + debugLogs.slice(-8).join('<br>');
+            debugPanel.innerHTML = html;
+        }
+        setInterval(updateDebug, 500);
+        updateDebug();
+        // ===== 调试面板结束 =====
+
         const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
         const slowNetwork = !!connection.saveData || /(^|-)2g$|(^|-)3g$/.test(connection.effectiveType || '');
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -421,10 +464,15 @@
         function attachSource() {
             if (sourceAttached) return;
             sourceAttached = true;
+            const videoUrl = './assets/background.mp4?v=20261115e';
+            // 同时设置 src 属性（微信内核对 <source> 子元素支持不稳定，src 直接赋值更可靠）
+            if (!video.getAttribute('src')) {
+                video.setAttribute('src', videoUrl);
+            }
             const hasSource = !!video.querySelector('source');
             if (!hasSource) {
                 const source = document.createElement('source');
-                source.src = './assets/background.mp4?v=20261115e';
+                source.src = videoUrl;
                 source.type = 'video/mp4';
                 video.appendChild(source);
             }
