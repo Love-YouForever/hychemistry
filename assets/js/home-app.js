@@ -1365,8 +1365,10 @@ window.addEventListener('toggle-chat-panel', () => {
         idle: './images/normal2.png',    // 中性/发呆
         pull: './images/pull.png'        // 被拖拽
     };
-    const EXPRESSIONS = ['happy', 'idle', 'shy', 'surprised', 'sleepy'];
-    const ACTIONS = ['jump', 'spin', 'wave', 'shake', 'heart'];
+    const EXPRESSIONS = ['happy', 'idle', 'shy', 'surprised', 'sleepy', 'angry', 'cool', 'love', 'dizzy', 'excited', 'thinking'];
+    const ACTIONS = ['jump', 'spin', 'wave', 'shake', 'heart', 'bounce', 'flip', 'wiggle', 'fall', 'dance', 'nod'];
+    // 使用开心形象（normal1.png）的表情；其余用中性形象（normal2.png）
+    const HAPPY_IMG_EXPRS = new Set(['happy', 'shy', 'surprised', 'angry', 'excited', 'love']);
 
     // 状态
     let expression = 'happy';     // 当前表情
@@ -1456,8 +1458,8 @@ window.addEventListener('toggle-chat-panel', () => {
         if (now - lastExprSwitch > 5000 + Math.random() * 4000) {
             const next = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
             setExpression(next);
-            // 表情对应图片：happy/shy/surprised 用 normal1，idle/sleepy 用 normal2
-            if (next === 'happy' || next === 'shy' || next === 'surprised') setImage('happy');
+            // 表情对应图片：HAPPY_IMG_EXPRS 用 normal1（张嘴），其余用 normal2（中性）
+            if (HAPPY_IMG_EXPRS.has(next)) setImage('happy');
             else setImage('idle');
             lastExprSwitch = now;
         }
@@ -1506,7 +1508,7 @@ window.addEventListener('toggle-chat-panel', () => {
         // 恢复随机表情
         const expr = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
         setExpression(expr);
-        if (expr === 'happy' || expr === 'shy' || expr === 'surprised') setImage('happy');
+        if (HAPPY_IMG_EXPRS.has(expr)) setImage('happy');
         else setImage('idle');
         playAction('heart');
         lastAction = Date.now();
@@ -1520,7 +1522,7 @@ window.addEventListener('toggle-chat-panel', () => {
         // 随机表情
         const expr = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
         setExpression(expr);
-        if (expr === 'happy' || expr === 'shy' || expr === 'surprised') setImage('happy');
+        if (HAPPY_IMG_EXPRS.has(expr)) setImage('happy');
         else setImage('idle');
         lastExprSwitch = Date.now();
         // 随机动作
