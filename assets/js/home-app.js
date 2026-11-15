@@ -1394,6 +1394,20 @@ window.addEventListener('toggle-chat-panel', () => {
     let wandering = true;
     let lastAction = 0;
     let lastExprSwitch = 0;
+    // 心情状态机
+    let mood = 'happy';           // 当前心情（表情英文名）
+    let moodLocked = false;       // 触发心情锁定（害羞/生气/疲倦期间不随机切表情）
+    let moodTimer = null;
+    let pokeCount = 0;            // 连续戳的次数
+    let lastPokeTime = 0;         // 上次戳的时间
+    const onlineStart = Date.now();
+    const POKE_WINDOW = 8000;     // 戳的时间窗口（8秒）
+    const POKE_ANGRY = 5;         // 连续戳多少次会生气
+    const MOOD_DURATION = 5000;   // 触发心情持续时长
+    const TIRE_TIME = 8 * 60 * 1000; // 在线多久会疲倦（8分钟）
+    // 闲置漫游时可用的表情池（排除需触发的害羞/生气/疲倦）
+    const IDLE_EXPRS = ['happy', 'idle', 'surprised', 'sleepy', 'cool', 'love',
+        'dizzy', 'excited', 'thinking', 'afraid', 'cry', 'amazed', 'care', 'hi', 'salute'];
     const bubbleTexts = [
         '你好呀～', '要聊聊化学吗？', '点我开始对话！', '今天学点什么？',
         '元素的世界很奇妙～', '有什么想问的吗？', '我是小幻语！', '在发呆呢…',
@@ -1417,6 +1431,19 @@ window.addEventListener('toggle-chat-panel', () => {
         expression = expr;
         EXPRESSIONS.forEach(e => img.classList.remove('expr-' + e));
         img.classList.add('expr-' + expr);
+    }
+
+    // 设置心情：切换表情+对应形象图片，持续一段时间后解除锁定恢复漫游
+    function setMood(expr, duration) {
+        mood = expr;
+        moodLocked = true;
+        setExpression(expr);
+        setImage(EXPR_IMG[expr]);
+        lastExprSwitch = Date.now();
+        clearTimeout(moodTimer);
+        moodTimer = setTimeout(() => {
+            moodLocked = false;
+        }, duration || MOOD_DURATION);
     }
 
     // 播放动作（临时动画，播完即止）
@@ -1470,22 +1497,28 @@ window.addEventListener('toggle-chat-panel', () => {
     }
     setInterval(wander, 33); // ~30fps
 
-    // 闲置时随机切换表情 + 偶尔做动作
+    // 闲置时随机切换表情 + 偶尔做动作 + 在线疲倦检测
     setInterval(() => {
         if (state === 'dragging') return;
         const now = Date.now();
-        // 每 5-9 秒切换表情
-        if (now - lastExprSwitch > 5000 + Math.random() * 4000) {
-            const next = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
-            setExpression(next);
-            // 表情对应图片：按 EXPR_IMG 映射选择专属形象
-            setImage(EXPR_IMG[next]);
-            lastExprSwitch = now;
+        // 在线时间过长 → 疲倦（每次检测触发，不打断已锁定的心情）
+        if (!moodLocked && now - onlineStart > TIRE_TIME) {
+            setMood('tired');
         }
-        // 每 8-15 秒做一个随机动作
-        if (now - lastAction > 8000 + Math.random() * 7000) {
-            playAction(ACTIONS[Math.floor(Math.random() * ACTIONS.length)]);
-            lastAction = now;
+        // 心情锁定期间不随机切换表情
+        if (!moodLocked) {
+            // 每 5-9 秒切换表情（从闲置表情池随机）
+            if (now - lastExprSwitch > 5000 + Math.random() * 4000) {
+                const next = IDLE_EXPRS[Math.floor(Math.random() * IDLE_EXPRS.length)];
+                setExpression(next);
+                setImage(EXPR_IMG[next]);
+                lastExprSwitch = now;
+            }
+            // 每 8-15 秒做一个随机动作
+            if (now - lastAction > 8000 + Math.random() * 7000) {
+                playAction(ACTIONS[Math.floor(Math.random() * ACTIONS.length)]);
+                lastAction = now;
+            }
         }
     }, 1000);
 
@@ -1524,29 +1557,35 @@ window.addEventListener('toggle-chat-panel', () => {
         state = 'idle';
         pet.classList.remove('dragging');
         try { pet.releasePointerCapture(e.pointerId); } catch (_) {}
-        // 恢复随机表情
-        const expr = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
-        setExpression(expr);
-        setImage(EXPR_IMG[expr]);
-        playAction('heart');
-        lastAction = Date.now();
+        // 拖拽触发害羞
+        if (dragMoved) {
+            setMood('shy');
+            playAction('heart');
+            lastAction = Date.now();
+        }
     }
     pet.addEventListener('pointerup', endDrag);
     pet.addEventListener('pointercancel', endDrag);
 
-    // 点击：随机表情 + 随机动作 + 气泡 + 打开对话面板
+    // 点击（戳）：连续戳生气，单次戳害羞
     pet.addEventListener('click', (e) => {
         if (dragMoved || state === 'dragging') return;
-        // 随机表情
-        const expr = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
-        setExpression(expr);
-        setImage(EXPR_IMG[expr]);
-        lastExprSwitch = Date.now();
-        // 随机动作
-        playAction(ACTIONS[Math.floor(Math.random() * ACTIONS.length)]);
+        const now = Date.now();
+        // 超出时间窗口则重置计数
+        if (now - lastPokeTime > POKE_WINDOW) pokeCount = 0;
+        pokeCount++;
+        lastPokeTime = now;
+        if (pokeCount >= POKE_ANGRY) {
+            // 一直戳 → 生气
+            setMood('angry', 6000);
+            showBubble('别戳啦！生气了！');
+            pokeCount = 0;
+        } else {
+            // 戳一下 → 害羞
+            setMood('shy');
+            showBubble(bubbleTexts[Math.floor(Math.random() * bubbleTexts.length)]);
+        }
         lastAction = Date.now();
-        // 气泡
-        showBubble(bubbleTexts[Math.floor(Math.random() * bubbleTexts.length)]);
         // 打开对话面板
         window.dispatchEvent(new CustomEvent('toggle-chat-panel'));
     });
