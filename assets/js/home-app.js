@@ -1387,9 +1387,13 @@ window.addEventListener('toggle-chat-panel', () => {
     const PET_SIZE = 110;
     const BOTTOM = 24;           // 固定距底部距离
 
+    // 当前形象名称（避免用 img.src 绝对路径与相对路径比较导致失效）
+    let currentImg = 'happy';
     // 设置形象图片
     function setImage(name) {
-        if (img.src.indexOf(IMG[name]) === -1) img.src = IMG[name];
+        if (currentImg === name) return;
+        currentImg = name;
+        img.src = IMG[name];
     }
 
     // 设置表情（CSS 滤镜类）
@@ -1483,7 +1487,7 @@ window.addEventListener('toggle-chat-panel', () => {
         state = 'dragging';
         setImage('pull');
         pet.classList.add('dragging');
-        pet.setPointerCapture(e.pointerId);
+        try { pet.setPointerCapture(e.pointerId); } catch (_) {}
         dragStartX = e.clientX;
         startLeft = posX;
     });
