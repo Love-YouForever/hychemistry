@@ -235,49 +235,52 @@
         const slowNetwork = !!connection.saveData || /(^|-)2g$|(^|-)3g$/.test(connection.effectiveType || '');
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        // ===== 调试面板：在页面右上角显示视频状态（按 Ctrl+Shift+D 切换显示） =====
-        const debugPanel = document.createElement('div');
-        debugPanel.id = 'video-debug-panel';
-        debugPanel.style.cssText = 'position:fixed;top:10px;right:10px;z-index:2147483647;background:rgba(0,0,0,0.85);color:#0f0;font-family:monospace;font-size:12px;padding:10px 14px;border-radius:6px;line-height:1.6;max-width:340px;word-break:break-all;display:block;';
-        document.body.appendChild(debugPanel);
-        let debugVisible = false;
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
-                e.preventDefault();
-                debugVisible = !debugVisible;
-                debugPanel.style.display = debugVisible ? 'block' : 'none';
-            }
-        });
-        // 捕获 console.error/warn 到调试面板
+        // ===== 调试面板：页面右上角显示视频状态（防崩溃：全部 try-catch，不重写 console） =====
+        let debugPanel = null;
         const debugLogs = [];
-        const origError = console.error;
-        const origWarn = console.warn;
-        console.error = function() { debugLogs.push('[ERR] ' + Array.from(arguments).join(' ')); updateDebug(); origError.apply(console, arguments); };
-        console.warn = function() { debugLogs.push('[WARN] ' + Array.from(arguments).join(' ')); updateDebug(); origWarn.apply(console, arguments); };
+        try {
+            debugPanel = document.createElement('div');
+            debugPanel.id = 'video-debug-panel';
+            debugPanel.style.cssText = 'position:fixed;top:10px;right:10px;z-index:2147483647;background:rgba(0,0,0,0.85);color:#0f0;font-family:monospace;font-size:12px;padding:10px 14px;border-radius:6px;line-height:1.6;max-width:340px;word-break:break-all;display:block;';
+            document.body.appendChild(debugPanel);
+        } catch (e) { /* 面板创建失败不影响主流程 */ }
+
+        // 捕获全局错误（不重写 console，避免递归崩溃）
+        window.addEventListener('error', function (e) {
+            try {
+                debugLogs.push('[ERR] ' + (e.message || e.error || 'unknown') + ' @ ' + (e.filename || '') + ':' + (e.lineno || ''));
+                if (debugLogs.length > 20) debugLogs.shift();
+            } catch (err) {}
+        });
+
         function updateDebug() {
-            const state = {
-                readyState: video.readyState,
-                networkState: video.networkState,
-                paused: video.paused,
-                currentTime: video.currentTime.toFixed(2),
-                duration: video.duration,
-                error: video.error ? video.error.code + ':' + video.error.message : 'null',
-                currentSrc: video.currentSrc || '(empty)',
-                srcAttr: video.getAttribute('src') || '(none)',
-                sourceCount: video.querySelectorAll('source').length,
-                buffered: video.buffered.length,
-                WeixinJSBridge: typeof WeixinJSBridge,
-                slowNetwork: slowNetwork,
-                reduceMotion: reduceMotion,
-                bodyClasses: document.body.className,
-                userAgent: navigator.userAgent.substring(0, 80)
-            };
-            let html = '<b>Video Debug</b><br>';
-            for (const k in state) html += k + ': ' + state[k] + '<br>';
-            html += '<b>Logs:</b><br>' + debugLogs.slice(-8).join('<br>');
-            debugPanel.innerHTML = html;
+            try {
+                if (!debugPanel) return;
+                const state = {
+                    readyState: video.readyState,
+                    networkState: video.networkState,
+                    paused: video.paused,
+                    currentTime: (video.currentTime || 0).toFixed(2),
+                    duration: video.duration || 0,
+                    error: video.error ? (video.error.code + ':' + (video.error.message || '')) : 'null',
+                    currentSrc: video.currentSrc || '(empty)',
+                    srcAttr: video.getAttribute('src') || '(none)',
+                    sourceCount: video.querySelectorAll('source').length,
+                    buffered: video.buffered ? video.buffered.length : 0,
+                    WeixinJSBridge: typeof WeixinJSBridge,
+                    slowNetwork: slowNetwork,
+                    reduceMotion: reduceMotion,
+                    bodyClasses: document.body.className,
+                    userAgent: navigator.userAgent.substring(0, 80)
+                };
+                let html = '<b>Video Debug</b><br>';
+                for (const k in state) html += k + ': ' + state[k] + '<br>';
+                html += '<b>Logs:</b><br>' + debugLogs.slice(-8).join('<br>');
+                debugPanel.innerHTML = html;
+            } catch (e) { /* 忽略调试更新错误 */ }
         }
-        setInterval(updateDebug, 500);
+        // 每 2 秒更新一次（降低频率避免性能问题）
+        setInterval(updateDebug, 2000);
         updateDebug();
         // ===== 调试面板结束 =====
 
