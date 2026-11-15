@@ -83,6 +83,7 @@
 | `lookup_reaction` | 查询试剂混合后的反应类型、方程式与实验现象 |
 | `get_safety_info` | 查询危化品危险性、防护要求与急救措施 |
 | `search_knowledge` | 在 118 个元素图鉴文本（1213 个知识块）中检索并返回来源 |
+| `control_scene` | 受约束的 3D 场景控制：周期表高亮/聚焦/调温、实验室聚焦器材/装载安全反应 |
 
 模型通过 `tool_choice: auto` 自主决定是否调用、调用哪个，最多支持 4 轮工具链。
 
@@ -104,6 +105,37 @@
 全部计算在本机完成，不调用嵌入接口：索引一次构建后落盘（28.9 MB），单次查询约 40 毫秒，可离线、结果可复现。语料与 3D 元素周期表同源，回答不会与页面内容打架。
 
 **效果**：15 题检索评测中，混合检索 Recall@1 由升级前的 73.3% 提升到 **86.7%**，Recall@3 由 80.0% 提升到 **93.3%**，MRR 由 0.767 提升到 **0.900**，报告见 [`docs/RAG评测报告.md`](docs/RAG评测报告.md)。
+
+### 3.5 关系证据图（Relation Graph）
+
+在混合检索之上，新增一层**轻量关系证据图**（[`relation_graph.py`](server/relation_graph.py)），把查询中的受控别名连接到语料中的有效元素，提供可追溯的多跳证据路径：
+
+| 特性 | 说明 |
+|---|---|
+| 节点类型 | `element`（元素）/ `form`（形态）/ `property`（性质） |
+| 关系类型 | `allotrope_of`（同素异形体）/ `form_of`（形态）/ `has_property`（性质）/ `related_to`（相关） |
+| 证据约束 | 每条边必须指向真实句子块，且句子块需同时支持边的两个端点 |
+| 搜索深度 | 最多 2 跳，最多 8 条路径 |
+| 降级策略 | 加载或校验失败时只禁用关系能力，不影响普通混合检索 |
+
+关系图的作用是让「金刚石和石墨有什么区别」这类不含元素名、但含同素异形体别名的提问，能通过别名 → 元素 → 语料块的路径召回证据，并在回答中标注来源。
+
+### 3.6 场景动作协议（Scene Actions）
+
+为了让 AI 能驱动 3D 场景但又不越权，设计了**受约束的场景动作协议**（[`scene_actions.py`](server/scene_actions.py)）：
+
+| 场景 | 可用动作 |
+|---|---|
+| 周期表 | `highlight_elements` / `clear_highlight` / `focus_element` / `set_temperature` / `reset_view` |
+| 实验室 | `focus_equipment`（聚焦器材）/ `load_reaction`（装载安全反应所需物品） |
+
+关键安全设计：
+- 模型只能选择白名单动作，具体对象与参数在服务端再次校验
+- 实验室动作仅定位器材或摆放反应所需物品，**不执行混合、倾倒、加热及任何动态代码**
+- `load_reaction` 只装载 7 组预设安全反应（如 `AgNO3+NaCl`、`CuSO4+NaOH`），并附安全提示
+- 装载试剂瓶不等于把试剂加入容器
+
+前端通过 SSE 接收 `scene_action` 事件，执行对应的 DOM/Three.js 操作，形成「AI 说 → 场景动」的闭环。
 
 ### 4. AI 安全护栏
 
@@ -187,6 +219,7 @@ Claude Desktop / Cursor 配置示例见 `server/mcp_config.example.json`：
 |---|---|---|
 | Tool | `query_element` / `molar_mass` / `balance_equation` | 元素查询、摩尔质量、方程式配平 |
 | Tool | `lookup_reaction` / `get_safety_info` / `search_knowledge` | 反应检索、危化品安全、知识检索 |
+| Tool | `control_scene` | 受约束的 3D 场景控制（周期表/实验室） |
 | Resource | `chem://element/{symbol}` | 单个元素的结构化资料 |
 | Resource | `chem://catalog/elements` | 全量元素清单（118 项） |
 | Resource | `chem://catalog/reactions` | 内置反应库清单 |
@@ -230,6 +263,8 @@ Claude Desktop / Cursor 配置示例见 `server/mcp_config.example.json`：
 │   ├── vision_service.py        # 多模态视觉识别
 │   ├── mcp_server.py            # MCP 化学工具服务（6 工具 + 3 资源）
 │   ├── rag_engine.py            # 混合检索引擎（BM25 + LSA 向量 + RRF）
+│   ├── relation_graph.py        # 轻量关系证据图（别名→元素→语料块的多跳证据路径）
+│   ├── scene_actions.py         # 受约束的 3D 场景动作协议（周期表/实验室白名单动作）
 │   ├── build_index.py           # 构建本地检索索引（落盘 knowledge_index/）
 │   ├── eval_agent.py            # AI 效果评测（25 题）
 │   ├── eval_rag.py              # RAG 检索评测（15 题，含消融对比）
