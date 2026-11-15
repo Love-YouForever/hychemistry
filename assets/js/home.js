@@ -414,9 +414,10 @@
                 source.src = './assets/background.mp4?v=20261115e';
                 source.type = 'video/mp4';
                 video.appendChild(source);
-                // 仅在动态添加 source 时调用 load()；若 source 已在 HTML 中，preload="auto" 已负责加载
-                video.load();
             }
+            // 调用一次 load() 启动加载（微信内置浏览器不尊重 preload=auto，需显式触发）
+            // sourceAttached 标志确保此处只执行一次，避免反复 load 导致 ERR_ABORTED
+            video.load();
             tryPlay();
             bindFirstInteraction();
             bindWechatBridge();
