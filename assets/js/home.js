@@ -289,8 +289,19 @@
                 playPromise.catch(() => {
                     console.log('视频自动播放受限，等待用户交互后重试');
                     bindFirstInteraction();
+                    showPlayButton();
                 });
             }
+        }
+
+        // 显示播放按钮（自动播放失败时的兜底）
+        function showPlayButton() {
+            const btn = document.getElementById('video-play-btn');
+            if (btn) btn.style.display = 'block';
+        }
+        function hidePlayButton() {
+            const btn = document.getElementById('video-play-btn');
+            if (btn) btn.style.display = 'none';
         }
 
         function bindFirstInteraction() {
@@ -300,6 +311,7 @@
                 document.removeEventListener('click', handler);
                 document.removeEventListener('touchstart', handler);
                 interactionBound = false;
+                hidePlayButton();
                 tryPlay();
             };
             document.addEventListener('click', handler, { passive: true });
@@ -311,19 +323,18 @@
             function wechatPlay() {
                 // 确保视频源已挂载
                 if (!sourceAttached) attachSource();
-                // X5 内核需要通过 invoke 激活媒体播放权限
+                // 先直接尝试播放（桌面微信 + 已授权的移动端微信可直接播放）
+                tryPlay();
+                // X5 内核（手机微信）需要通过 invoke 激活媒体播放权限，作为补充
                 if (typeof WeixinJSBridge !== 'undefined' && WeixinJSBridge.invoke) {
                     try {
                         WeixinJSBridge.invoke('getNetworkType', {}, function () {
                             tryPlay();
-                            // X5 内核可能需要多次尝试
                             setTimeout(tryPlay, 300);
                         });
                     } catch (e) {
-                        tryPlay();
+                        // 忽略，前面已直接 tryPlay
                     }
-                } else {
-                    tryPlay();
                 }
             }
             if (typeof WeixinJSBridge !== 'undefined') {
@@ -341,7 +352,19 @@
             return;
         }
 
-        video.addEventListener('playing', markReady);
+        video.addEventListener('playing', () => {
+            markReady();
+            hidePlayButton();
+        });
+
+        // 播放按钮点击后播放
+        const playBtn = document.getElementById('video-play-btn');
+        if (playBtn) {
+            playBtn.addEventListener('click', () => {
+                hidePlayButton();
+                tryPlay();
+            });
+        }
         video.addEventListener('loadeddata', () => { if (video.readyState >= 2) markReady(); });
         video.addEventListener('canplay', () => {
             markReady();
