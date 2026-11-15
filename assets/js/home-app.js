@@ -1363,12 +1363,20 @@ window.addEventListener('toggle-chat-panel', () => {
     const IMG = {
         happy: './images/normal1.png',   // 开心
         idle: './images/normal2.png',    // 中性/发呆
+        shy: './images/shy.png',         // 害羞
+        surprised: './images/amazing.png', // 惊讶
+        angry: './images/angry.png',     // 生气
+        cry: './images/cry.png',         // 哭泣
         pull: './images/pull.png'        // 被拖拽
     };
-    const EXPRESSIONS = ['happy', 'idle', 'shy', 'surprised', 'sleepy', 'angry', 'cool', 'love', 'dizzy', 'excited', 'thinking'];
-    const ACTIONS = ['jump', 'spin', 'wave', 'shake', 'heart', 'bounce', 'flip', 'wiggle', 'fall', 'dance', 'nod'];
-    // 使用开心形象（normal1.png）的表情；其余用中性形象（normal2.png）
-    const HAPPY_IMG_EXPRS = new Set(['happy', 'shy', 'surprised', 'angry', 'excited', 'love']);
+    const EXPRESSIONS = ['happy', 'idle', 'shy', 'surprised', 'sleepy', 'angry', 'cool', 'love', 'dizzy', 'excited', 'thinking', 'cry'];
+    const ACTIONS = ['jump', 'spin', 'wave', 'shake', 'heart', 'bounce', 'flip', 'wiggle', 'fall', 'dance', 'nod', 'cheer', 'roll', 'salute'];
+    // 表情 → 形象图片映射：有专属图片的用专属图，其余回退到 normal1/normal2
+    const EXPR_IMG = {
+        happy: 'happy', idle: 'idle', shy: 'shy', surprised: 'surprised',
+        sleepy: 'idle', angry: 'angry', cool: 'happy', love: 'happy',
+        dizzy: 'idle', excited: 'happy', thinking: 'idle', cry: 'cry'
+    };
 
     // 状态
     let expression = 'happy';     // 当前表情
@@ -1462,9 +1470,8 @@ window.addEventListener('toggle-chat-panel', () => {
         if (now - lastExprSwitch > 5000 + Math.random() * 4000) {
             const next = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
             setExpression(next);
-            // 表情对应图片：HAPPY_IMG_EXPRS 用 normal1（张嘴），其余用 normal2（中性）
-            if (HAPPY_IMG_EXPRS.has(next)) setImage('happy');
-            else setImage('idle');
+            // 表情对应图片：按 EXPR_IMG 映射选择专属形象
+            setImage(EXPR_IMG[next]);
             lastExprSwitch = now;
         }
         // 每 8-15 秒做一个随机动作
@@ -1512,8 +1519,7 @@ window.addEventListener('toggle-chat-panel', () => {
         // 恢复随机表情
         const expr = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
         setExpression(expr);
-        if (HAPPY_IMG_EXPRS.has(expr)) setImage('happy');
-        else setImage('idle');
+        setImage(EXPR_IMG[expr]);
         playAction('heart');
         lastAction = Date.now();
     }
@@ -1526,8 +1532,7 @@ window.addEventListener('toggle-chat-panel', () => {
         // 随机表情
         const expr = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
         setExpression(expr);
-        if (HAPPY_IMG_EXPRS.has(expr)) setImage('happy');
-        else setImage('idle');
+        setImage(EXPR_IMG[expr]);
         lastExprSwitch = Date.now();
         // 随机动作
         playAction(ACTIONS[Math.floor(Math.random() * ACTIONS.length)]);

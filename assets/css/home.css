@@ -409,6 +409,9 @@
         .pet-img.act-fall   { animation: petFall 1.0s ease-in-out; }
         .pet-img.act-dance  { animation: petDance 1.0s ease-in-out; }
         .pet-img.act-nod    { animation: petNod 0.8s ease-in-out; }
+        .pet-img.act-cheer  { animation: petCheer 0.9s ease-in-out; }
+        .pet-img.act-roll   { animation: petRoll 0.9s ease-in-out; }
+        .pet-img.act-salute { animation: petSalute 0.8s ease-in-out; }
 
         @keyframes petBounce {
             0%, 100% { transform: translateY(0) rotate(-1deg); }
@@ -482,6 +485,24 @@
             25% { transform: rotate(14deg); }
             50% { transform: rotate(-6deg); }
             75% { transform: rotate(10deg); }
+        }
+        @keyframes petCheer {
+            0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
+            25% { transform: translateY(-28px) scale(1.06) rotate(-6deg); }
+            50% { transform: translateY(-10px) scale(1.02) rotate(6deg); }
+            75% { transform: translateY(-22px) scale(1.05) rotate(-4deg); }
+        }
+        @keyframes petRoll {
+            0%   { transform: rotate(0deg) translateX(0); }
+            30%  { transform: rotate(-160deg) translateX(-18px); }
+            60%  { transform: rotate(-300deg) translateX(14px); }
+            100% { transform: rotate(-360deg) translateX(0); }
+        }
+        @keyframes petSalute {
+            0%, 100% { transform: rotate(0deg) translateY(0); }
+            30% { transform: rotate(-22deg) translateY(-4px); }
+            55% { transform: rotate(-22deg) translateY(-4px); }
+            80% { transform: rotate(-8deg) translateY(0); }
         }
 
         .pet-shadow {
