@@ -1341,3 +1341,181 @@ const AssistantApp = {
 };
 
 createApp(AssistantApp).mount('#assistant-app');
+
+// 监听桌宠派发的自定义事件，打开/关闭对话面板
+window.addEventListener('toggle-chat-panel', () => {
+    const el = document.querySelector('#assistant-app');
+    const proxy = el && el.__vue_app__ && el.__vue_app__._container &&
+        el.__vue_app__._container._vnode && el.__vue_app__._container._vnode.component &&
+        el.__vue_app__._container._vnode.component.proxy;
+    if (proxy && typeof proxy.togglePanel === 'function') {
+        proxy.togglePanel();
+    }
+});
+
+// ===== 桌宠行为：自主活动 / 点击切换表情 / 拖拽切换 pull 形象 =====
+(function initPet() {
+    const pet = document.getElementById('pet-container');
+    const img = document.getElementById('pet-img');
+    const bubble = document.getElementById('pet-bubble');
+    if (!pet || !img) return;
+
+    const IMG = {
+        happy: './images/normal1.png',   // 开心
+        idle: './images/normal2.png',    // 中性/发呆
+        pull: './images/pull.png'        // 被拖拽
+    };
+
+    // 状态
+    let state = 'idle';          // idle | happy | dragging
+    let pos = { x: 24, y: 24 };  // 相对视口左下角（CSS bottom/left）
+    let vel = { x: 0.3, y: 0.15 }; // 自主移动速度（px/帧）
+    let wandering = true;
+    let lastSwitch = 0;
+    const bubbleTexts = [
+        '你好呀～', '要聊聊化学吗？', '点我开始对话！', '今天学点什么？',
+        '元素的世界很奇妙～', '有什么想问的吗？', '我是小幻语！', '在发呆呢…'
+    ];
+
+    // 设置形象
+    function setImage(name) {
+        if (img.src.indexOf(IMG[name]) === -1) img.src = IMG[name];
+    }
+
+    // 显示气泡
+    let bubbleTimer = null;
+    function showBubble(text) {
+        if (!bubble) return;
+        bubble.textContent = text;
+        bubble.classList.add('show');
+        clearTimeout(bubbleTimer);
+        bubbleTimer = setTimeout(() => bubble.classList.remove('show'), 2200);
+    }
+
+    // 设置位置（bottom/left）
+    function applyPos() {
+        pet.style.left = pos.x + 'px';
+        pet.style.bottom = pos.y + 'px';
+    }
+    applyPos();
+
+    // 自主漫游
+    function wander() {
+        if (!wandering || state === 'dragging') return;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const petSize = 120;
+        const margin = 16;
+
+        pos.x += vel.x;
+        pos.y += vel.y;
+
+        // 边界反弹
+        if (pos.x < margin) { pos.x = margin; vel.x = Math.abs(vel.x); }
+        if (pos.x > w - petSize - margin) { pos.x = w - petSize - margin; vel.x = -Math.abs(vel.x); }
+        if (pos.y < margin) { pos.y = margin; vel.y = Math.abs(vel.y); }
+        if (pos.y > h - petSize - margin) { pos.y = h - petSize - margin; vel.y = -Math.abs(vel.y); }
+
+        // 偶尔随机改变方向
+        if (Math.random() < 0.005) {
+            vel.x = (Math.random() - 0.5) * 1.2;
+            vel.y = (Math.random() - 0.5) * 0.8;
+            // 避免速度为0
+            if (Math.abs(vel.x) < 0.1) vel.x = 0.3 * (vel.x >= 0 ? 1 : -1);
+        }
+
+        applyPos();
+    }
+    setInterval(wander, 33); // ~30fps
+
+    // 闲置表情定时切换（idle <-> happy）
+    setInterval(() => {
+        if (state === 'dragging') return;
+        if (Date.now() - lastSwitch > 4000 + Math.random() * 4000) {
+            state = (state === 'happy') ? 'idle' : 'happy';
+            setImage(state);
+            lastSwitch = Date.now();
+        }
+    }, 1000);
+
+    // 拖拽
+    let dragging = false;
+    let dragMoved = false;
+    let dragStartX = 0, dragStartY = 0;
+    let startLeft = 0, startBottom = 0;
+
+    pet.addEventListener('pointerdown', (e) => {
+        dragging = true;
+        dragMoved = false;
+        wandering = false;
+        state = 'dragging';
+        setImage('pull');
+        pet.classList.add('dragging');
+        pet.setPointerCapture(e.pointerId);
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        startLeft = pos.x;
+        startBottom = pos.y;
+    });
+
+    pet.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const dx = e.clientX - dragStartX;
+        const dy = dragStartY - e.clientY; // bottom 方向与 clientY 相反
+        if (Math.abs(e.clientX - dragStartX) > 4 || Math.abs(e.clientY - dragStartY) > 4) {
+            dragMoved = true;
+        }
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const petSize = 120;
+        const margin = 8;
+        pos.x = Math.max(margin, Math.min(w - petSize - margin, startLeft + dx));
+        pos.y = Math.max(margin, Math.min(h - petSize - margin, startBottom + dy));
+        applyPos();
+    });
+
+    function endDrag(e) {
+        if (!dragging) return;
+        dragging = false;
+        wandering = true;
+        pet.classList.remove('dragging');
+        try { pet.releasePointerCapture(e.pointerId); } catch (_) {}
+        // 恢复随机表情
+        state = Math.random() > 0.5 ? 'happy' : 'idle';
+        setImage(state);
+        lastSwitch = Date.now();
+    }
+    pet.addEventListener('pointerup', endDrag);
+    pet.addEventListener('pointercancel', endDrag);
+
+    // 点击：切换表情 + 气泡 + 打开对话面板（拖拽时不触发）
+    pet.addEventListener('click', (e) => {
+        if (dragMoved || state === 'dragging') return;
+        state = (state === 'happy') ? 'idle' : 'happy';
+        setImage(state);
+        lastSwitch = Date.now();
+        showBubble(bubbleTexts[Math.floor(Math.random() * bubbleTexts.length)]);
+        // 派发自定义事件，由 Vue 监听后打开对话面板
+        window.dispatchEvent(new CustomEvent('toggle-chat-panel'));
+    });
+
+    // 对话面板打开时桌宠发光（监听 Vue panelOpen 变化）
+    function getVueProxy() {
+        const el = document.querySelector('#assistant-app');
+        return el && el.__vue_app__ && el.__vue_app__._container &&
+            el.__vue_app__._container._vnode && el.__vue_app__._container._vnode.component &&
+            el.__vue_app__._container._vnode.component.proxy;
+    }
+    function syncActiveState() {
+        const proxy = getVueProxy();
+        if (proxy) {
+            if (proxy.panelOpen) pet.classList.add('active');
+            else pet.classList.remove('active');
+        }
+    }
+    setInterval(syncActiveState, 300);
+
+    // 初始化形象
+    setImage('happy');
+})();
+

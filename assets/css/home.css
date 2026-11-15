@@ -365,7 +365,92 @@
             color: #ffecb3;
         }
 
-        /* 左下角 小幻语网页助手状态条 */
+        /* ===== 桌宠（小幻语）===== */
+        .pet-container {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            z-index: 160;
+            width: 120px;
+            height: 120px;
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            transition: transform 0.15s ease;
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.35));
+        }
+        .pet-container:active { cursor: grabbing; }
+        .pet-container:hover { transform: scale(1.06); }
+
+        .pet-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+            animation: petBounce 2.6s ease-in-out infinite;
+            transition: opacity 0.2s;
+        }
+        /* 拖拽时停止浮动，用 pull 形象 */
+        .pet-container.dragging .pet-img { animation: none; }
+        /* 聊天面板打开时微微发光 */
+        .pet-container.active { filter: drop-shadow(0 0 14px rgba(255,200,120,0.7)); }
+
+        @keyframes petBounce {
+            0%, 100% { transform: translateY(0) rotate(-1deg); }
+            50% { transform: translateY(-8px) rotate(1deg); }
+        }
+
+        .pet-shadow {
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 10px;
+            background: radial-gradient(ellipse, rgba(0,0,0,0.35) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: petShadow 2.6s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes petShadow {
+            0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.5; }
+            50% { transform: translateX(-50%) scale(0.8); opacity: 0.3; }
+        }
+
+        /* 对话气泡 */
+        .pet-bubble {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(8px);
+            background: rgba(15, 30, 40, 0.92);
+            color: #f0f3f5;
+            padding: 8px 14px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s, transform 0.25s;
+            border: 1px solid rgba(255,215,150,0.4);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+            margin-bottom: 6px;
+        }
+        .pet-bubble::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 7px solid transparent;
+            border-top-color: rgba(15, 30, 40, 0.92);
+        }
+        .pet-bubble.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 左下角 小幻语网页助手状态条（已被桌宠替代，保留以防引用） */
         .ai-agent-status {
             position: fixed;
             bottom: 20px;
