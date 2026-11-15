@@ -283,6 +283,18 @@
             document.addEventListener('touchstart', handler, { passive: true });
         }
 
+        // 微信内置浏览器（X5 内核 / WKWebView）需在 WeixinJSBridgeReady 后才能自动播放
+        function bindWechatBridge() {
+            if (typeof WeixinJSBridge !== 'undefined') {
+                tryPlay();
+            } else {
+                document.addEventListener('WeixinJSBridgeReady', function onBridge() {
+                    document.removeEventListener('WeixinJSBridgeReady', onBridge);
+                    tryPlay();
+                }, false);
+            }
+        }
+
         if (slowNetwork || reduceMotion) {
             hardDegrade();
             return;
@@ -326,6 +338,7 @@
             video.load();
             tryPlay();
             bindFirstInteraction();
+            bindWechatBridge();
         }
 
         // 立即挂载视频源，不再只等空闲回调，避免 preload=auto 下仍迟迟不加载
