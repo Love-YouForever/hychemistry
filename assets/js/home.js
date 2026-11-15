@@ -232,7 +232,6 @@
 
         const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
         const slowNetwork = !!connection.saveData || /(^|-)2g$|(^|-)3g$/.test(connection.effectiveType || '');
-        const smallScreen = window.matchMedia('(max-width: 768px)').matches;
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         let sourceAttached = false;
@@ -284,7 +283,7 @@
             document.addEventListener('touchstart', handler, { passive: true });
         }
 
-        if (slowNetwork || smallScreen || reduceMotion) {
+        if (slowNetwork || reduceMotion) {
             hardDegrade();
             return;
         }
