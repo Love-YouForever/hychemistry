@@ -381,12 +381,18 @@
         });
         // 加载失败时先指数退避重试，仍失败再保留静态海报，避免整块背景变成黑屏
         video.addEventListener('error', () => {
+            const hasSource = !!video.querySelector('source');
             if (retryCount < MAX_RETRIES) {
                 retryCount += 1;
                 const delay = 700 * retryCount;
                 console.warn('背景视频加载失败，' + delay + 'ms 后第 ' + retryCount + ' 次重试');
-                sourceAttached = false;
-                setTimeout(attachSource, delay);
+                if (hasSource) {
+                    // source 已在 HTML 中，只需重试播放，不重置 sourceAttached 也不重复 load()
+                    setTimeout(() => { if (video.paused) tryPlay(); }, delay);
+                } else {
+                    sourceAttached = false;
+                    setTimeout(attachSource, delay);
+                }
                 return;
             }
             console.warn('背景视频加载失败，已保留静态海报');
@@ -402,13 +408,15 @@
         function attachSource() {
             if (sourceAttached) return;
             sourceAttached = true;
-            if (!video.querySelector('source')) {
+            const hasSource = !!video.querySelector('source');
+            if (!hasSource) {
                 const source = document.createElement('source');
                 source.src = './assets/background.mp4?v=20261115e';
                 source.type = 'video/mp4';
                 video.appendChild(source);
+                // 仅在动态添加 source 时调用 load()；若 source 已在 HTML 中，preload="auto" 已负责加载
+                video.load();
             }
-            video.load();
             tryPlay();
             bindFirstInteraction();
             bindWechatBridge();
@@ -417,11 +425,11 @@
         // 立即挂载视频源，不再只等空闲回调，避免 preload=auto 下仍迟迟不加载
         attachSource();
 
-        // 兜底：load 事件与超时再次确保挂载（sourceAttached 会去重）
+        // 兜底：load 事件与超时仅重试播放，不再重复挂载 source（避免 video.load() 反复中止请求）
         if (document.readyState !== 'complete') {
-            window.addEventListener('load', attachSource, { once: true });
+            window.addEventListener('load', () => { if (video.paused) tryPlay(); }, { once: true });
         }
-        setTimeout(attachSource, 3000);
+        setTimeout(() => { if (video.paused && sourceAttached) tryPlay(); }, 3000);
     })();
 
 
