@@ -319,7 +319,7 @@
             sourceAttached = true;
             if (!video.querySelector('source')) {
                 const source = document.createElement('source');
-                source.src = './assets/background.mp4';
+                source.src = './assets/background.mp4?v=20261115e';
                 source.type = 'video/mp4';
                 video.appendChild(source);
             }
