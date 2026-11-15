@@ -1353,7 +1353,7 @@ window.addEventListener('toggle-chat-panel', () => {
     }
 });
 
-// ===== 桌宠行为：自主活动 / 点击切换表情 / 拖拽切换 pull 形象 =====
+// ===== 桌宠行为：固定底部左右漫游 / 点击切换表情动作 / 拖拽切换 pull 形象 =====
 (function initPet() {
     const pet = document.getElementById('pet-container');
     const img = document.getElementById('pet-img');
@@ -1365,21 +1365,49 @@ window.addEventListener('toggle-chat-panel', () => {
         idle: './images/normal2.png',    // 中性/发呆
         pull: './images/pull.png'        // 被拖拽
     };
+    const EXPRESSIONS = ['happy', 'idle', 'shy', 'surprised', 'sleepy'];
+    const ACTIONS = ['jump', 'spin', 'wave', 'shake', 'heart'];
 
     // 状态
-    let state = 'idle';          // idle | happy | dragging
-    let pos = { x: 24, y: 24 };  // 相对视口左下角（CSS bottom/left）
-    let vel = { x: 0.3, y: 0.15 }; // 自主移动速度（px/帧）
+    let expression = 'happy';     // 当前表情
+    let state = 'idle';           // idle | dragging
+    let posX = 24;                // 水平位置（left）
+    let velX = 0.35;              // 水平速度
     let wandering = true;
-    let lastSwitch = 0;
+    let lastAction = 0;
+    let lastExprSwitch = 0;
     const bubbleTexts = [
         '你好呀～', '要聊聊化学吗？', '点我开始对话！', '今天学点什么？',
-        '元素的世界很奇妙～', '有什么想问的吗？', '我是小幻语！', '在发呆呢…'
+        '元素的世界很奇妙～', '有什么想问的吗？', '我是小幻语！', '在发呆呢…',
+        '戳戳我！', '一起来探索吧～', '化学好有趣！'
     ];
 
-    // 设置形象
+    const PET_SIZE = 110;
+    const BOTTOM = 24;           // 固定距底部距离
+
+    // 设置形象图片
     function setImage(name) {
         if (img.src.indexOf(IMG[name]) === -1) img.src = IMG[name];
+    }
+
+    // 设置表情（CSS 滤镜类）
+    function setExpression(expr) {
+        expression = expr;
+        EXPRESSIONS.forEach(e => img.classList.remove('expr-' + e));
+        img.classList.add('expr-' + expr);
+    }
+
+    // 播放动作（临时动画，播完即止）
+    let actionTimer = null;
+    function playAction(action) {
+        ACTIONS.forEach(a => img.classList.remove('act-' + a));
+        // 强制重绘后再添加，确保动画重新触发
+        void img.offsetWidth;
+        img.classList.add('act-' + action);
+        clearTimeout(actionTimer);
+        actionTimer = setTimeout(() => {
+            img.classList.remove('act-' + action);
+        }, 950);
     }
 
     // 显示气泡
@@ -1392,57 +1420,59 @@ window.addEventListener('toggle-chat-panel', () => {
         bubbleTimer = setTimeout(() => bubble.classList.remove('show'), 2200);
     }
 
-    // 设置位置（bottom/left）
+    // 应用水平位置（bottom 固定）
     function applyPos() {
-        pet.style.left = pos.x + 'px';
-        pet.style.bottom = pos.y + 'px';
+        pet.style.left = posX + 'px';
+        pet.style.bottom = BOTTOM + 'px';
     }
     applyPos();
 
-    // 自主漫游
+    // 自主左右漫游
     function wander() {
         if (!wandering || state === 'dragging') return;
         const w = window.innerWidth;
-        const h = window.innerHeight;
-        const petSize = 120;
-        const margin = 16;
+        const margin = 12;
 
-        pos.x += vel.x;
-        pos.y += vel.y;
+        posX += velX;
 
-        // 边界反弹
-        if (pos.x < margin) { pos.x = margin; vel.x = Math.abs(vel.x); }
-        if (pos.x > w - petSize - margin) { pos.x = w - petSize - margin; vel.x = -Math.abs(vel.x); }
-        if (pos.y < margin) { pos.y = margin; vel.y = Math.abs(vel.y); }
-        if (pos.y > h - petSize - margin) { pos.y = h - petSize - margin; vel.y = -Math.abs(vel.y); }
+        // 左右边界反弹
+        if (posX < margin) { posX = margin; velX = Math.abs(velX); }
+        if (posX > w - PET_SIZE - margin) { posX = w - PET_SIZE - margin; velX = -Math.abs(velX); }
 
-        // 偶尔随机改变方向
-        if (Math.random() < 0.005) {
-            vel.x = (Math.random() - 0.5) * 1.2;
-            vel.y = (Math.random() - 0.5) * 0.8;
-            // 避免速度为0
-            if (Math.abs(vel.x) < 0.1) vel.x = 0.3 * (vel.x >= 0 ? 1 : -1);
+        // 偶尔随机改变方向/速度
+        if (Math.random() < 0.006) {
+            velX = (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random() * 0.6);
         }
 
         applyPos();
     }
     setInterval(wander, 33); // ~30fps
 
-    // 闲置表情定时切换（idle <-> happy）
+    // 闲置时随机切换表情 + 偶尔做动作
     setInterval(() => {
         if (state === 'dragging') return;
-        if (Date.now() - lastSwitch > 4000 + Math.random() * 4000) {
-            state = (state === 'happy') ? 'idle' : 'happy';
-            setImage(state);
-            lastSwitch = Date.now();
+        const now = Date.now();
+        // 每 5-9 秒切换表情
+        if (now - lastExprSwitch > 5000 + Math.random() * 4000) {
+            const next = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
+            setExpression(next);
+            // 表情对应图片：happy/shy/surprised 用 normal1，idle/sleepy 用 normal2
+            if (next === 'happy' || next === 'shy' || next === 'surprised') setImage('happy');
+            else setImage('idle');
+            lastExprSwitch = now;
+        }
+        // 每 8-15 秒做一个随机动作
+        if (now - lastAction > 8000 + Math.random() * 7000) {
+            playAction(ACTIONS[Math.floor(Math.random() * ACTIONS.length)]);
+            lastAction = now;
         }
     }, 1000);
 
-    // 拖拽
+    // 拖拽（仅水平）
     let dragging = false;
     let dragMoved = false;
-    let dragStartX = 0, dragStartY = 0;
-    let startLeft = 0, startBottom = 0;
+    let dragStartX = 0;
+    let startLeft = 0;
 
     pet.addEventListener('pointerdown', (e) => {
         dragging = true;
@@ -1453,24 +1483,16 @@ window.addEventListener('toggle-chat-panel', () => {
         pet.classList.add('dragging');
         pet.setPointerCapture(e.pointerId);
         dragStartX = e.clientX;
-        dragStartY = e.clientY;
-        startLeft = pos.x;
-        startBottom = pos.y;
+        startLeft = posX;
     });
 
     pet.addEventListener('pointermove', (e) => {
         if (!dragging) return;
         const dx = e.clientX - dragStartX;
-        const dy = dragStartY - e.clientY; // bottom 方向与 clientY 相反
-        if (Math.abs(e.clientX - dragStartX) > 4 || Math.abs(e.clientY - dragStartY) > 4) {
-            dragMoved = true;
-        }
+        if (Math.abs(dx) > 4) dragMoved = true;
         const w = window.innerWidth;
-        const h = window.innerHeight;
-        const petSize = 120;
         const margin = 8;
-        pos.x = Math.max(margin, Math.min(w - petSize - margin, startLeft + dx));
-        pos.y = Math.max(margin, Math.min(h - petSize - margin, startBottom + dy));
+        posX = Math.max(margin, Math.min(w - PET_SIZE - margin, startLeft + dx));
         applyPos();
     });
 
@@ -1478,28 +1500,39 @@ window.addEventListener('toggle-chat-panel', () => {
         if (!dragging) return;
         dragging = false;
         wandering = true;
+        state = 'idle';
         pet.classList.remove('dragging');
         try { pet.releasePointerCapture(e.pointerId); } catch (_) {}
         // 恢复随机表情
-        state = Math.random() > 0.5 ? 'happy' : 'idle';
-        setImage(state);
-        lastSwitch = Date.now();
+        const expr = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
+        setExpression(expr);
+        if (expr === 'happy' || expr === 'shy' || expr === 'surprised') setImage('happy');
+        else setImage('idle');
+        playAction('heart');
+        lastAction = Date.now();
     }
     pet.addEventListener('pointerup', endDrag);
     pet.addEventListener('pointercancel', endDrag);
 
-    // 点击：切换表情 + 气泡 + 打开对话面板（拖拽时不触发）
+    // 点击：随机表情 + 随机动作 + 气泡 + 打开对话面板
     pet.addEventListener('click', (e) => {
         if (dragMoved || state === 'dragging') return;
-        state = (state === 'happy') ? 'idle' : 'happy';
-        setImage(state);
-        lastSwitch = Date.now();
+        // 随机表情
+        const expr = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
+        setExpression(expr);
+        if (expr === 'happy' || expr === 'shy' || expr === 'surprised') setImage('happy');
+        else setImage('idle');
+        lastExprSwitch = Date.now();
+        // 随机动作
+        playAction(ACTIONS[Math.floor(Math.random() * ACTIONS.length)]);
+        lastAction = Date.now();
+        // 气泡
         showBubble(bubbleTexts[Math.floor(Math.random() * bubbleTexts.length)]);
-        // 派发自定义事件，由 Vue 监听后打开对话面板
+        // 打开对话面板
         window.dispatchEvent(new CustomEvent('toggle-chat-panel'));
     });
 
-    // 对话面板打开时桌宠发光（监听 Vue panelOpen 变化）
+    // 对话面板打开时桌宠发光
     function getVueProxy() {
         const el = document.querySelector('#assistant-app');
         return el && el.__vue_app__ && el.__vue_app__._container &&
@@ -1515,7 +1548,8 @@ window.addEventListener('toggle-chat-panel', () => {
     }
     setInterval(syncActiveState, 300);
 
-    // 初始化形象
+    // 初始化
+    setExpression('happy');
     setImage('happy');
 })();
 

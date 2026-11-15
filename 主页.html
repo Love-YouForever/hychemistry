@@ -7,7 +7,7 @@
     
     <link rel="stylesheet" href="assets/css/mobile-adaptation.css">
     
-    <link rel="stylesheet" href="assets/css/home.css?v=20261116a">
+    <link rel="stylesheet" href="assets/css/home.css?v=20261116b">
     <link rel="stylesheet" href="assets/css/ai-assistant.css?v=20261115c">
 </head>
 <body class="video-poster">
@@ -87,8 +87,9 @@
 
 <!--AI小助手（小幻语）：Vue 3 管理状态与交互-->
 <div id="assistant-app">
-    <!-- 桌宠形象：替代原状态条，点击打开对话面板，可拖拽，自主活动 -->
+    <!-- 桌宠形象：固定屏幕底部，左右漫游，点击/拖拽切换表情动作 -->
     <div class="pet-container" id="pet-container">
+        <div class="pet-hint" id="pet-hint">戳一戳我进行对话 👉</div>
         <div class="pet-bubble" id="pet-bubble"></div>
         <img id="pet-img" src="./images/normal1.png" alt="小幻语" class="pet-img" draggable="false">
         <div class="pet-shadow"></div>
@@ -306,6 +307,6 @@
 
     <script src="assets/vendor/vue.global.prod.js"></script>
     <script src="assets/js/home.js?v=20261115u"></script>
-    <script src="assets/js/home-app.js?v=20261116l"></script>
+    <script src="assets/js/home-app.js?v=20261116m"></script>
 </body>
 </html>
