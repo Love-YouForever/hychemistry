@@ -114,24 +114,6 @@
         const root = el('div');
         root.id = 'pt-ai-root';
 
-        const headerBtn = el('button', 'pt-ai-header-btn', '🧪 AI 探索');
-        headerBtn.type = 'button';
-        headerBtn.title = '用自然语言探索元素周期表';
-        headerBtn.addEventListener('click', () => {
-            openPanel(true);
-            showPresets(true);
-        });
-
-        const pageHeader = document.querySelector('.container > header');
-        if (pageHeader) {
-            pageHeader.appendChild(headerBtn);
-        } else {
-            headerBtn.style.position = 'fixed';
-            headerBtn.style.top = '16px';
-            headerBtn.style.zIndex = '1500';
-            root.appendChild(headerBtn);
-        }
-
         const launcher = el('button', 'pt-ai-launcher');
         launcher.type = 'button';
         launcher.innerHTML = '<span class="pulse-dot"></span><span>问小幻语</span>';
