@@ -306,30 +306,6 @@
             document.addEventListener('touchstart', handler, { passive: true });
         }
 
-        // 检测微信环境
-        const isWechat = /MicroMessenger/i.test(navigator.userAgent);
-
-        // 微信中显示"点击播放"覆盖层（X5 内核自动播放限制严格，用户手势最可靠）
-        function showWechatPlayOverlay() {
-            if (document.getElementById('wechat-video-overlay')) return;
-            const overlay = document.createElement('div');
-            overlay.id = 'wechat-video-overlay';
-            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;' +
-                'display:flex;align-items:center;justify-content:center;' +
-                'background:rgba(0,0,0,0.35);cursor:pointer;touch-action:manipulation;';
-            overlay.innerHTML = '<div style="text-align:center;color:#fff;">' +
-                '<div style="font-size:48px;margin-bottom:12px;">▶</div>' +
-                '<div style="font-size:16px;">点击播放背景视频</div></div>';
-            const onTap = () => {
-                overlay.remove();
-                tryPlay();
-                setTimeout(tryPlay, 300);
-            };
-            overlay.addEventListener('click', onTap);
-            overlay.addEventListener('touchstart', onTap, { passive: true });
-            document.body.appendChild(overlay);
-        }
-
         // 微信内置浏览器（X5 内核 / WKWebView）需在 WeixinJSBridgeReady 后才能自动播放
         function bindWechatBridge() {
             function wechatPlay() {
@@ -349,12 +325,6 @@
                 } else {
                     tryPlay();
                 }
-                // 1.5 秒后如果仍未播放（仅微信中），显示点击播放覆盖层
-                if (isWechat) {
-                    setTimeout(() => {
-                        if (video.paused) showWechatPlayOverlay();
-                    }, 1500);
-                }
             }
             if (typeof WeixinJSBridge !== 'undefined') {
                 wechatPlay();
@@ -371,11 +341,7 @@
             return;
         }
 
-        video.addEventListener('playing', () => {
-            markReady();
-            const ov = document.getElementById('wechat-video-overlay');
-            if (ov) ov.remove();
-        });
+        video.addEventListener('playing', markReady);
         video.addEventListener('loadeddata', () => { if (video.readyState >= 2) markReady(); });
         video.addEventListener('canplay', () => {
             markReady();
