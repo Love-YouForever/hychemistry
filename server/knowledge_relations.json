@@ -1,0 +1,149 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "element:carbon",
+      "kind": "element",
+      "name": "碳",
+      "aliases": ["碳元素"]
+    },
+    {
+      "id": "form:diamond",
+      "kind": "form",
+      "name": "金刚石",
+      "aliases": ["钻石"]
+    },
+    {
+      "id": "form:graphite",
+      "kind": "form",
+      "name": "石墨",
+      "aliases": []
+    },
+    {
+      "id": "form:graphene",
+      "kind": "form",
+      "name": "石墨烯",
+      "aliases": []
+    },
+    {
+      "id": "property:natural_hardest",
+      "kind": "property",
+      "name": "自然界最硬",
+      "aliases": ["最硬", "硬度最高", "极致坚硬"]
+    },
+    {
+      "id": "property:soft_conductive",
+      "kind": "property",
+      "name": "柔软导电",
+      "aliases": ["柔软", "柔软而导电", "柔软且导电", "质软导电"]
+    },
+    {
+      "id": "property:stronger_than_steel",
+      "kind": "property",
+      "name": "强于钢铁",
+      "aliases": ["高强度"]
+    },
+    {
+      "id": "element:phosphorus",
+      "kind": "element",
+      "name": "磷",
+      "aliases": ["磷元素"]
+    },
+    {
+      "id": "form:white_phosphorus",
+      "kind": "form",
+      "name": "白磷",
+      "aliases": []
+    },
+    {
+      "id": "form:red_phosphorus",
+      "kind": "form",
+      "name": "红磷",
+      "aliases": []
+    },
+    {
+      "id": "form:black_phosphorus",
+      "kind": "form",
+      "name": "黑磷",
+      "aliases": []
+    },
+    {
+      "id": "property:air_self_ignition",
+      "kind": "property",
+      "name": "空气自燃",
+      "aliases": ["自燃"]
+    }
+  ],
+  "edges": [
+    {
+      "id": "diamond_allotrope_of_carbon",
+      "source": "form:diamond",
+      "relation": "allotrope_of",
+      "target": "element:carbon",
+      "evidence_ids": ["碳#5"]
+    },
+    {
+      "id": "diamond_has_property_natural_hardest",
+      "source": "form:diamond",
+      "relation": "has_property",
+      "target": "property:natural_hardest",
+      "evidence_ids": ["碳#5"]
+    },
+    {
+      "id": "graphite_allotrope_of_carbon",
+      "source": "form:graphite",
+      "relation": "allotrope_of",
+      "target": "element:carbon",
+      "evidence_ids": ["碳#6"]
+    },
+    {
+      "id": "graphite_has_property_soft_conductive",
+      "source": "form:graphite",
+      "relation": "has_property",
+      "target": "property:soft_conductive",
+      "evidence_ids": ["碳#6"]
+    },
+    {
+      "id": "graphene_allotrope_of_carbon",
+      "source": "form:graphene",
+      "relation": "allotrope_of",
+      "target": "element:carbon",
+      "evidence_ids": ["碳#9"]
+    },
+    {
+      "id": "graphene_has_property_stronger_than_steel",
+      "source": "form:graphene",
+      "relation": "has_property",
+      "target": "property:stronger_than_steel",
+      "evidence_ids": ["碳#9"]
+    },
+    {
+      "id": "white_phosphorus_allotrope_of_phosphorus",
+      "source": "form:white_phosphorus",
+      "relation": "allotrope_of",
+      "target": "element:phosphorus",
+      "evidence_ids": ["磷#4"]
+    },
+    {
+      "id": "white_phosphorus_has_property_air_self_ignition",
+      "source": "form:white_phosphorus",
+      "relation": "has_property",
+      "target": "property:air_self_ignition",
+      "evidence_ids": ["磷#4"]
+    },
+    {
+      "id": "red_phosphorus_allotrope_of_phosphorus",
+      "source": "form:red_phosphorus",
+      "relation": "allotrope_of",
+      "target": "element:phosphorus",
+      "evidence_ids": ["磷#5"]
+    },
+    {
+      "id": "black_phosphorus_allotrope_of_phosphorus",
+      "source": "form:black_phosphorus",
+      "relation": "allotrope_of",
+      "target": "element:phosphorus",
+      "evidence_ids": ["磷#5"]
+    }
+  ]
+}

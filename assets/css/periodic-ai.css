@@ -129,6 +129,31 @@
     font-weight: 600;
 }
 
+.pt-ai-scene-status {
+    margin: 0 14px;
+    padding: 7px 10px;
+    border: 1px solid rgba(46, 230, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(46, 230, 255, 0.07);
+    color: #a9edfa;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.pt-ai-scene-status:empty {
+    display: none;
+}
+
+.pt-ai-scene-status[data-tone="warn"] {
+    border-color: rgba(251, 191, 36, 0.35);
+    background: rgba(251, 191, 36, 0.08);
+    color: #ffe1a3;
+}
+
+.pt-ai-scene-status[data-tone="pending"] {
+    color: #c4b5fd;
+}
+
 .pt-ai-close {
     width: 28px;
     height: 28px;

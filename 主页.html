@@ -7,14 +7,14 @@
     
     <link rel="stylesheet" href="assets/css/mobile-adaptation.css">
     
-    <link rel="stylesheet" href="assets/css/home.css?v=20261113b">
-    <link rel="stylesheet" href="assets/css/ai-assistant.css?v=20261113h">
+    <link rel="stylesheet" href="assets/css/home.css?v=20261115d">
+    <link rel="stylesheet" href="assets/css/ai-assistant.css?v=20261115c">
 </head>
 <body class="video-poster">
 
 <!--背景层（视频 + 遮罩 + 粒子）-->
 <div class="video-container">
-    <video autoplay loop muted playsinline preload="none" id="bgVideo" poster="assets/background-poster.jpg"></video>
+    <video autoplay loop muted playsinline webkit-playsinline="true" x5-playsinline="true" x5-video-player-type="h5-page" x5-video-player-fullscreen="false" x5-video-orientation="portrait" disablepictureinpicture preload="none" id="bgVideo" poster="assets/background-poster.jpg"></video>
 </div>
 <div class="overlay"></div>
 <canvas id="particle-canvas"></canvas>
@@ -28,11 +28,6 @@
         <br>3D周期表让微观宇宙触手可及——科学与诗意在此交融，每一次滑动，都是与万物之灵的对话。
     </div>
     
-    <div class="ai-mode-entry">
-        <button type="button" class="ai-mode-btn" onclick="window.ElementWhisperAssistant && window.ElementWhisperAssistant.open()">🤖 AI 模式</button>
-        <span class="ai-mode-text">你的 AI 化学探索助手 · 试着问「帮我找三个常温下是液态的元素」</span>
-    </div>
-
     <div class="btn-group" id="nav-app">
         <div class="btn-group-left">
             <a href="./pages/Periodic_Table/交互式元素周期表/交互式元素周期表3D.html" class="btn btn-primary" id="exploreBtn" @click.prevent="go('./pages/Periodic_Table/交互式元素周期表/交互式元素周期表3D.html')">🔬 周期表</a>
@@ -149,7 +144,19 @@
                 <div v-else-if="m.type === 'image'" class="assistant-message user">
                     <img class="assistant-thumb" :src="m.src" alt="上传的图片">
                 </div>
-                <div v-else class="assistant-message" :class="[m.type, { blocked: m.blocked, streaming: m.streaming }]">{{ m.text }}</div>
+                <div v-else class="assistant-message" :class="[m.type, { blocked: m.blocked, streaming: m.streaming }]">
+                    <template v-for="(seg, i) in parseCitationSegments(m.text, m.citations)" :key="i">
+                        <span v-if="seg.type === 'text'">{{ seg.value }}</span>
+                        <span
+                            v-else-if="seg.type === 'cite'"
+                            class="citation-chip"
+                            role="button"
+                            tabindex="0"
+                            @click="openEvidence(seg.item)"
+                            @keyup.enter="openEvidence(seg.item)"
+                        >📎 {{ seg.item.ref }}</span>
+                    </template>
+                </div>
             </template>
             <div v-if="!messages.some(m => m.type === 'user')" class="assistant-empty">
                 <div v-if="!messages.length" class="assistant-empty-title">🤖 AI 模式已就绪</div>
@@ -163,7 +170,14 @@
         </div>
         <div class="assistant-tools">
             <button type="button" class="assistant-tool-btn" @click="openDoc" :disabled="sending">📄 文档问答</button>
+            <button type="button" class="assistant-tool-btn" @click="openMetrics">⚡ 运行指标</button>
+            <button type="button" class="assistant-tool-btn" @click="openQuiz" :disabled="sending">🎯 随堂小测</button>
             <span class="assistant-tools-tip">粘贴一段文字，我只依据它回答并标出处</span>
+        </div>
+        <div v-if="speaking" class="assistant-speaking">
+            <span class="assistant-speaking-dot" aria-hidden="true"></span>
+            <span>正在朗读…</span>
+            <button type="button" class="assistant-stop" @click="muteSpeech">⏸ 停止朗读</button>
         </div>
         <form class="assistant-form" @submit.prevent="submit">
             <button class="assistant-camera" type="button" title="拍照识别化学方程式或实验装置" @click="pickImage" :disabled="cameraBusy">📷</button>
@@ -188,6 +202,69 @@
             </div>
             <div class="evidence-quote">{{ evidence.quote || evidence.snippet }}</div>
             <div class="evidence-foot">原文取自本地化学知识库（BM25 + 向量召回 + RRF 融合 + 领域重排），可逐条核对后再采信。</div>
+        </div>
+    </div>
+
+    <!-- 运行指标：语义缓存命中率与响应延迟 -->
+    <div v-if="metricsOpen" class="evidence-mask" @click.self="closeMetrics">
+        <div class="evidence-dialog" role="dialog" aria-modal="true">
+            <div class="evidence-head">
+                <span class="evidence-title">⚡ 运行指标</span>
+                <button type="button" class="evidence-close" @click="closeMetrics">×</button>
+            </div>
+            <div class="evidence-meta">
+                <div class="evidence-row"><span class="k">累计请求</span><span class="v">{{ metrics.requests || 0 }} 次</span></div>
+                <div class="evidence-row"><span class="k">缓存命中</span><span class="v">{{ metrics.cache_hits || 0 }} 次 · {{ metrics.cache_hit_rate || 0 }}%</span></div>
+                <div class="evidence-row"><span class="k">平均首字</span><span class="v">{{ ((metrics.avg_first_token_ms || 0) / 1000).toFixed(2) }} s</span></div>
+                <div class="evidence-row"><span class="k">平均总耗时</span><span class="v">{{ ((metrics.avg_total_ms || 0) / 1000).toFixed(2) }} s</span></div>
+                <div class="evidence-row"><span class="k">降级次数</span><span class="v">{{ metrics.degraded || 0 }} 次</span></div>
+                <div class="evidence-row"><span class="k">数值校验拦截</span><span class="v">{{ metrics.verify_flags || 0 }} 次</span></div>
+                <div class="evidence-row"><span class="k">缓存条目</span><span class="v">{{ metrics.cache_entries || 0 }} 条</span></div>
+            </div>
+            <div class="evidence-foot">{{ metricsError || '相似问题会命中语义缓存直接复用结论，省去模型推理时间；首字延迟为本轮从提问到第一个字返回的耗时。' }}</div>
+        </div>
+    </div>
+
+    <!-- 随堂小测：讲解后立刻练习，答完判分并给解析 -->
+    <div v-if="quizOpen" class="doc-mask" @click.self="closeQuiz">
+        <div class="doc-dialog quiz-dialog" role="dialog" aria-modal="true">
+            <div class="doc-head">
+                <span class="doc-title">🎯 随堂小测</span>
+                <button type="button" class="doc-close" @click="closeQuiz">×</button>
+            </div>
+            <div v-if="quizLoading" class="quiz-loading">正在围绕你最近的问题出题…</div>
+            <template v-else-if="quiz">
+                <p class="doc-tip">主题：{{ quiz.topic }} · 共 {{ quiz.questions.length }} 题，全部选完后提交判分。</p>
+                <div class="quiz-body">
+                    <div v-for="(q, qi) in quiz.questions" :key="qi" class="quiz-item">
+                        <div class="quiz-stem">{{ qi + 1 }}. {{ q.stem }}</div>
+                        <button
+                            v-for="(opt, oi) in q.options"
+                            :key="oi"
+                            type="button"
+                            class="quiz-option"
+                            :class="optionClass(qi, q, oi)"
+                            :disabled="quizSubmitted"
+                            @click="selectOption(qi, oi)"
+                        >
+                            <span class="quiz-option-key">{{ 'ABCD'[oi] }}</span>
+                            <span class="quiz-option-text">{{ opt }}</span>
+                        </button>
+                        <div v-if="quizSubmitted" class="quiz-explain" :class="{ wrong: quizSelected[qi] !== q.answer_index }">
+                            {{ quizSelected[qi] === q.answer_index ? '✅ 回答正确' : '❌ 正确答案：' + 'ABCD'[q.answer_index] }}
+                            <span v-if="q.explanation">· {{ q.explanation }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="quizSubmitted" class="quiz-score">本轮得分：{{ quizScore }} / {{ quiz.questions.length }}</div>
+            </template>
+            <div v-if="quizError" class="doc-error">{{ quizError }}</div>
+            <div class="doc-actions">
+                <button type="button" class="doc-cancel" @click="closeQuiz">关闭</button>
+                <button v-if="quiz && !quizSubmitted" type="button" class="doc-submit" @click="submitQuiz">提交答案</button>
+                <button v-else-if="quizLoading" type="button" class="doc-submit" disabled>出题中…</button>
+                <button v-else type="button" class="doc-submit" @click="loadQuiz">再来一组</button>
+            </div>
         </div>
     </div>
 
@@ -224,7 +301,7 @@
 </audio>
 
     <script src="assets/vendor/vue.global.prod.js"></script>
-    <script src="assets/js/home.js?v=20261113c"></script>
-    <script src="assets/js/home-app.js?v=20261113r"></script>
+    <script src="assets/js/home.js?v=20261115a"></script>
+    <script src="assets/js/home-app.js?v=20261115j"></script>
 </body>
 </html>

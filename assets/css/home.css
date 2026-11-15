@@ -19,8 +19,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -2;
+            z-index: 0;
             overflow: hidden;
+            pointer-events: none;
             background:
                 radial-gradient(circle at 30% 20%, rgba(10, 58, 82, 0.55), transparent 55%),
                 radial-gradient(circle at 75% 70%, rgba(46, 230, 255, 0.12), transparent 50%),
@@ -38,6 +39,7 @@
             transform: translate(-50%, -50%);
             object-fit: cover;
             opacity: 0;
+            pointer-events: none;
             transition: opacity 0.8s ease;
         } /*实现自动裁剪，使其填满整个窗口*/
 
@@ -64,7 +66,8 @@
             width: 100%;
             height: 100%;
             background: linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 100%);
-            z-index: -1;
+            z-index: 1;
+            pointer-events: none;
         }
 
         /* 高清粒子画布层 */
@@ -76,13 +79,13 @@
             height: 100%;
             display: block;
             pointer-events: none; /*画布不响应任何鼠标/触摸事件 否则会影响交互*/
-            z-index: 0; /*设置层级 使其位于遮罩层上，其他层下，不影响交互*/
+            z-index: 2; /*设置层级 位于视频与遮罩之上、页面内容之下，不影响交互*/
         }
 
         /* 主内容区域（标题、副标题、描述、按钮组......）*/
         .content {
             position: relative;
-            z-index: 2;
+            z-index: 3;
             min-height: 100vh;
             display: flex; /*启用 Flexbox 布局，便于内部元素灵活排列*/
             flex-direction: column;
@@ -547,6 +550,38 @@
             color: rgba(236, 240, 242, 0.76);
             text-align: center;
         }
+
+        /*朗读中：可随时打断*/
+        .assistant-speaking {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px 0;
+            font-size: 0.72rem;
+            color: rgba(230,236,240,0.68);
+        }
+        .assistant-speaking-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #f2bb58;
+            animation: speaking-pulse 1.1s ease-in-out infinite;
+        }
+        @keyframes speaking-pulse {
+            0%, 100% { opacity: 0.35; transform: scale(0.85); }
+            50% { opacity: 1; transform: scale(1.15); }
+        }
+        .assistant-stop {
+            margin-left: auto;
+            border: 1px solid rgba(242,187,88,0.45);
+            background: rgba(242,187,88,0.12);
+            color: #f2bb58;
+            border-radius: 12px;
+            padding: 4px 10px;
+            font-size: 0.72rem;
+            cursor: pointer;
+        }
+        .assistant-stop:hover { background: rgba(242,187,88,0.22); }
 
         /*输入表单及相关元素*/
         .assistant-form {

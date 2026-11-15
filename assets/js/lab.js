@@ -1288,6 +1288,7 @@
             
             dropZone.appendChild(equipment);
             makeDraggable(equipment);
+            return equipment.id;
         }
 
         // 使器材可拖拽（优化版 - 支持触摸和鼠标）
@@ -2449,3 +2450,53 @@
 
         // 全量校验所有器材是否都具备实物绘制
         verifyEquipmentRendering();
+
+        // AI 只能调用这两个窄接口；装载不触碰混合、倾倒、加热或点燃逻辑。
+        let aiLoadedEquipmentIds = [];
+        window.ChemistryLab3D = Object.freeze({
+            focusEquipment(equipmentType, reagent) {
+                const item = Array.from(document.querySelectorAll('.item[data-type]')).find(candidate =>
+                    candidate.dataset.type === equipmentType &&
+                    candidate.dataset.static !== 'true' &&
+                    (!reagent || candidate.dataset.reagent === reagent)
+                );
+                if (!item) return { ok: false, error: '未找到对应器材或试剂' };
+                document.querySelectorAll('.lab-ai-focus').forEach(node => node.classList.remove('lab-ai-focus'));
+                item.classList.add('lab-ai-focus');
+                item.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+                window.setTimeout(() => item.classList.remove('lab-ai-focus'), 3200);
+                const name = item.querySelector('.item-name');
+                return { ok: true, name: name ? name.textContent.trim() : equipmentType };
+            },
+            loadReaction(items) {
+                if (!Array.isArray(items) || items.length < 2 || items.length > 3) {
+                    return { ok: false, error: '装载清单无效' };
+                }
+                aiLoadedEquipmentIds.forEach(id => {
+                    const node = document.getElementById(id);
+                    if (node) node.remove();
+                    equipmentData.delete(id);
+                });
+                aiLoadedEquipmentIds = [];
+
+                const width = dropZone.clientWidth || 800;
+                const height = dropZone.clientHeight || 520;
+                const slots = [
+                    { x: 0.22, y: 0.48 },
+                    { x: 0.50, y: 0.24 },
+                    { x: 0.72, y: 0.58 }
+                ];
+                items.forEach((item, index) => {
+                    const x = Math.max(8, Math.min(width * slots[index].x, width - 150));
+                    const y = Math.max(8, Math.min(height * slots[index].y, height - 170));
+                    const id = createEquipment(item.type, item.reagent || '', x, y);
+                    const node = document.getElementById(id);
+                    node.classList.add('lab-ai-loaded');
+                    node.dataset.aiLoadedOnly = 'true';
+                    aiLoadedEquipmentIds.push(id);
+                });
+                showExperimentInfo('已摆放容器和独立试剂瓶；尚未混合、倾倒或加热，请按实验指南手动操作。');
+                return { ok: true, ids: aiLoadedEquipmentIds.slice(), loadedOnly: true };
+            }
+        });
+        document.dispatchEvent(new CustomEvent('chemistry-lab-ready'));

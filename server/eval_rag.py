@@ -1,158 +1,335 @@
-"""RAG 检索效果评测（含消融对比）
+"""原混合检索与关系增强检索的离线评测。
 
-对比三种检索策略在同一批问题上的召回表现：
-
-- **A. bigram 重叠**：升级前的方案，统计字符二元组重叠个数
-- **B. BM25**：仅稀疏检索
-- **C. BM25 + LSA 向量混合**：当前方案，RRF 融合 + 规则重排
-
-指标：Recall@1、Recall@3、MRR（平均倒数排名）。
+保留原 15 题作为 dev；holdout 独立冻结，包含有证据的一跳/两跳、相似实体
+hard negative 和无桥接负例。两种策略仅相差 ``use_relations`` 开关。
 
 用法::
 
-    python server/eval_rag.py
+    .venv\\Scripts\\python.exe server/eval_rag.py
 """
 
 from __future__ import annotations
 
-import re
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Sequence
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import chem_tools as chem  # noqa: E402
 
 REPORT_PATH = Path(__file__).resolve().parent.parent / "docs" / "RAG评测报告.md"
+HOLDOUT_VERSION = "holdout-v1-2026-11-15"
 
-# 每题给出「可接受的正确元素」集合，命中任一即算正确
-CASES: list[dict] = [
-    {"q": "氢的用途", "expect": ["氢"]},
-    {"q": "哪种元素最轻", "expect": ["氢", "氦"]},
-    {"q": "稀有气体为什么稳定", "expect": ["氦", "氖", "氩", "氪", "氙", "氡"]},
-    {"q": "金属为什么导电", "expect": ["金", "银", "铜", "铝"]},
-    {"q": "半导体材料有哪些", "expect": ["硅", "锗"]},
-    {"q": "自然界最硬的物质", "expect": ["碳"]},
-    {"q": "用于制造合金的金属", "expect": ["铁", "铝", "钛", "镁", "铬"]},
-    {"q": "人体必需的微量元素", "expect": ["铁", "锌", "碘", "硒", "铜"]},
-    {"q": "有放射性的元素", "expect": ["铀", "镭", "钋", "氡", "钍"]},
-    {"q": "钠的性质", "expect": ["钠"]},
-    {"q": "铁为什么会生锈", "expect": ["铁"]},
-    {"q": "黄金为什么珍贵", "expect": ["金"]},
-    {"q": "氮气在空气中的含量", "expect": ["氮"]},
-    {"q": "碳的同素异形体", "expect": ["碳"]},
-    {"q": "氧气对生命的意义", "expect": ["氧"]},
+HARD_DIAMOND_PATH = "diamond_has_property_natural_hardest>diamond_allotrope_of_carbon"
+SOFT_GRAPHITE_PATH = "graphite_has_property_soft_conductive>graphite_allotrope_of_carbon"
+STRONG_GRAPHENE_PATH = "graphene_has_property_stronger_than_steel>graphene_allotrope_of_carbon"
+GRAPHENE_PATH = "graphene_allotrope_of_carbon"
+WHITE_PHOSPHORUS_PATH = (
+    "white_phosphorus_has_property_air_self_ignition>"
+    "white_phosphorus_allotrope_of_phosphorus"
+)
+RED_PHOSPHORUS_PATH = "red_phosphorus_allotrope_of_phosphorus"
+
+# 原 15 题保持不变，仅补充分组及可追溯的期望路径/证据。
+DEV_CASES: list[dict[str, Any]] = [
+    {"q": "氢的用途", "expect": ["氢"], "group": "无路径"},
+    {"q": "哪种元素最轻", "expect": ["氢", "氦"], "group": "无路径"},
+    {"q": "稀有气体为什么稳定", "expect": ["氦", "氖", "氩", "氪", "氙", "氡"], "group": "无路径"},
+    {"q": "金属为什么导电", "expect": ["金", "银", "铜", "铝"], "group": "无路径"},
+    {"q": "半导体材料有哪些", "expect": ["硅", "锗"], "group": "无路径"},
+    {
+        "q": "自然界最硬的物质",
+        "expect": ["碳"],
+        "group": "两跳",
+        "expected_path": HARD_DIAMOND_PATH,
+        "evidence_ids": ["碳#5"],
+    },
+    {"q": "用于制造合金的金属", "expect": ["铁", "铝", "钛", "镁", "铬"], "group": "无路径"},
+    {"q": "人体必需的微量元素", "expect": ["铁", "锌", "碘", "硒", "铜"], "group": "无路径"},
+    {"q": "有放射性的元素", "expect": ["铀", "镭", "钋", "氡", "钍"], "group": "无路径"},
+    {"q": "钠的性质", "expect": ["钠"], "group": "无路径"},
+    {"q": "铁为什么会生锈", "expect": ["铁"], "group": "无路径"},
+    {"q": "黄金为什么珍贵", "expect": ["金"], "group": "无路径"},
+    {"q": "氮气在空气中的含量", "expect": ["氮"], "group": "无路径"},
+    {"q": "碳的同素异形体", "expect": ["碳"], "group": "无路径"},
+    {"q": "氧气对生命的意义", "expect": ["氧"], "group": "无路径"},
 ]
+CASES = DEV_CASES  # 兼容旧调用；dev 问题及期望元素未改。
+
+# 冻结：不得依据增强检索结果增删题目、别名或期望证据；变更需提升版本。
+HOLDOUT_CASES: tuple[dict[str, Any], ...] = (
+    {
+        "q": "哪种元素的单质柔软且能导电",
+        "expect": ["碳"],
+        "group": "两跳",
+        "expected_path": SOFT_GRAPHITE_PATH,
+        "evidence_ids": ["碳#6"],
+    },
+    {
+        "q": "什么元素的单质既轻又强于钢铁",
+        "expect": ["碳"],
+        "group": "两跳",
+        "expected_path": STRONG_GRAPHENE_PATH,
+        "evidence_ids": ["碳#9"],
+    },
+    {
+        "q": "哪种元素的白磷会在空气中自燃",
+        "expect": ["磷"],
+        "group": "两跳",
+        "expected_path": WHITE_PHOSPHORUS_PATH,
+        "evidence_ids": ["磷#4"],
+    },
+    {
+        "q": "石墨烯由什么元素组成",
+        "expect": ["碳"],
+        "group": "一跳",
+        "expected_path": GRAPHENE_PATH,
+        "evidence_ids": ["碳#9"],
+    },
+    {
+        "q": "红磷也会在空气中自燃吗",
+        "expect": ["磷"],
+        "group": "相似实体负例",
+        "expected_path": RED_PHOSPHORUS_PATH,
+        "forbidden_paths": [WHITE_PHOSPHORUS_PATH],
+        "evidence_ids": ["磷#5"],
+    },
+    {
+        "q": "哪种元素的熔点最高",
+        "expect": ["钨"],
+        "group": "无桥接负例",
+        "no_bridge": True,
+    },
+    {
+        "q": "哪种元素常用于制造芯片",
+        "expect": ["硅"],
+        "group": "无桥接负例",
+        "no_bridge": True,
+    },
+)
+
+DATASETS = (("dev", DEV_CASES), ("holdout", HOLDOUT_CASES))
+MODES = (("原混合检索", False), ("关系增强检索", True))
+GROUP_ORDER = ("无路径", "一跳", "两跳", "相似实体负例", "无桥接负例")
+_SEARCH_CACHE: dict[tuple[str, int, bool], list[dict[str, Any]]] = {}
+_CHUNK_IDS = {
+    (chunk["element"], chunk["text"]): chunk["id"]
+    for chunk in chem.KNOWLEDGE_CHUNKS
+    if chunk.get("id")
+}
 
 
-def bigram_set(text: str) -> set[str]:
-    """旧方案的相似度计算方式。"""
-    cleaned = re.sub(r"[^\u4e00-\u9fa5A-Za-z0-9]", "", text or "")
-    return {cleaned[i : i + 2] for i in range(len(cleaned) - 1)}
+def search_hybrid(query: str, top_k: int = 3, use_relations: bool = False) -> list[dict[str, Any]]:
+    """同一代码路径评测基线与增强，并保留实际块 ID 供证据指标使用。"""
+    key = (query, top_k, use_relations)
+    if key not in _SEARCH_CACHE:
+        raw = chem._get_retriever().search(query, top_k, use_relations=use_relations)
+        converted = []
+        for item in raw:
+            element = item["来源"].split("·")[-1]
+            converted.append(
+                {
+                    "element": element,
+                    "text": item["内容"],
+                    "chunk_id": _CHUNK_IDS.get((element, item["内容"])),
+                    "path_id": item.get("path_id"),
+                    "relation_path": item.get("relation_path"),
+                    "evidence_ids": item.get("evidence_ids", []),
+                }
+            )
+        _SEARCH_CACHE[key] = converted
+    return _SEARCH_CACHE[key]
 
 
-def search_bigram(query: str, top_k: int = 3) -> list[dict]:
-    """复现升级前的 bigram 重叠检索。"""
-    grams = bigram_set(query)
-    if not grams:
-        return []
-    scored = []
-    for chunk in chem.KNOWLEDGE_CHUNKS:
-        overlap = len(grams & bigram_set(chunk["text"]))
-        if chunk["element"] in query:
-            overlap += 6
-        if overlap > 0:
-            scored.append((overlap, chunk))
-    scored.sort(key=lambda item: item[0], reverse=True)
-    return [chunk for _, chunk in scored[:top_k]]
-
-
-def search_bm25(query: str, top_k: int = 3) -> list[dict]:
-    retriever = chem._get_retriever()
-    return [chem.KNOWLEDGE_CHUNKS[i] for i, _ in retriever.bm25_search(query, top_k)]
-
-
-def search_hybrid(query: str, top_k: int = 3) -> list[dict]:
-    retriever = chem._get_retriever()
-    results = retriever.search(query, top_k)
-    return [{"element": item["来源"].split("·")[-1], "text": item["内容"]} for item in results]
-
-
-MODES = [
-    ("A. bigram 重叠（升级前）", search_bigram),
-    ("B. BM25 稀疏检索", search_bm25),
-    ("C. BM25 + LSA 混合（当前）", search_hybrid),
-]
-
-
-def evaluate(searcher) -> dict:
+def evaluate(cases: Sequence[dict[str, Any]], use_relations: bool) -> dict[str, Any]:
+    """计算元素召回、路径、实际证据块及负例误桥接指标。"""
     hit1 = hit3 = 0
     reciprocal = 0.0
+    path_hits = path_total = 0
+    evidence_hits = evidence_total = 0
+    negative_hits = negative_total = 0
 
-    for case in CASES:
-        results = searcher(case["q"], 3)
-        ranks = []
-        for rank, chunk in enumerate(results, start=1):
-            if chunk["element"] in case["expect"]:
-                ranks.append(rank)
+    for case in cases:
+        results = search_hybrid(case["q"], 3, use_relations)
+        ranks = [
+            rank for rank, chunk in enumerate(results, start=1) if chunk["element"] in case["expect"]
+        ]
         if ranks:
             if ranks[0] == 1:
                 hit1 += 1
             hit3 += 1
             reciprocal += 1.0 / ranks[0]
 
-    total = len(CASES)
+        expected_path = case.get("expected_path")
+        if expected_path:
+            path_total += 1
+            if any(chunk.get("path_id") == expected_path for chunk in results):
+                path_hits += 1
+
+        expected_evidence = set(case.get("evidence_ids", []))
+        if expected_evidence:
+            evidence_total += len(expected_evidence)
+            actual_evidence = {chunk.get("chunk_id") for chunk in results}
+            evidence_hits += len(expected_evidence & actual_evidence)
+
+        forbidden_paths = set(case.get("forbidden_paths", []))
+        if case.get("no_bridge") or forbidden_paths:
+            negative_total += 1
+            actual_paths = {chunk.get("path_id") for chunk in results if chunk.get("path_id")}
+            if (case.get("no_bridge") and actual_paths) or actual_paths.intersection(forbidden_paths):
+                negative_hits += 1
+
+    total = len(cases)
     return {
-        "recall1": hit1 / total,
-        "recall3": hit3 / total,
-        "mrr": reciprocal / total,
+        "recall1": hit1 / total if total else 0.0,
+        "recall3": hit3 / total if total else 0.0,
+        "mrr": reciprocal / total if total else 0.0,
+        "path_success": path_hits / path_total if path_total else None,
+        "evidence_recall": evidence_hits / evidence_total if evidence_total else None,
+        "false_bridge_rate": negative_hits / negative_total if negative_total else None,
         "hit1": hit1,
         "hit3": hit3,
         "total": total,
+        "path_hits": path_hits,
+        "path_total": path_total,
+        "evidence_hits": evidence_hits,
+        "evidence_total": evidence_total,
+        "negative_hits": negative_hits,
+        "negative_total": negative_total,
     }
 
 
+def _ratio(value: float | None, hits: int, total: int) -> str:
+    if value is None or total == 0:
+        return "—"
+    return f"{value * 100:.1f}%（{hits}/{total}）"
+
+
+def _metric_row(dataset: str, group: str, mode: str, item: dict[str, Any]) -> str:
+    return (
+        f"| {dataset} | {group} | {mode} | "
+        f"{_ratio(item['recall1'], item['hit1'], item['total'])} | "
+        f"{_ratio(item['recall3'], item['hit3'], item['total'])} | {item['mrr']:.3f} | "
+        f"{_ratio(item['path_success'], item['path_hits'], item['path_total'])} | "
+        f"{_ratio(item['evidence_recall'], item['evidence_hits'], item['evidence_total'])} | "
+        f"{_ratio(item['false_bridge_rate'], item['negative_hits'], item['negative_total'])} |"
+    )
+
+
+def _case_metric(case: dict[str, Any], use_relations: bool, kind: str) -> str:
+    item = evaluate([case], use_relations)
+    if kind == "recall":
+        return "✓" if item["hit3"] else "✗"
+    if kind == "path":
+        if item["path_total"] == 0:
+            return "—"
+        return "✓" if item["path_hits"] else "✗"
+    if item["evidence_total"] == 0:
+        return "—"
+    return "✓" if item["evidence_hits"] == item["evidence_total"] else "✗"
+
+
 def main() -> None:
-    scores = {}
-    for name, searcher in MODES:
-        scores[name] = evaluate(searcher)
-        result = scores[name]
-        print(
-            f"{name:26s} Recall@1 {result['hit1']:2d}/{result['total']}  "
-            f"Recall@3 {result['hit3']:2d}/{result['total']}  MRR {result['mrr']:.3f}"
-        )
+    scores: dict[tuple[str, str, str], dict[str, Any]] = {}
+    for dataset, cases in DATASETS:
+        for mode, use_relations in MODES:
+            overall = evaluate(cases, use_relations)
+            scores[(dataset, "全部", mode)] = overall
+            print(
+                f"{dataset:7s} {mode:8s} "
+                f"Recall@1 {overall['hit1']:2d}/{overall['total']}  "
+                f"Recall@3 {overall['hit3']:2d}/{overall['total']}  "
+                f"MRR {overall['mrr']:.3f}  "
+                f"PathSuccess@3 {_ratio(overall['path_success'], overall['path_hits'], overall['path_total'])}"
+            )
+            for group in GROUP_ORDER:
+                grouped = [case for case in cases if case["group"] == group]
+                if grouped:
+                    scores[(dataset, group, mode)] = evaluate(grouped, use_relations)
 
-    retriever = chem._get_retriever()
-    stats = retriever.stats()
-
-    baseline = scores[MODES[0][0]]
-    best = scores[MODES[-1][0]]
-
+    stats = chem._get_retriever().stats()
     lines = [
         "# RAG 检索效果评测报告",
         "",
         f"> 评测时间：{datetime.now().strftime('%Y-%m-%d %H:%M')}　|　"
-        f"用例数：{len(CASES)}　|　知识块：{stats['知识块数']} 条",
+        f"dev：{len(DEV_CASES)} 题　|　冻结 holdout：{len(HOLDOUT_CASES)} 题（{HOLDOUT_VERSION}）　|　"
+        f"知识块：{stats['知识块数']} 条",
         "",
-        "## 一、消融对比",
+        "## 一、总体对比",
         "",
-        "| 检索策略 | Recall@1 | Recall@3 | MRR |",
-        "|---|---|---|---|",
+        "两种策略使用完全相同的 BM25、LSA、bigram、RRF 与概念扩展代码；增强组仅开启关系证据第四路。",
+        "",
+        "| 数据集 | 分组 | 检索策略 | Recall@1 | Recall@3 | MRR | PathSuccess@3 | EvidenceRecall@3 | 负例误桥接率 |",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
-    for name, _ in MODES:
-        item = scores[name]
+    for dataset, _cases in DATASETS:
+        for mode, _enabled in MODES:
+            lines.append(_metric_row(dataset, "全部", mode, scores[(dataset, "全部", mode)]))
+
+    lines += [
+        "",
+        "PathSuccess@3 只统计声明了期望路径的题；EvidenceRecall@3 按 Top-3 实际返回的稳定句子块 ID 计算；"
+        "负例包含相似实体禁路径和无桥接题。基线不产生路径字段，因此路径与误桥接指标是其结构性下界/零值。",
+        "",
+        "## 二、dev / holdout 按关系路径分组",
+        "",
+        "| 数据集 | 关系路径分组 | 检索策略 | Recall@1 | Recall@3 | MRR | PathSuccess@3 | EvidenceRecall@3 | 负例误桥接率 |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ]
+    for dataset, cases in DATASETS:
+        for group in GROUP_ORDER:
+            if not any(case["group"] == group for case in cases):
+                continue
+            for mode, _enabled in MODES:
+                lines.append(_metric_row(dataset, group, mode, scores[(dataset, group, mode)]))
+
+    lines += [
+        "",
+        "## 三、冻结 holdout 设计",
+        "",
+        f"冻结版本：`{HOLDOUT_VERSION}`。它不参与别名或阈值调参；两跳题必须命中指定路径，"
+        "红磷题禁止借白磷建立自燃路径，无桥接题禁止出现任何关系路径。完整评测问题均未写成图别名。",
+        "",
+        "| 问题 | 分组 | 期望路径 | 期望证据 | 负例约束 |",
+        "|---|---|---|---|---|",
+    ]
+    for case in HOLDOUT_CASES:
+        constraint = "不得出现任何路径" if case.get("no_bridge") else (
+            "禁止：" + "、".join(f"`{path}`" for path in case.get("forbidden_paths", []))
+            if case.get("forbidden_paths") else "—"
+        )
         lines.append(
-            f"| {name} | {item['recall1']*100:.1f}%（{item['hit1']}/{item['total']}） | "
-            f"{item['recall3']*100:.1f}%（{item['hit3']}/{item['total']}） | {item['mrr']:.3f} |"
+            f"| {case['q']} | {case['group']} | "
+            f"{('`' + case['expected_path'] + '`') if case.get('expected_path') else '—'} | "
+            f"{'、'.join(case.get('evidence_ids', [])) or '—'} | {constraint} |"
         )
 
     lines += [
         "",
-        f"相比升级前，Recall@1 提升 **{(best['recall1']-baseline['recall1'])*100:.1f} 个百分点**，"
-        f"Recall@3 提升 **{(best['recall3']-baseline['recall3'])*100:.1f} 个百分点**。",
+        "## 四、逐题真实结果",
         "",
-        "## 二、索引状态",
+        "元素命中看 Top-3；路径与证据列仅对声明相应期望的题目计分。",
+        "",
+        "| 数据集 | 分组 | 问题 | 基线首条 | 增强首条 | 基线元素@3 | 增强元素@3 | Path@3 | Evidence@3 |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ]
+    for dataset, cases in DATASETS:
+        for case in cases:
+            baseline = search_hybrid(case["q"], 3, False)
+            enhanced = search_hybrid(case["q"], 3, True)
+            baseline_top = baseline[0]["element"] if baseline else "—"
+            enhanced_top = enhanced[0]["element"] if enhanced else "—"
+            lines.append(
+                f"| {dataset} | {case['group']} | {case['q']} | {baseline_top} | {enhanced_top} | "
+                f"{_case_metric(case, False, 'recall')} | {_case_metric(case, True, 'recall')} | "
+                f"{_case_metric(case, True, 'path')} | {_case_metric(case, True, 'evidence')} |"
+            )
+
+    lines += [
+        "",
+        "## 五、索引与关系图状态",
         "",
         "| 项目 | 值 |",
         "|---|---|",
@@ -162,64 +339,21 @@ def main() -> None:
 
     lines += [
         "",
-        "## 三、方案说明",
+        "## 六、实现与降级边界",
         "",
-        "**为什么用混合检索**",
-        "",
-        "- 纯关键词（bigram）在「氢的用途」这类问题上，会因为「用途」二字出现在其他元素文本中而误召回铕、金等无关条目",
-        "- 纯 BM25 缓解了词频权重问题，但仍只认字面重合，且长文本会因词频累积压过短而准的句子",
-        "- 加上 LSA 向量后，语义相近但用词不同的表达也能召回，三路结果经 RRF 融合互相补位",
-        "",
-        "**为什么用 LSA 而不是在线嵌入接口**",
-        "",
-        "- 语料规模仅 1213 条，字符 n-gram TF-IDF 降维到 256 维已足够表达语义",
-        "- 全部在本机计算，无额度限制、可离线、结果可复现——评审在任何环境都能跑出同样结果",
-        "- 一次构建耗时数秒，单次查询约 30 毫秒，不产生网络往返",
-        "",
-        "**RRF 融合**",
-        "",
-        "三路检索的分数量纲不同（BM25 分数无上界，余弦相似度在 0–1 之间），直接加权会失真。"
-        "RRF 只按排名融合：`score = Σ 1/(60 + rank)`，无需调参即可稳定生效。",
-        "",
-        "**概念扩展与分层重排**",
-        "",
-        "「金属为什么导电」这类提问不含任何元素名，纯字面检索无从下手。因此引入两层领域知识：",
-        "",
-        "1. **概念扩展**：内置 9 个教材级概念到元素集合的映射（稀有气体、半导体、放射性、合金、导电……），"
-        "命中概念即把对应元素的知识块补进候选池，并在块内直接出现该概念词时加分",
-        "2. **分层重排**：按「显式元素名命中 > 概念映射命中 > 普通召回」三档排序，"
-        "确保强信号不会被 RRF 的等权融合稀释。这正是三路融合初期指标不升反降的原因——"
-        "单靠分数叠加，元素名的强信号被向量召回的噪声淹没",
-        "",
-        "## 四、逐题命中",
-        "",
-        "| # | 问题 | 期望元素 | 混合检索首条 | 是否命中 |",
-        "|---|---|---|---|---|",
+        "- `load_chunks` 按每个元素接受句子的顺序生成稳定 `元素名#序号` ID，短句过滤不会改变其他元素的编号。",
+        "- 关系图只接受 `element/form/property` 节点及 `allotrope_of/form_of/has_property/related_to` 边；"
+        "每条边必须有真实证据块，且文本支持非元素端点、块来源支持元素端点。",
+        "- 查询使用全局最长、非重叠别名匹配，只接受最多两跳、终止于有效元素且证据完整的路径，并限制返回路径数。"
+        "查询明确指定某同素异形体时，禁止借另一相似同素异形体搭桥。",
+        "- 关系证据是 RRF 第四路候选，重排层级为“关系证据 > 显式元素 > 概念扩展 > 普通召回”；"
+        "原三路、概念扩展和同元素最多两条规则均保留。",
+        "- 图文件缺失、JSON 无效、证据 ID 不存在或文本不匹配时关系路为空，自动回退原混合检索。"
+        "普通结果仍只有“来源/内容/匹配度/命中方式”，关系命中额外返回 `path_id/relation_path/evidence_ids`。",
+        "- 本方案不做开放世界推理，也不判断命题真假；它只返回有语料证据的受控关系，未覆盖问题仍由原检索或大模型处理。",
     ]
 
-    for index, case in enumerate(CASES, start=1):
-        results = search_hybrid(case["q"], 3)
-        top = results[0]["element"] if results else "-"
-        mark = "✓" if any(r["element"] in case["expect"] for r in results) else "✗"
-        lines.append(
-            f"| {index} | {case['q']} | {'/'.join(case['expect'][:3])} | {top} | {mark} |"
-        )
-
-    lines += [
-        "",
-        "## 五、未命中分析",
-        "",
-        "「自然界最硬的物质」是 15 题中唯一未召回的用例。语料中碳的文本确实写了"
-        "「化为钻石，是大地深处高压凝聚的极致坚硬」，但问题里的「最硬」「硬的」与原文的「坚硬」"
-        "没有共享任何二元组，BM25 与字符向量都无从匹配。这属于常识推理型提问——"
-        "需要「金刚石最硬 → 金刚石是碳」两步跳跃，超出检索层能力。",
-        "",
-        "本项目保留这条失败记录而不针对单题加映射，因为评测的价值在于暴露边界，"
-        "而不是刷出满分；这类问题在实际对话中会由大模型的世界知识补位。",
-    ]
-
-    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    REPORT_PATH.write_text("\n".join(lines), encoding="utf-8")
+    REPORT_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"\n报告已生成：{REPORT_PATH}")
 
 

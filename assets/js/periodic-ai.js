@@ -52,7 +52,8 @@
             ? '正在检索 ' + a.reactants.join(' + ') + ' 的反应现象…'
             : '正在检索反应现象…',
         get_safety_info: (a) => a.chemical ? '正在查询「' + a.chemical + '」的危化品安全信息…' : '正在查询危化品安全信息…',
-        search_knowledge: (a) => a.query ? '正在检索知识库：' + shortText(a.query, 18) : '正在检索本地知识库…'
+        search_knowledge: (a) => a.query ? '正在检索知识库：' + shortText(a.query, 18) : '正在检索本地知识库…',
+        control_scene: () => '正在校验并下发周期表动作…'
     };
 
     const TOOL_ARGS = {
@@ -61,7 +62,8 @@
         balance_equation: (a) => a.equation ? '方程式：' + shortText(a.equation, 22) : '方程式配平',
         lookup_reaction: (a) => Array.isArray(a.reactants) && a.reactants.length ? '反应物：' + a.reactants.join(' + ') : '反应检索',
         get_safety_info: (a) => a.chemical ? '化学品：' + a.chemical : '危化品安全',
-        search_knowledge: (a) => a.query ? '检索：' + shortText(a.query, 22) : '知识库检索'
+        search_knowledge: (a) => a.query ? '检索：' + shortText(a.query, 22) : '知识库检索',
+        control_scene: (a) => '周期表动作：' + (a.action || '待校验')
     };
 
     let panel;
@@ -74,6 +76,8 @@
     let presetsEl;
     let hitline;
     let evidenceMask;
+    let sceneStatusEl;
+    let pendingSceneActions = [];
 
     let busy = false;
     let currentElement = null;
@@ -157,6 +161,10 @@
         bodyEl = el('div', 'pt-ai-body');
         bodyEl.appendChild(el('div', 'pt-ai-msg sys', '点击任意元素，或在下方选择一个探索问题。回答会标注知识来源，可点击核对原文。'));
 
+        sceneStatusEl = el('div', 'pt-ai-scene-status');
+        sceneStatusEl.setAttribute('role', 'status');
+        sceneStatusEl.setAttribute('aria-live', 'polite');
+
         quickEl = el('div', 'pt-ai-quick');
         presetsEl = el('div', 'pt-ai-presets');
 
@@ -180,6 +188,7 @@
 
         panel.appendChild(head);
         panel.appendChild(bodyEl);
+        panel.appendChild(sceneStatusEl);
         panel.appendChild(quickEl);
         panel.appendChild(presetsEl);
         panel.appendChild(formEl);
@@ -501,7 +510,142 @@
     }
 
     /* ------------------------------------------------------------
-       五、SSE 对话
+       五、受控场景动作：本轮幂等、初始化排队、2D 降级
+       ------------------------------------------------------------ */
+    function hasOnlyKeys(value, allowed) {
+        return Object.keys(value).every(key => allowed.includes(key));
+    }
+
+    function isValidSceneAction(action) {
+        if (!action || action.target !== 'periodic' || typeof action.id !== 'string' ||
+            !/^scene-[A-Za-z0-9-]{8,80}$/.test(action.id)) return false;
+        const params = action.params;
+        if (!params || typeof params !== 'object' || Array.isArray(params)) return false;
+        if (action.action === 'highlight_elements') {
+            return hasOnlyKeys(params, ['symbols']) && Array.isArray(params.symbols) &&
+                params.symbols.length >= 1 && params.symbols.length <= 18 &&
+                params.symbols.every(symbol => typeof symbol === 'string' && /^[A-Z][a-z]?$/.test(symbol));
+        }
+        if (action.action === 'focus_element') {
+            return hasOnlyKeys(params, ['symbol']) && typeof params.symbol === 'string' &&
+                /^[A-Z][a-z]?$/.test(params.symbol);
+        }
+        if (action.action === 'set_temperature') {
+            return hasOnlyKeys(params, ['kelvin']) && typeof params.kelvin === 'number' &&
+                Number.isFinite(params.kelvin) && params.kelvin >= 0 && params.kelvin <= 6000;
+        }
+        return ['clear_highlight', 'reset_view'].includes(action.action) && Object.keys(params).length === 0;
+    }
+
+    function setSceneStatus(text, tone) {
+        if (!sceneStatusEl) return;
+        sceneStatusEl.textContent = text || '';
+        sceneStatusEl.dataset.tone = tone || 'ok';
+    }
+
+    function findElementCell(symbol) {
+        const cells = Array.from(document.querySelectorAll('[data-number]')).filter(cell => {
+            const symbolEl = cell.querySelector('.symbol');
+            return symbolEl && symbolEl.textContent.trim() === symbol;
+        });
+        return cells.find(cell => cell.offsetParent !== null) || cells[0] || null;
+    }
+
+    function focusElement2D(symbol) {
+        const cell = findElementCell(symbol);
+        if (!cell) {
+            setSceneStatus('2D 周期表中未找到该元素', 'warn');
+            return;
+        }
+        const element = readElementFromCell(cell);
+        if (element) setElementContext(element, false);
+        highlightSymbols([symbol]);
+        cell.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        setSceneStatus('已在 2D 周期表中定位元素 ' + symbol);
+    }
+
+    function performSceneAction(action) {
+        const params = action.params;
+        try {
+            if (action.action === 'highlight_elements') {
+                highlightSymbols(params.symbols);
+                setSceneStatus('已高亮 ' + params.symbols.length + ' 个元素');
+                return;
+            }
+            if (action.action === 'clear_highlight') {
+                clearHighlight();
+                setSceneStatus('已清除元素高亮');
+                return;
+            }
+            if (action.action === 'focus_element') {
+                if (window.PeriodicTable3D) {
+                    const result = window.PeriodicTable3D.focusElement(params.symbol);
+                    if (!result.ok) throw new Error(result.error || '元素聚焦失败');
+                    const cell = findElementCell(params.symbol);
+                    const element = readElementFromCell(cell);
+                    if (element) setElementContext(element, false);
+                    highlightSymbols([params.symbol]);
+                    setSceneStatus('已聚焦元素 ' + params.symbol + ' 并打开详情');
+                } else {
+                    focusElement2D(params.symbol);
+                }
+                return;
+            }
+            if (!window.PeriodicTable3D) {
+                setSceneStatus('当前为 2D 降级视图，调温和视角复位需要在 3D 页面执行', 'warn');
+                return;
+            }
+            if (action.action === 'set_temperature') {
+                const result = window.PeriodicTable3D.setTemperature(params.kelvin);
+                if (!result.ok) throw new Error(result.error || '调温失败');
+                setSceneStatus('已将周期表温度设为 ' + params.kelvin + ' K');
+            } else if (action.action === 'reset_view') {
+                window.PeriodicTable3D.resetView();
+                setSceneStatus('已复位 3D 周期表视角');
+            }
+        } catch (error) {
+            setSceneStatus('场景动作未完成：' + (error.message || '未知错误'), 'warn');
+        }
+    }
+
+    function flushPendingSceneActions() {
+        const queued = pendingSceneActions.splice(0);
+        queued.forEach(entry => {
+            window.clearTimeout(entry.timer);
+            performSceneAction(entry.action);
+        });
+    }
+
+    function queueSceneAction(action) {
+        setSceneStatus('3D 场景尚未就绪，动作已排队等待', 'pending');
+        const entry = { action, timer: null };
+        entry.timer = window.setTimeout(() => {
+            const index = pendingSceneActions.indexOf(entry);
+            if (index < 0) return;
+            pendingSceneActions.splice(index, 1);
+            showFallback('3D 场景加载超时，已切换为可用的 2D 动作。');
+            performSceneAction(action);
+        }, 8000);
+        pendingSceneActions.push(entry);
+    }
+
+    function executeSceneAction(action, executedActionIds) {
+        if (!isValidSceneAction(action)) {
+            setSceneStatus('已忽略未通过校验的场景动作', 'warn');
+            return;
+        }
+        if (executedActionIds.has(action.id)) return;
+        executedActionIds.add(action.id);
+        if (!window.PeriodicTable3D && !document.body.classList.contains('pt-no-webgl') &&
+            !['highlight_elements', 'clear_highlight'].includes(action.action)) {
+            queueSceneAction(action);
+            return;
+        }
+        performSceneAction(action);
+    }
+
+    /* ------------------------------------------------------------
+       六、SSE 对话
        ------------------------------------------------------------ */
     function parseFrame(raw) {
         let event = 'message';
@@ -528,6 +672,7 @@
         if (result.element) return result.element['中文名'] + ' ' + result.element['元素符号'];
         if (Array.isArray(result.results)) return result.results.length ? '命中 ' + result.results.length + ' 条知识片段' : '未命中相关片段';
         if (result['提示']) return result['提示'];
+        if (result.message) return result.message;
         return '已完成';
     }
 
@@ -559,6 +704,7 @@
         let answerNode = null;
         let answerText = '';
         let degraded = false;
+        const executedActionIds = new Set();
         currentToolNode = null;
 
         const history = session.concat([{ role: 'user', content: prompt }]).slice(-10);
@@ -567,7 +713,7 @@
             const response = await fetch(API_BASE + '/api/aigent/chat/stream', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ history: history })
+                body: JSON.stringify({ history: history, surface: 'periodic' })
             });
             if (!response.ok) throw new Error('http ' + response.status);
             if (!response.body) throw new Error('stream unsupported');
@@ -610,6 +756,8 @@
                             currentToolNode.detailNode.textContent = summarizeToolResult(data.result);
                             currentToolNode = null;
                         }
+                    } else if (event === 'scene_action') {
+                        executeSceneAction(data, executedActionIds);
                     } else if (event === 'sources') {
                         pushSources(data.items);
                     } else if (event === 'delta') {
@@ -670,6 +818,7 @@
             toggle.textContent = '3D 不可用';
             toggle.title = '当前环境不支持 WebGL 或 Three.js 未加载，已保留 2D 周期表';
         }
+        flushPendingSceneActions();
     }
 
     function check3dCapability() {
@@ -700,6 +849,11 @@
     function start() {
         injectUI();
         bindElementClicks();
+        document.addEventListener('periodic-table-3d-ready', flushPendingSceneActions);
+        document.addEventListener('periodic-table-3d-unavailable', () => {
+            showFallback('3D 元素数据暂不可用，已保留 2D 周期表与基础定位能力。');
+        });
+        if (window.PeriodicTable3D) flushPendingSceneActions();
         check3dCapability();
 
         const toggle = document.getElementById('viewToggle');

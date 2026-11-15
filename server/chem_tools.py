@@ -136,6 +136,14 @@ _REAGENT_ALIASES = {
     "二氧化锰": "MnO2",
 }
 
+def substance_aliases(formula: str) -> list[str]:
+    """返回化学式对应的中文别名，供回答数值核对时做物质对齐。"""
+    target = (formula or "").strip().lower()
+    if not target:
+        return []
+    return [name for name, code in _REAGENT_ALIASES.items() if code.lower() == target]
+
+
 # 危险请求关键词：命中即拒绝并转入安全教育
 # 注意：这里只放「明确的非法操作短语」，不要放孤立的名词。
 # 原因：学生可能正常提问「冰毒的危害有哪些」「TNT 的分子结构」，
@@ -505,19 +513,17 @@ def _get_retriever() -> HybridRetriever:
     return _RETRIEVER
 
 
-def search_knowledge(query: str, top_k: int = 3) -> dict[str, Any]:
-    """在元素知识库中检索最相关的片段，并返回来源与命中方式。
+def search_knowledge(query: str, top_k: int = 3, use_relations: bool = True) -> dict[str, Any]:
+    """检索知识片段；关系命中时透传路径与证据 ID。
 
-    采用 BM25 稀疏检索与向量语义检索的混合方案：
-    - 关键词精确命中（元素名、术语）由 BM25 覆盖
-    - 语义相近但用词不同的表达由向量检索覆盖
-    - 两路结果经 RRF 融合后按领域规则重排
+    ``use_relations=False`` 使用原 BM25 + LSA + bigram 三路基线，便于同代码
+    进行消融评测。普通结果仍保持原有字段结构。
     """
     if not query:
         return {"ok": False, "error": "缺少检索关键字"}
 
     retriever = _get_retriever()
-    results = retriever.search(query, top_k)
+    results = retriever.search(query, top_k, use_relations=use_relations)
 
     return {
         "ok": True,
@@ -616,7 +622,9 @@ _TOOL_IMPL = {
     "balance_equation": lambda args: balance_equation(args.get("equation", "")),
     "lookup_reaction": lambda args: lookup_reaction(args.get("reactants", [])),
     "get_safety_info": lambda args: get_safety_info(args.get("chemical", "")),
-    "search_knowledge": lambda args: search_knowledge(args.get("query", "")),
+    "search_knowledge": lambda args: search_knowledge(
+        args.get("query", ""), use_relations=args.get("use_relations", True)
+    ),
 }
 
 

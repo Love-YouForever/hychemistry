@@ -717,62 +717,7 @@
     color: #6f8598;
 }
 
-/* 首屏 AI 模式入口：把「欣赏元素」重新框定为「AI 化学探索」 */
-.ai-mode-entry {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-bottom: 2rem;
-    animation: fadeInUp 0.8s ease-out 0.5s both;
-}
-
-.ai-mode-btn {
-    border: 1px solid rgba(46, 230, 255, 0.55);
-    background: linear-gradient(135deg, rgba(46, 230, 255, 0.22), rgba(139, 92, 246, 0.28));
-    color: #eafcff;
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    padding: 10px 22px;
-    border-radius: 999px;
-    cursor: pointer;
-    box-shadow: 0 0 0 rgba(46, 230, 255, 0);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.ai-mode-btn:hover,
-.ai-mode-btn:focus-visible {
-    transform: translateY(-2px);
-    border-color: rgba(46, 230, 255, 0.95);
-    box-shadow: 0 8px 24px rgba(46, 230, 255, 0.28);
-    outline: none;
-}
-
-.ai-mode-btn:active {
-    transform: translateY(0);
-}
-
-.ai-mode-text {
-    font-size: 12.5px;
-    color: rgba(214, 235, 245, 0.78);
-    letter-spacing: 0.02em;
-}
-
-@media (max-width: 768px) {
-    .ai-mode-entry {
-        flex-direction: column;
-        gap: 8px;
-        margin-bottom: 1.6rem;
-        padding: 0 1rem;
-    }
-
-    .ai-mode-text {
-        font-size: 11.5px;
-        text-align: center;
-    }
-}
+/* 首屏 AI 模式入口样式已随入口按钮一起移除 */
 
 /* AI 面板空态：给出可点的示例问题，避免打开后一片空白 */
 .assistant-empty {
@@ -819,4 +764,157 @@
     border-color: rgba(46, 230, 255, 0.6);
     transform: translateX(2px);
     outline: none;
+}
+
+/* ---------- 随堂小测弹窗 ---------- */
+.quiz-dialog {
+    width: min(560px, 100%);
+}
+
+.quiz-loading {
+    padding: 26px 0;
+    text-align: center;
+    font-size: 12px;
+    color: #8fa8c4;
+}
+
+.quiz-body {
+    margin-top: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.quiz-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.quiz-stem {
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.65;
+    color: #e6fbff;
+}
+
+.quiz-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 9px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.03);
+    color: #c8dbe8;
+    font-size: 11.5px;
+    line-height: 1.6;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.16s ease;
+}
+
+.quiz-option:hover:not(:disabled) {
+    border-color: rgba(46, 230, 255, 0.5);
+    background: rgba(46, 230, 255, 0.1);
+    color: #fff;
+}
+
+.quiz-option:disabled {
+    cursor: default;
+    opacity: 0.9;
+}
+
+.quiz-option.picked {
+    border-color: rgba(46, 230, 255, 0.75);
+    background: rgba(46, 230, 255, 0.14);
+    color: #e8fdff;
+}
+
+.quiz-option.correct {
+    border-color: rgba(74, 222, 128, 0.75);
+    background: rgba(74, 222, 128, 0.14);
+    color: #e7ffee;
+}
+
+.quiz-option.wrong {
+    border-color: rgba(248, 113, 113, 0.7);
+    background: rgba(248, 113, 113, 0.12);
+    color: #ffe8e8;
+}
+
+.quiz-option-key {
+    flex: none;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    background: rgba(139, 92, 246, 0.28);
+    color: #ddd6fe;
+    font-size: 10px;
+    line-height: 17px;
+    text-align: center;
+}
+
+.quiz-option-text {
+    word-break: break-word;
+}
+
+.quiz-explain {
+    margin-top: 2px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    line-height: 1.65;
+    color: #c9f7d8;
+    background: rgba(74, 222, 128, 0.08);
+    border-left: 3px solid rgba(74, 222, 128, 0.65);
+}
+
+.quiz-explain.wrong {
+    color: #ffd9d9;
+    background: rgba(248, 113, 113, 0.08);
+    border-left-color: rgba(248, 113, 113, 0.65);
+}
+
+.quiz-score {
+    margin-top: 10px;
+    text-align: right;
+    font-size: 12px;
+    font-weight: 700;
+    color: #9fe8fa;
+}
+
+/* ---------- 引用溯源：回答中的来源名做成可点击卡片 ---------- */
+.citation-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin: 0 2px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    border: 1px solid rgba(46, 230, 255, 0.45);
+    background: rgba(46, 230, 255, 0.1);
+    color: #9fe8fa;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.7;
+    cursor: pointer;
+    transition: all 0.16s ease;
+    text-decoration: none;
+}
+
+.citation-chip:hover,
+.citation-chip:focus-visible {
+    background: rgba(46, 230, 255, 0.24);
+    border-color: rgba(46, 230, 255, 0.8);
+    color: #ffffff;
+    outline: none;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(46, 230, 255, 0.25);
+}
+
+.citation-chip:active {
+    transform: translateY(0);
 }

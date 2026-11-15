@@ -36,6 +36,17 @@ const AssistantApp = {
         const docQuestion = ref('');
         const docError = ref('');
         const roleMode = ref('');
+        const speaking = ref(false);   // 是否正在朗读，用于显示「停止朗读」
+        const metricsOpen = ref(false);
+        const metrics = ref({});
+        const metricsError = ref('');
+        const quizOpen = ref(false);
+        const quizLoading = ref(false);
+        const quiz = ref(null);
+        const quizError = ref('');
+        const quizSelected = ref([]);
+        const quizSubmitted = ref(false);
+        const quizScore = ref(0);
 
         let chatHistory = [];
         let currentSpeechAudio = null;
@@ -46,6 +57,14 @@ const AssistantApp = {
         let speechBuffer = '';
         let currentSpeechResolve = null;
         let speechPrefetching = false;
+        // 文字跟随语音展示：revealedBase 为已读完的文字，revealActive 为正在朗读的片段
+        let speechPendingDisplay = '';
+        let revealedBase = '';
+        let revealNodeOffset = 0;
+        let revealActive = null;
+        let revealRaf = null;
+        let speechDisabled = false;
+        let speechUi = null;
 
         function nextId() {
             return ++uid;
@@ -104,6 +123,48 @@ const AssistantApp = {
             return num <= 1 ? num.toFixed(3) : num.toFixed(2);
         }
 
+        // ---------- 引用溯源可视化：把回答中的来源名渲染成可点击卡片 ----------
+        function parseCitationSegments(text, citations) {
+            const body = text == null ? '' : String(text);
+            if (!citations || !citations.length || !body) {
+                return [{ type: 'text', value: body }];
+            }
+            const refMap = new Map();
+            citations.forEach((item) => {
+                if (item && item.ref) refMap.set(item.ref, item);
+            });
+            const refs = [...refMap.keys()].sort((a, b) => b.length - a.length);
+            if (!refs.length) return [{ type: 'text', value: body }];
+
+            const segments = [];
+            let i = 0;
+            const len = body.length;
+            while (i < len) {
+                let matched = null;
+                for (const ref of refs) {
+                    if (body.startsWith(ref, i)) { matched = ref; break; }
+                }
+                if (matched) {
+                    segments.push({ type: 'cite', item: refMap.get(matched) });
+                    i += matched.length;
+                    continue;
+                }
+                // 收集到下一处可能命中为止的纯文本
+                let j = i + 1;
+                while (j < len) {
+                    let found = false;
+                    for (const ref of refs) {
+                        if (body.startsWith(ref, j)) { found = true; break; }
+                    }
+                    if (found) break;
+                    j += 1;
+                }
+                segments.push({ type: 'text', value: body.slice(i, j) });
+                i = j;
+            }
+            return segments;
+        }
+
         function focusInput() {
             nextTick(() => {
                 if (inputRef.value) inputRef.value.focus();
@@ -112,11 +173,65 @@ const AssistantApp = {
 
         // ---------- 语音合成（跟随流式文本逐句播放） ----------
         function stopSpeech() {
+            speaking.value = false;
             speechSession += 1;
             speechQueue = [];
             speechPlaying = false;
             speechBuffer = '';
+            speechStarted = false;
             speechPrefetching = false;
+            speechPendingDisplay = '';
+            speechDisabled = false;
+            if (revealRaf) {
+                cancelAnimationFrame(revealRaf);
+                revealRaf = null;
+            }
+            // 打断时把正在朗读的片段补全，避免气泡停在半句
+            if (revealActive && speechUi) {
+                speechUi.setText(revealActive.base + revealActive.item.display);
+                revealActive.item.revealed = true;
+            }
+            revealActive = null;
+            revealedBase = '';
+            revealNodeOffset = 0;
+            speechUi = null;
+            if (currentSpeechResolve) {
+                currentSpeechResolve();
+                currentSpeechResolve = null;
+            }
+            if (currentSpeechAudio) {
+                currentSpeechAudio.pause();
+                currentSpeechAudio = null;
+            }
+            if (currentSpeechUrl) {
+                URL.revokeObjectURL(currentSpeechUrl);
+                currentSpeechUrl = null;
+            }
+        }
+
+        // 打断朗读：立刻停声，已读文字保留，剩余回答改成直接显示不再朗读
+        function muteSpeech() {
+            if (!speechPlaying && !speechQueue.length && !currentSpeechAudio && !speechBuffer) return;
+            speaking.value = false;
+            speechSession += 1;
+            speechQueue = [];
+            speechPlaying = false;
+            speechBuffer = '';
+            speechStarted = false;
+            speechPrefetching = false;
+            speechPendingDisplay = '';
+            speechDisabled = true;   // 后续文本走即时显示分支，不再合成
+            if (revealRaf) {
+                cancelAnimationFrame(revealRaf);
+                revealRaf = null;
+            }
+            if (revealActive && speechUi) {
+                revealedBase = revealActive.base + revealActive.item.display;
+                revealActive.item.revealed = true;
+                speechUi.setText(revealedBase);
+                scrollToBottom();
+            }
+            revealActive = null;
             if (currentSpeechResolve) {
                 currentSpeechResolve();
                 currentSpeechResolve = null;
@@ -141,22 +256,27 @@ const AssistantApp = {
 
         // 流式文本切句：优先按句末标点，其次按逗号短语；过短的片段并入下一句，保证每段都够长
         const SPEECH_MIN_CHARS = 8;
+        const SPEECH_FIRST_MIN_CHARS = 4;   // 首句阈值放低，让第一声更快出来
         const SPEECH_BOUNDARY = /[。！？!?；;\n]|[，,、]/g;
+        let speechStarted = false;          // 首段是否已经送出
 
         function drainSpeechBuffer(force = false) {
             SPEECH_BOUNDARY.lastIndex = 0;
+            const minChars = speechStarted ? SPEECH_MIN_CHARS : SPEECH_FIRST_MIN_CHARS;
             let match;
             while ((match = SPEECH_BOUNDARY.exec(speechBuffer))) {
                 const end = match.index + 1;
-                if (cleanForSpeech(speechBuffer.slice(0, end)).length >= SPEECH_MIN_CHARS) {
+                if (cleanForSpeech(speechBuffer.slice(0, end)).length >= minChars) {
                     const chunk = speechBuffer.slice(0, end);
                     speechBuffer = speechBuffer.slice(end);
+                    speechStarted = true;
                     return chunk;
                 }
             }
             if (force && speechBuffer.trim()) {
                 const chunk = speechBuffer;
                 speechBuffer = '';
+                speechStarted = true;
                 return chunk;
             }
             return '';
@@ -173,16 +293,21 @@ const AssistantApp = {
 
         // 只预取一段：合成一段的同时播放上一段，避免并发抢占导致每段都变慢
         const SPEECH_BREATH_MS = 160;
+        const SPEECH_TIMEOUT_MS = 8000;
+        const SPEECH_RATE = 1.2;   // 播放倍速，文字揭示按音频进度同步
 
         function sleep(ms) {
             return new Promise((resolve) => setTimeout(resolve, ms));
         }
 
         function synthesizeSegment(text) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), SPEECH_TIMEOUT_MS);
             return fetch(`${BACKEND_BASE}/speech/synthesize`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, language: 'zh-CN' })
+                body: JSON.stringify({ text, language: 'zh-CN' }),
+                signal: controller.signal
             })
                 .then((response) => {
                     if (!response.ok) throw new Error(`speech http ${response.status}`);
@@ -192,7 +317,8 @@ const AssistantApp = {
                 .catch((error) => {
                     console.warn('TTS synthesize failed', error);
                     return null;
-                });
+                })
+                .finally(() => clearTimeout(timer));
         }
 
         function startNextPrefetch() {
@@ -206,12 +332,83 @@ const AssistantApp = {
             });
         }
 
-        function enqueueSpeech(text) {
-            const clean = cleanForSpeech(text);
-            if (!clean) return;
-            speechQueue.push({ text: clean, task: null });
+        function enqueueSpeech(chunk) {
+            const clean = cleanForSpeech(chunk);
+            const display = stripMarkup(chunk);
+            if (!clean) {
+                // 纯标点/空白片段不单独合成，并入下一段一起展示
+                speechPendingDisplay += display;
+                return;
+            }
+            const item = { text: clean, display: speechPendingDisplay + display, task: null, revealed: false };
+            speechPendingDisplay = '';
+            if (speechDisabled) {
+                revealInstant(item);
+                return;
+            }
+            speechQueue.push(item);
             startNextPrefetch();
             pumpSpeech();
+        }
+
+        // ---------- 文字与语音同步：朗读到哪，文字才出现到哪 ----------
+        function revealInstant(item) {
+            if (!item || item.revealed) return;
+            item.revealed = true;
+            revealedBase += item.display;
+            if (!speechUi) return;
+            speechUi.create();
+            speechUi.setText(revealedBase);
+            scrollToBottom();
+        }
+
+        function beginReveal(item) {
+            item.revealed = true;
+            if (!speechUi) {
+                revealedBase += item.display;
+                return;
+            }
+            speechUi.create();
+            revealActive = { item, base: revealedBase };
+            const total = item.display.length;
+            let lastCount = -1;
+            const tick = () => {
+                revealRaf = null;
+                const audio = currentSpeechAudio;
+                if (!revealActive || !audio) return;
+                const duration = audio.duration;
+                let count = 1;
+                if (isFinite(duration) && duration > 0) {
+                    const ratio = Math.min(1, audio.currentTime / duration);
+                    count = Math.max(1, Math.floor(total * ratio));
+                }
+                if (count !== lastCount) {
+                    lastCount = count;
+                    speechUi.setText(revealActive.base + item.display.slice(0, count));
+                    scrollToBottom();
+                }
+                if (count < total && !audio.ended) revealRaf = requestAnimationFrame(tick);
+            };
+            revealRaf = requestAnimationFrame(tick);
+        }
+
+        function finishReveal(item) {
+            if (revealRaf) {
+                cancelAnimationFrame(revealRaf);
+                revealRaf = null;
+            }
+            if (revealActive && revealActive.item === item) {
+                revealedBase = revealActive.base + item.display;
+                revealActive = null;
+                if (speechUi) {
+                    speechUi.setText(revealedBase);
+                    scrollToBottom();
+                }
+                item.revealed = true;
+                return;
+            }
+            // 音频未能播放时兜底，保证文字不丢失
+            revealInstant(item);
         }
 
         async function pumpSpeech() {
@@ -228,9 +425,17 @@ const AssistantApp = {
                     if (result) URL.revokeObjectURL(result.url);
                     return;
                 }
-                if (!result) continue;
+                if (!result) {
+                    // 合成不可用时不再等待，文字直接显示，避免气泡空白
+                    speechDisabled = true;
+                    revealInstant(item);
+                    speechQueue.splice(0).forEach((rest) => revealInstant(rest));
+                    continue;
+                }
 
                 const audio = new Audio(result.url);
+                audio.playbackRate = SPEECH_RATE;
+                if ('preservesPitch' in audio) audio.preservesPitch = true;
                 currentSpeechAudio = audio;
                 currentSpeechUrl = result.url;
 
@@ -238,9 +443,13 @@ const AssistantApp = {
                     currentSpeechResolve = resolve;
                     audio.addEventListener('ended', resolve, { once: true });
                     audio.addEventListener('error', resolve, { once: true });
-                    audio.play().catch(resolve);
+                    audio.play().then(() => {
+                        speaking.value = true;
+                        beginReveal(item);
+                    }).catch(resolve);
                 });
                 currentSpeechResolve = null;
+                finishReveal(item);
 
                 URL.revokeObjectURL(result.url);
                 currentSpeechUrl = null;
@@ -256,8 +465,20 @@ const AssistantApp = {
 
             if (session === speechSession) {
                 speechPlaying = false;
+                speaking.value = false;
                 currentSpeechAudio = null;
                 currentSpeechUrl = null;
+                if (speechUi) {
+                    if (speechUi.finishOnIdle) {
+                        speechUi.finish();
+                        speechUi.finishOnIdle = false;
+                    }
+                    if (speechUi.afterIdle) {
+                        const after = speechUi.afterIdle;
+                        speechUi.afterIdle = null;
+                        after();
+                    }
+                }
             }
         }
 
@@ -306,6 +527,7 @@ const AssistantApp = {
             if (willOpen) {
                 loadBootstrap().finally(focusInput);
             } else {
+                stopSpeech();
                 roleMode.value = '';
             }
         }
@@ -433,8 +655,47 @@ const AssistantApp = {
             let blocked = false;
             let degraded = false;
             let citationCount = Array.isArray(options.sources) ? options.sources.length : 0;
+            let currentCitations = null;
             let degradedNoticeShown = false;
+            let sceneActionNoticeShown = false;
             let sceneName = '';
+
+            // 文字气泡由语音进度驱动创建与增长
+            speechUi = {
+                finishOnIdle: false,
+                create() {
+                    if (botNode) return;
+                    removeMessage(pendingNode);
+                    botNode = pushMessage({
+                        type: 'assistant',
+                        text: revealedBase.slice(revealNodeOffset),
+                        streaming: true
+                    });
+                    scrollToBottom();
+                },
+                setText(text) {
+                    if (!botNode) this.create();
+                    if (botNode) botNode.text = text.slice(revealNodeOffset);
+                },
+                finish() {
+                    if (botNode) botNode.streaming = false;
+                },
+                // 工具调用把当前气泡收尾，后续文字在新气泡里继续
+                detach() {
+                    if (revealActive) {
+                        if (revealRaf) {
+                            cancelAnimationFrame(revealRaf);
+                            revealRaf = null;
+                        }
+                        revealedBase = revealActive.base + revealActive.item.display;
+                        revealActive.item.revealed = true;
+                        revealActive = null;
+                    }
+                    if (botNode) botNode.text = revealedBase.slice(revealNodeOffset);
+                    revealNodeOffset = revealedBase.length;
+                    botNode = null;
+                }
+            };
 
             const pushDegradeNotice = (text, retryText = '') => {
                 if (degradedNoticeShown) return;
@@ -452,7 +713,7 @@ const AssistantApp = {
                 const response = await fetch(`${BACKEND_BASE}/api/aigent/chat/stream`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ history: pendingHistory, role: options.roleName || '' })
+                    body: JSON.stringify({ history: pendingHistory, role: options.roleName || '', surface: 'home' })
                 });
                 if (!response.ok) throw new Error(`http ${response.status}`);
                 if (!response.body) throw new Error('stream unsupported');
@@ -478,11 +739,30 @@ const AssistantApp = {
                             pendingNode.text = data.text || '正在思考…';
                             if (data.scene) sceneName = data.scene;
                             if (data.stage === 'degraded') pushDegradeNotice(data.chain);
+                            if (data.stage === 'cache') {
+                                pushMessage({
+                                    type: 'notice',
+                                    tone: 'hint',
+                                    title: '语义缓存命中',
+                                    text: '这个问题和之前问过的内容高度相似，直接复用了上次的结论，省去了模型推理。'
+                                });
+                            }
+                            if (data.stage === 'doc_guard' && data.hits > 0) {
+                                pushMessage({
+                                    type: 'notice',
+                                    tone: 'warn',
+                                    title: '资料中的可疑指令已屏蔽',
+                                    text: `在你提供的资料里识别到 ${data.hits} 处指令性内容，已按普通文字处理，不会影响回答规则。`
+                                });
+                            }
                         } else if (event === 'tool') {
                             // 工具调用前若已有正文，先收尾当前气泡，让工具卡片出现在独立位置
                             if (botNode) {
-                                botNode.streaming = false;
-                                botNode = null;
+                                if (speechUi) speechUi.detach();
+                                else {
+                                    botNode.streaming = false;
+                                    botNode = null;
+                                }
                             }
                             toolCard = pushMessage({
                                 type: 'tool',
@@ -498,34 +778,72 @@ const AssistantApp = {
                                 toolCard.detail = summarizeToolResult(data.result);
                                 toolCard = null;
                             }
+                        } else if (event === 'scene_action') {
+                            // 主页不执行 3D 动作；异常或误路由事件不影响正文与语音。
+                            if (!sceneActionNoticeShown) {
+                                sceneActionNoticeShown = true;
+                                const targetName = data.target === 'periodic'
+                                    ? '3D 元素周期表'
+                                    : (data.target === 'lab' ? '3D 化学实验室' : '对应 3D 页面');
+                                pushMessage({
+                                    type: 'notice',
+                                    tone: 'hint',
+                                    title: '场景动作未在主页执行',
+                                    text: `请前往${targetName}后重新提出该操作请求。`
+                                });
+                            }
                         } else if (event === 'sources') {
                             if (Array.isArray(data.items) && data.items.length) {
                                 citationCount = data.items.length;
+                                const items = data.items.map((item) => ({
+                                    ...item,
+                                    snippet: stripMarkup(item.snippet || ''),
+                                    quote: stripMarkup(item.quote || item.snippet || '')
+                                }));
+                                currentCitations = items;
+                                if (botNode) botNode.citations = items;
+                                pushMessage({ type: 'sources', items });
+                            }
+                        } else if (event === 'verify') {
+                            const issues = Array.isArray(data.mismatches) ? data.mismatches : [];
+                            if (issues.length) {
                                 pushMessage({
-                                    type: 'sources',
-                                    items: data.items.map((item) => ({
-                                        ...item,
-                                        snippet: stripMarkup(item.snippet || ''),
-                                        quote: stripMarkup(item.quote || item.snippet || '')
-                                    }))
+                                    type: 'notice',
+                                    tone: 'warn',
+                                    title: '数值核对已拦截',
+                                    text: issues
+                                        .map((item) => `${item.expected}，与上文中的 ${item.claimed} 不一致`)
+                                        .join('；')
+                                });
+                            } else if ((data.checked || 0) > 0) {
+                                pushMessage({
+                                    type: 'notice',
+                                    tone: 'hint',
+                                    title: '数值核对通过',
+                                    text: `已用工具计算结果核对回答中的 ${data.checked} 处数值，全部一致。`
                                 });
                             }
                         } else if (event === 'delta') {
                             const piece = data.text || '';
-                            if (!botNode) {
-                                removeMessage(pendingNode);
-                                botNode = pushMessage({ type: 'assistant', text: '', streaming: true });
-                            }
+                            // 文本只入缓冲，等语音读到对应片段时再显示
                             answerText += piece;
-                            botNode.text = stripMarkup(answerText);
                             speechBuffer += piece;
                             flushSpeechBuffer();
-                            scrollToBottom();
                         } else if (event === 'done') {
                             blocked = !!data.blocked;
                             degraded = !!data.degraded;
                             if (data.scene) sceneName = data.scene;
-                            if (Array.isArray(data.citations) && data.citations.length) citationCount = data.citations.length;
+                            if (Array.isArray(data.citations) && data.citations.length) {
+                                citationCount = data.citations.length;
+                                if (!currentCitations) {
+                                    currentCitations = data.citations.map((item) => ({
+                                        ...item,
+                                        snippet: stripMarkup(item.snippet || ''),
+                                        quote: stripMarkup(item.quote || item.snippet || '')
+                                    }));
+                                }
+                            }
+                            if (currentCitations && botNode) botNode.citations = currentCitations;
                             if (degraded) {
                                 const chain = data.chain || '';
                                 pushDegradeNotice(chain, chain.indexOf('均不可用') >= 0 ? message : '');
@@ -540,23 +858,33 @@ const AssistantApp = {
 
                 if (degraded) pushDegradeNotice();
 
-                if (botNode) {
-                    botNode.streaming = false;
-                    if (blocked) botNode.blocked = true;
-                }
-
-                // 可解释性标注：没有检索到知识库原文时，明确告知这是模型的通识推断
-                if (!blocked && answerText && citationCount === 0 && sceneName !== 'chitchat' && !options.skipCitationNotice) {
-                    pushMessage({
-                        type: 'notice',
-                        tone: 'hint',
-                        title: '系统建议',
-                        text: '本条回答未检索到知识库原文，属于模型的通识推断，建议结合教材手动核对。'
-                    });
-                }
-
                 // 收尾：把最后一段不足一句的文本也送去合成
                 flushSpeechBuffer(true);
+
+                if (botNode && blocked) botNode.blocked = true;
+
+                const finishAnswer = () => {
+                    if (botNode) botNode.streaming = false;
+                    // 可解释性标注：没有检索到知识库原文时，明确告知这是模型的通识推断
+                    if (!blocked && answerText && citationCount === 0 && sceneName !== 'chitchat' && !options.skipCitationNotice) {
+                        pushMessage({
+                            type: 'notice',
+                            tone: 'hint',
+                            title: '系统建议',
+                            text: '本条回答未检索到知识库原文，属于模型的通识推断，建议结合教材手动核对。'
+                        });
+                    }
+                };
+
+                // 文字还在随语音逐句出现时，等朗读结束再收起光标、追加提示
+                if (speechPlaying || speechQueue.length) {
+                    if (speechUi) {
+                        speechUi.finishOnIdle = true;
+                        speechUi.afterIdle = finishAnswer;
+                    }
+                } else {
+                    finishAnswer();
+                }
 
                 if (answerText) {
                     chatHistory = [...pendingHistory, { role: 'assistant', content: answerText }];
@@ -706,6 +1034,100 @@ const AssistantApp = {
         function closeDoc() {
             if (sending.value) return;
             docOpen.value = false;
+        }
+
+        // ---------- 运行指标：缓存命中率与首字延迟 ----------
+        async function openMetrics() {
+            metricsOpen.value = true;
+            metricsError.value = '';
+            try {
+                const response = await fetch(`${BACKEND_BASE}/api/metrics`);
+                if (!response.ok) throw new Error('bad status');
+                metrics.value = await response.json();
+            } catch (error) {
+                metricsError.value = '暂时取不到运行指标，请确认后端服务在线。';
+            }
+        }
+
+        function closeMetrics() {
+            metricsOpen.value = false;
+        }
+
+        // ---------- 随堂小测：按最近的问题出题，答完立即判分并给出解析 ----------
+        function lastUserTopic() {
+            for (let i = chatHistory.length - 1; i >= 0; i -= 1) {
+                if (chatHistory[i].role === 'user') return chatHistory[i].content;
+            }
+            return '';
+        }
+
+        async function loadQuiz() {
+            quizLoading.value = true;
+            quizError.value = '';
+            quiz.value = null;
+            quizSelected.value = [];
+            quizSubmitted.value = false;
+            quizScore.value = 0;
+
+            const topic = lastUserTopic();
+            if (!topic) {
+                quizLoading.value = false;
+                quizError.value = '先在对话里问一个化学问题，我再按最近的问题出题。';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BACKEND_BASE}/api/aigent/quiz`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic, history: chatHistory.slice(-6) })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.ok) throw new Error(data.error || 'bad status');
+                quiz.value = data.quiz;
+                quizSelected.value = data.quiz.questions.map(() => -1);
+            } catch (error) {
+                quizError.value = '暂时出不了题，请确认后端在线后再试一次。';
+            } finally {
+                quizLoading.value = false;
+            }
+        }
+
+        function openQuiz() {
+            quizOpen.value = true;
+            loadQuiz();
+        }
+
+        function closeQuiz() {
+            quizOpen.value = false;
+        }
+
+        function selectOption(questionIndex, optionIndex) {
+            if (quizSubmitted.value) return;
+            const next = [...quizSelected.value];
+            next[questionIndex] = optionIndex;
+            quizSelected.value = next;
+            quizError.value = '';
+        }
+
+        function optionClass(questionIndex, question, optionIndex) {
+            const picked = quizSelected.value[questionIndex] === optionIndex;
+            if (!quizSubmitted.value) return { picked };
+            if (optionIndex === question.answer_index) return { correct: true };
+            return { picked, wrong: picked };
+        }
+
+        function submitQuiz() {
+            if (!quiz.value) return;
+            if (quizSelected.value.some((value) => value < 0)) {
+                quizError.value = '还有题目没有作答，全部选完再提交。';
+                return;
+            }
+            quizScore.value = quiz.value.questions.filter(
+                (question, index) => question.answer_index === quizSelected.value[index]
+            ).length;
+            quizError.value = '';
+            quizSubmitted.value = true;
         }
 
         function onDocFile(event) {
@@ -870,6 +1292,8 @@ const AssistantApp = {
             messages,
             input,
             sending,
+            speaking,
+            muteSpeech,
             cameraBusy,
             messagesRef,
             inputRef,
@@ -878,6 +1302,7 @@ const AssistantApp = {
             openEvidence,
             closeEvidence,
             formatScore,
+            parseCitationSegments,
             togglePanel,
             submit,
             quickAsk,
@@ -892,7 +1317,25 @@ const AssistantApp = {
             closeDoc,
             submitDoc,
             onDocFile,
-            roleMode
+            roleMode,
+            metricsOpen,
+            metrics,
+            metricsError,
+            openMetrics,
+            closeMetrics,
+            quizOpen,
+            quizLoading,
+            quiz,
+            quizError,
+            quizSelected,
+            quizSubmitted,
+            quizScore,
+            openQuiz,
+            closeQuiz,
+            loadQuiz,
+            selectOption,
+            optionClass,
+            submitQuiz
         };
     }
 };

@@ -1,10 +1,12 @@
 """混合检索 RAG 引擎
 
-三路能力组合，兼顾精确匹配与语义理解：
+四路候选组合，兼顾精确匹配、语义理解与可追溯关系证据：
 
 1. **BM25** —— 稀疏检索，擅长关键词精确命中（元素名、术语）
-2. **LSA 向量检索** —— TF-IDF + 截断 SVD 降维得到的稠密向量，擅长语义相近但用词不同的表达
-3. **RRF 融合 + 规则重排** —— 把两路结果按排名融合，再用领域规则微调
+2. **LSA 向量检索** —— TF-IDF + 截断 SVD 降维得到的稠密向量
+3. **bigram** —— 补足中文短语的字面重叠
+4. **关系证据** —— 受控别名、最多两跳且逐边校验语料证据
+5. **RRF 融合 + 分层重排** —— 按排名融合，再用领域规则微调
 
 全部在本机计算，不调用任何外部接口，因此无额度限制、可离线运行、结果可复现。
 若环境缺少 scikit-learn，会自动降级为纯 BM25。
@@ -18,6 +20,8 @@ import re
 from collections import Counter
 from pathlib import Path
 from typing import Any
+
+from relation_graph import RelationGraph
 
 try:
     import numpy as np
@@ -86,10 +90,14 @@ def load_chunks(description_dir: Path) -> list[dict[str, str]]:
             content = path.read_text(encoding="utf-8")
         except OSError:
             continue
+        sequence = 0
         for raw in re.split(r"[。；\n]+", content):
             sentence = raw.strip()
             if len(sentence) >= 12:
-                chunks.append({"element": element_name, "text": sentence})
+                sequence += 1
+                chunks.append(
+                    {"id": f"{element_name}#{sequence}", "element": element_name, "text": sentence}
+                )
     return chunks
 
 
@@ -201,6 +209,8 @@ class HybridRetriever:
         chunks: list[dict[str, str]],
         index_dir: Path | None = None,
         api_key: str = "",
+        relation_graph_path: Path | None = None,
+        relation_max_paths: int = 8,
     ) -> None:
         self.chunks = chunks
         self.api_key = api_key  # 保留参数以兼容旧调用，本地索引不需要
@@ -215,8 +225,15 @@ class HybridRetriever:
         for tokens in self.tokenized:
             self.df.update(set(tokens))
 
-        # 元素名集合，用于查询命中的加权
+        # 元素名集合，用于查询命中的加权与关系路径终点校验
         self.element_names = {chunk["element"] for chunk in chunks if chunk["element"]}
+        graph_path = relation_graph_path or Path(__file__).with_name("knowledge_relations.json")
+        self.relation_graph = RelationGraph.from_file(
+            graph_path,
+            chunks,
+            valid_elements=self.element_names,
+            max_paths=relation_max_paths,
+        )
 
         self.vector_index = LocalVectorIndex()
         self.index_info: dict[str, Any] = {}
@@ -235,6 +252,10 @@ class HybridRetriever:
     @property
     def vector_enabled(self) -> bool:
         return self.vector_index.ok
+
+    @property
+    def relation_enabled(self) -> bool:
+        return self.relation_graph.available and bool(self.relation_graph.edges)
 
     # ---------- 查询中的元素识别 ----------
     def _mentioned_elements(self, query: str) -> set[str]:
@@ -330,24 +351,51 @@ class HybridRetriever:
         top_indices = np.argsort(-similarities)[:top_k]
         return [(int(i), float(similarities[i])) for i in top_indices]
 
+    # ---------- 关系证据检索 ----------
+    def relation_search(self, query: str, top_k: int = 10) -> list[tuple[int, float, dict[str, Any]]]:
+        """把有效关系路径的证据块转为第四路候选，异常时自然返回空路。"""
+        if not self.relation_enabled:
+            return []
+        index_by_id = {chunk.get("id"): index for index, chunk in enumerate(self.chunks)}
+        hits: list[tuple[int, float, dict[str, Any]]] = []
+        seen_indices: set[int] = set()
+        for path in self.relation_graph.find_paths(query):
+            for evidence_id in path["evidence_ids"]:
+                index = index_by_id.get(evidence_id)
+                if index is None or index in seen_indices:
+                    continue
+                seen_indices.add(index)
+                hits.append((index, 1.0 / (len(hits) + 1), path))
+                if len(hits) >= top_k:
+                    return hits
+        return hits
+
     # ---------- 混合检索 ----------
-    def search(self, query: str, top_k: int = 3) -> list[dict[str, Any]]:
-        """返回重排后的检索结果。"""
+    def search(
+        self, query: str, top_k: int = 3, use_relations: bool = True
+    ) -> list[dict[str, Any]]:
+        """返回重排后的检索结果；关闭 ``use_relations`` 即为原三路基线。"""
         if not query.strip():
             return []
 
         bm25_hits = self.bm25_search(query, top_k=10)
         vector_hits = self.vector_search(query, top_k=10)
         bigram_hits = self.bigram_search(query, top_k=10)
+        relation_hits = self.relation_search(query, top_k=10) if use_relations else []
 
-        # RRF 融合：按排名而非分数加权，避免三路分数量纲不同
+        # RRF 融合：按排名而非分数加权，避免各路分数量纲不同
         fused: dict[int, float] = {}
         sources: dict[int, set[str]] = {}
+        relation_paths: dict[int, dict[str, Any]] = {}
 
         for label, hits in (("bm25", bm25_hits), ("vector", vector_hits), ("bigram", bigram_hits)):
             for rank, (index, _score) in enumerate(hits):
                 fused[index] = fused.get(index, 0.0) + 1.0 / (RRF_K + rank + 1)
                 sources.setdefault(index, set()).add(label)
+        for rank, (index, _score, path) in enumerate(relation_hits):
+            fused[index] = fused.get(index, 0.0) + 1.0 / (RRF_K + rank + 1)
+            sources.setdefault(index, set()).add("relation")
+            relation_paths.setdefault(index, path)
 
         if not fused:
             return []
@@ -356,7 +404,7 @@ class HybridRetriever:
         concept_keywords = [keyword for keyword in CONCEPT_MEMBERS if keyword in query]
         concepts = self._concept_elements(query) - mentioned
 
-        # 概念扩展补池：概念对应的元素即使没被三路召回，也纳入候选
+        # 概念扩展补池：概念对应的元素即使没被原三路召回，也纳入候选
         if concepts:
             base = 1.0 / (RRF_K + 1) * 0.8
             for index, chunk in enumerate(self.chunks):
@@ -364,13 +412,15 @@ class HybridRetriever:
                     fused[index] = base
                     sources[index] = {"concept"}
 
-        # 规则重排：元素名命中 > 概念命中 > 普通召回
+        # 分层重排：关系证据 > 显式元素名 > 概念命中 > 普通召回
         ranked = []
         for index, base in fused.items():
             chunk = self.chunks[index]
             element = chunk["element"]
 
-            if element and element in mentioned:
+            if index in relation_paths:
+                tier = 3
+            elif element and element in mentioned:
                 tier = 2
             elif element in concepts:
                 tier = 1
@@ -402,14 +452,22 @@ class HybridRetriever:
             if per_element[chunk["element"]] >= 2:
                 continue
             per_element[chunk["element"]] += 1
-            results.append(
-                {
-                    "来源": f"元素图鉴·{chunk['element']}",
-                    "内容": chunk["text"],
-                    "匹配度": round(score, 6),
-                    "命中方式": "+".join(sorted(sources.get(index, set()))),
-                }
-            )
+            result = {
+                "来源": f"元素图鉴·{chunk['element']}",
+                "内容": chunk["text"],
+                "匹配度": round(score, 6),
+                "命中方式": "+".join(sorted(sources.get(index, set()))),
+            }
+            path = relation_paths.get(index)
+            if path is not None:
+                result.update(
+                    {
+                        "path_id": path["path_id"],
+                        "relation_path": path["relation_path"],
+                        "evidence_ids": list(path["evidence_ids"]),
+                    }
+                )
+            results.append(result)
             if len(results) >= top_k:
                 break
 
@@ -417,6 +475,7 @@ class HybridRetriever:
 
     # ---------- 状态 ----------
     def stats(self) -> dict[str, Any]:
+        graph = self.relation_graph.stats()
         return {
             "知识块数": self.n_docs,
             "词表规模": len(self.df),
@@ -424,4 +483,9 @@ class HybridRetriever:
             "向量检索": "已启用（本地 LSA）" if self.vector_enabled else "未启用（降级为 BM25）",
             "向量维度": self.index_info.get("dim", 0),
             "向量方法": self.index_info.get("method", "-"),
+            "关系证据": (
+                f"已启用（{graph['edges']} 条有效边）" if self.relation_enabled else "未启用（回退原三路）"
+            ),
+            "关系节点": graph["nodes"],
+            "无效关系边": graph["invalid_edges"],
         }

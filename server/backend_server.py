@@ -30,6 +30,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "pages"))
 
 from aigent_service import (
     INTRO_MESSAGE,
+    generate_quiz,
+    get_runtime_metrics,
     run_agent,
     stream_agent,
     synthesize_aigent_speech,
@@ -45,6 +47,12 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 @app.get("/api/health")
 def health():
     return jsonify({"ok": True, "service": "0410-backend"})
+
+
+#运行指标：请求量、语义缓存命中率、首字延迟与总耗时，供前端看板展示
+@app.get("/api/metrics")
+def metrics():
+    return jsonify({"ok": True, **get_runtime_metrics()})
 
 
 # 维基百科代理：服务器在境外可直连维基，客户端不必访问 wikipedia.org
@@ -124,8 +132,9 @@ def aigent_chat():
     payload = request.get_json(silent=True) or {} #解析请求 JSON，若解析失败则用空字典
     history = payload.get("history") or [] #提取 history，若没有则默认为空列表。
     role_name = payload.get("role") or ""
+    surface = payload.get("surface") or "home"
     try:
-        result = run_agent(history, role_name) #Agent 模式：支持工具调用与安全拦截
+        result = run_agent(history, role_name, surface) #Agent 模式：支持工具调用与安全拦截
     except Exception as exc:
         return jsonify({"ok": False, "error": str(exc)}), 502 #若发生异常，返回 502 状态码及错误信息
     return jsonify(
@@ -134,6 +143,8 @@ def aigent_chat():
             "reply": result["reply"],
             "blocked": result["blocked"],
             "tool_calls": result["tool_calls"],
+            "actions": result.get("actions", []),
+            "surface": result.get("surface", "home"),
         }
     )
 
@@ -206,10 +217,11 @@ def aigent_chat_stream():
     payload = request.get_json(silent=True) or {}
     history = payload.get("history") or []
     role_name = payload.get("role") or ""
+    surface = payload.get("surface") or "home"
 
     def generate():
         try:
-            for frame in stream_agent(history, role_name):
+            for frame in stream_agent(history, role_name, surface):
                 yield frame
         except Exception as exc:  # 流式场景下用事件上报错误，保证前端能优雅收尾
             yield "event: error\ndata: " + json.dumps({"error": str(exc)}, ensure_ascii=False) + "\n\n"
@@ -222,6 +234,18 @@ def aigent_chat_stream():
             "X-Accel-Buffering": "no",   # 关闭 Nginx 缓冲，保证逐字输出
         },
     )
+
+
+#随堂小测接口：按主题（缺省用最后一条用户消息）生成 3 道单选题，供前端练习判分
+@app.post("/api/aigent/quiz")
+def aigent_quiz():
+    payload = request.get_json(silent=True) or {}
+    topic = payload.get("topic") or ""
+    history = payload.get("history") or []
+    result = generate_quiz(topic, history)
+    if not result.get("ok"):
+        return jsonify(result), 400
+    return jsonify(result)
 
 
 #语音合成接口（TTS）请求体：JSON，包含 text（要合成的文本，最长1000字符）和可选的 language（默认 zh-CN）。

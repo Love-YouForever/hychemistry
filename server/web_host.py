@@ -75,9 +75,19 @@ def proxy_aigent_chat():
     return proxy_backend("/api/aigent/chat")
 
 
+@app.get("/api/metrics")
+def proxy_metrics():
+    return proxy_backend("/api/metrics")
+
+
 @app.post("/api/aigent/vision")
 def proxy_aigent_vision():
     return proxy_backend("/api/aigent/vision", timeout=90)
+
+
+@app.post("/api/aigent/quiz")
+def proxy_aigent_quiz():
+    return proxy_backend("/api/aigent/quiz", timeout=30)
 
 
 @app.post("/api/aigent/chat/stream")

@@ -50,8 +50,11 @@
                     setupEventListeners();
                     updateTemperatures(tempSlider.value);
                     fitTableToViewport();
+                    exposeSceneApi();
+                    document.dispatchEvent(new CustomEvent('periodic-table-3d-ready'));
                 } catch (error) {
                     table.innerHTML = `<div class="loading">加载元素数据失败: ${error.message}</div>`;
+                    document.dispatchEvent(new CustomEvent('periodic-table-3d-unavailable'));
                 }
             }
 
@@ -542,6 +545,44 @@
                     modalBody.innerHTML = '';
                 }
                 currentModalElement = null;
+            }
+
+            // 仅暴露固定动作，不接受脚本、选择器或自由相机参数。
+            function exposeSceneApi() {
+                function showScene() {
+                    if (!document.body.classList.contains('view-3d') && typeof switchTo3DView === 'function') {
+                        switchTo3DView();
+                    }
+                }
+
+                window.PeriodicTable3D = Object.freeze({
+                    focusElement(symbol) {
+                        const element = elementsData.find(item => item.symbol === symbol);
+                        if (!element) return { ok: false, error: '元素不存在' };
+                        showScene();
+                        showElementModal(element.number);
+                        return { ok: true, number: element.number, symbol: element.symbol };
+                    },
+                    setTemperature(kelvin) {
+                        if (typeof kelvin !== 'number' || !Number.isFinite(kelvin) || kelvin < 0 || kelvin > 6000) {
+                            return { ok: false, error: '温度超出范围' };
+                        }
+                        showScene();
+                        updateTemperatures(kelvin);
+                        return { ok: true, kelvin: kelvin };
+                    },
+                    resetView() {
+                        showScene();
+                        currentRotateX = 50;
+                        currentRotateZ = -15;
+                        currentScale = 1.0;
+                        currentTranslateX = 0;
+                        currentTranslateY = 0;
+                        updateTransform();
+                        fitTableToViewport();
+                        return { ok: true };
+                    }
+                });
             }
 
             // 视图切换/横竖屏切换后重新适配 3D 周期表

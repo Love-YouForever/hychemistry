@@ -235,18 +235,16 @@
         const smallScreen = window.matchMedia('(max-width: 768px)').matches;
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        // 软降级：只切静态背景，保留视频源，网络恢复后还能自己回来
-        function softDegrade() {
-            document.body.classList.remove('video-ready');
-            document.body.classList.add('video-degraded');
-        }
+        let sourceAttached = false;
+        let interactionBound = false;
 
         // 硬降级：明确不该加载视频的场景（省流量 / 2G、3G / 窄屏），保持 poster 静态帧
         function hardDegrade() {
             try { video.pause(); } catch (error) { /* 忽略 */ }
             video.querySelectorAll('source').forEach((source) => source.remove());
             video.removeAttribute('src');
-            softDegrade();
+            document.body.classList.remove('video-ready');
+            document.body.classList.add('video-degraded');
         }
 
         function markReady() {
@@ -256,7 +254,32 @@
 
         function markPoster() {
             document.body.classList.add('video-poster');
-            document.body.classList.remove('video-degraded');
+            document.body.classList.remove('video-ready', 'video-degraded');
+        }
+
+        // 播放失败（如被自动播放策略拦截）时静默等待用户首次交互再重试
+        function tryPlay() {
+            if (!sourceAttached || document.body.classList.contains('video-degraded')) return;
+            const playPromise = video.play();
+            if (playPromise && typeof playPromise.catch === 'function') {
+                playPromise.catch(() => {
+                    console.log('视频自动播放受限，等待用户交互后重试');
+                    bindFirstInteraction();
+                });
+            }
+        }
+
+        function bindFirstInteraction() {
+            if (interactionBound) return;
+            interactionBound = true;
+            const handler = () => {
+                document.removeEventListener('click', handler);
+                document.removeEventListener('touchstart', handler);
+                interactionBound = false;
+                tryPlay();
+            };
+            document.addEventListener('click', handler, { passive: true });
+            document.addEventListener('touchstart', handler, { passive: true });
         }
 
         if (slowNetwork || smallScreen || reduceMotion) {
@@ -265,38 +288,46 @@
         }
 
         video.addEventListener('playing', markReady);
+        video.addEventListener('loadeddata', () => { if (video.readyState >= 2) markReady(); });
         video.addEventListener('canplay', () => {
             markReady();
-            if (video.paused) video.play().catch(() => {});
+            if (video.paused) tryPlay();
+        });
+        // 加载失败时保留静态海报，避免整块背景变成黑屏
+        video.addEventListener('error', () => {
+            console.warn('背景视频加载失败，已保留静态海报');
+            sourceAttached = false;
+            markPoster();
         });
 
-        // 懒加载：首屏渲染完成、主线程空闲后再请求 15.6MB 视频
+        // 从往返缓存（bfcache）恢复时补一次播放，避免刷新/返回后停在首帧
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) tryPlay();
+        });
+
         function attachSource() {
-            if (video.currentSrc || video.querySelector('source')) return;
-            const source = document.createElement('source');
-            source.src = './assets/background.mp4';
-            source.type = 'video/mp4';
-            video.appendChild(source);
-            video.load();
-
-            const playPromise = video.play();
-            if (playPromise && typeof playPromise.catch === 'function') {
-                playPromise.catch(() => {
-                    console.log('视频自动播放限制');
-                    if (video.readyState < 2) markPoster();
-                });
+            if (sourceAttached) return;
+            sourceAttached = true;
+            if (!video.querySelector('source')) {
+                const source = document.createElement('source');
+                source.src = './assets/background.mp4';
+                source.type = 'video/mp4';
+                video.appendChild(source);
             }
-
-            setTimeout(() => {
-                if (video.readyState < 2) softDegrade();
-            }, 8000);
+            video.load();
+            tryPlay();
+            bindFirstInteraction();
         }
 
+        // 刷新后必须保证视频源被挂载：空闲回调、load 事件与硬兜底三者取最早
         if ('requestIdleCallback' in window) {
-            window.requestIdleCallback(attachSource, { timeout: 2500 });
+            window.requestIdleCallback(attachSource, { timeout: 1500 });
         } else {
-            setTimeout(attachSource, 1200);
+            setTimeout(attachSource, 400);
         }
+        if (document.readyState === 'complete') attachSource();
+        else window.addEventListener('load', attachSource, { once: true });
+        setTimeout(attachSource, 3000);
     })();
 
 
