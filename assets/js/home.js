@@ -407,11 +407,13 @@
             }
         }
 
-        // 硬降级：仅在明确弱网（2G/3G/省流）时降级为静态背景
-        // 注意：已移除 prefers-reduced-motion 判断——微信 PC 内嵌浏览器会误报 reduce 为 true，
-        // 导致视频加载后被立即移除，表现为"闪一下就消失"
-        if (slowNetwork) {
-            console.warn('弱网检测，降级为静态背景');
+        // 硬降级：仅在移动端小屏 + 明确弱网（2G/3G）时降级为静态背景
+        // 注意：已移除 saveData 判断——微信 PC 内嵌浏览器会误报 saveData=true，
+        // 导致视频直接被降级不加载。桌面端一律加载视频。
+        const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+        const isSlow2g3g = /(^|-)2g$|(^|-)3g$/.test(connection.effectiveType || '');
+        if (isMobile && isSlow2g3g) {
+            console.warn('移动端弱网检测，降级为静态背景');
             hardDegrade();
             return;
         }
