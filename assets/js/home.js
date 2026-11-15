@@ -230,6 +230,11 @@
         const video = document.getElementById('bgVideo');
         if (!video) return;
 
+        // 网络/降级检测（必须在调试面板之前定义，供 updateDebug 读取）
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+        const slowNetwork = !!connection.saveData || /(^|-)2g$|(^|-)3g$/.test(connection.effectiveType || '');
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
         // ===== 调试面板：在页面右上角显示视频状态（按 Ctrl+Shift+D 切换显示） =====
         const debugPanel = document.createElement('div');
         debugPanel.id = 'video-debug-panel';
@@ -262,7 +267,10 @@
                 sourceCount: video.querySelectorAll('source').length,
                 buffered: video.buffered.length,
                 WeixinJSBridge: typeof WeixinJSBridge,
-                userAgent: navigator.userAgent.substring(0, 60)
+                slowNetwork: slowNetwork,
+                reduceMotion: reduceMotion,
+                bodyClasses: document.body.className,
+                userAgent: navigator.userAgent.substring(0, 80)
             };
             let html = '<b>Video Debug</b><br>';
             for (const k in state) html += k + ': ' + state[k] + '<br>';
@@ -272,10 +280,6 @@
         setInterval(updateDebug, 500);
         updateDebug();
         // ===== 调试面板结束 =====
-
-        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
-        const slowNetwork = !!connection.saveData || /(^|-)2g$|(^|-)3g$/.test(connection.effectiveType || '');
-        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         let sourceAttached = false;
         let interactionBound = false;
@@ -400,7 +404,11 @@
             }
         }
 
-        if (slowNetwork || reduceMotion) {
+        // 硬降级：仅在明确弱网（2G/3G/省流）时降级为静态背景
+        // 注意：已移除 prefers-reduced-motion 判断——微信 PC 内嵌浏览器会误报 reduce 为 true，
+        // 导致视频加载后被立即移除，表现为"闪一下就消失"
+        if (slowNetwork) {
+            console.warn('弱网检测，降级为静态背景');
             hardDegrade();
             return;
         }
