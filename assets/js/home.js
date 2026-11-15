@@ -478,6 +478,15 @@
             if (sourceAttached) return;
             sourceAttached = true;
             const videoUrl = './assets/background.mp4?v=20261115e';
+            // 强制设置内联播放属性，防止百度/UC/QQ 等国产移动端浏览器将视频弹出为独立播放器
+            video.setAttribute('playsinline', 'true');
+            video.setAttribute('webkit-playsinline', 'true');
+            video.setAttribute('x5-playsinline', 'true');
+            video.setAttribute('x5-video-player-type', 'h5-page');
+            video.setAttribute('x5-video-player-fullscreen', 'false');
+            video.setAttribute('disablepictureinpicture', 'true');
+            video.setAttribute('controls', 'false');
+            try { video.playsInline = true; } catch (e) {}
             // 同时设置 src 属性（微信内核对 <source> 子元素支持不稳定，src 直接赋值更可靠）
             if (!video.getAttribute('src')) {
                 video.setAttribute('src', videoUrl);

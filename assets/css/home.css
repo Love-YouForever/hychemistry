@@ -37,6 +37,10 @@
             object-fit: cover;
             opacity: 1;
             pointer-events: none;
+            /* 强制创建合成层，防止百度/UC/QQ 等国产浏览器将视频弹出为独立播放器 */
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
         } /*实现自动裁剪，使其填满整个窗口*/
 
         /* 首屏视频加载完成后再淡入，弱网/移动端降级为静态背景
