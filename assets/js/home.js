@@ -258,6 +258,29 @@
             document.body.classList.remove('video-ready', 'video-degraded');
         }
 
+        // object-fit: cover 兼容性兜底（部分旧浏览器/国产浏览器内核不支持）
+        (function fitVideoFallback() {
+            const test = document.createElement('div');
+            const supportsObjectFit = 'objectFit' in test.style || 'webkitObjectFit' in test.style;
+            if (supportsObjectFit) return;
+            function resize() {
+                const container = video.parentElement;
+                if (!container) return;
+                const cw = container.clientWidth;
+                const ch = container.clientHeight;
+                const vw = video.videoWidth || 1280;
+                const vh = video.videoHeight || 720;
+                const scale = Math.max(cw / vw, ch / vh);
+                video.style.width = (vw * scale) + 'px';
+                video.style.height = (vh * scale) + 'px';
+                video.style.left = ((cw - vw * scale) / 2) + 'px';
+                video.style.top = ((ch - vh * scale) / 2) + 'px';
+            }
+            video.addEventListener('loadedmetadata', resize);
+            window.addEventListener('resize', resize);
+            resize();
+        })();
+
         // 播放失败（如被自动播放策略拦截）时静默等待用户首次交互再重试
         function tryPlay() {
             if (!sourceAttached || document.body.classList.contains('video-degraded')) return;
@@ -285,12 +308,30 @@
 
         // 微信内置浏览器（X5 内核 / WKWebView）需在 WeixinJSBridgeReady 后才能自动播放
         function bindWechatBridge() {
+            function wechatPlay() {
+                // 确保视频源已挂载
+                if (!sourceAttached) attachSource();
+                // X5 内核需要通过 invoke 激活媒体播放权限
+                if (typeof WeixinJSBridge !== 'undefined' && WeixinJSBridge.invoke) {
+                    try {
+                        WeixinJSBridge.invoke('getNetworkType', {}, function () {
+                            tryPlay();
+                            // X5 内核可能需要多次尝试
+                            setTimeout(tryPlay, 300);
+                        });
+                    } catch (e) {
+                        tryPlay();
+                    }
+                } else {
+                    tryPlay();
+                }
+            }
             if (typeof WeixinJSBridge !== 'undefined') {
-                tryPlay();
+                wechatPlay();
             } else {
                 document.addEventListener('WeixinJSBridgeReady', function onBridge() {
                     document.removeEventListener('WeixinJSBridgeReady', onBridge);
-                    tryPlay();
+                    wechatPlay();
                 }, false);
             }
         }
