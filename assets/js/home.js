@@ -471,7 +471,7 @@
         function attachSource() {
             if (sourceAttached) return;
             sourceAttached = true;
-            const videoUrl = './assets/background.mp4?v=20261115e';
+            const videoUrl = './assets/background.mp4?v=20261116a';
             // 强制设置内联播放属性，防止百度/UC/QQ 等国产移动端浏览器将视频弹出为独立播放器
             video.setAttribute('playsinline', 'true');
             video.setAttribute('webkit-playsinline', 'true');
