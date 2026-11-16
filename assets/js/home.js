@@ -347,13 +347,20 @@
         // 播放失败（如被自动播放策略拦截）时静默等待用户首次交互再重试
         function tryPlay() {
             if (!sourceAttached || document.body.classList.contains('video-degraded')) return;
+            // 显式静音：自动播放策略要求 muted 才能无手势播放，属性可能在部分浏览器失效，这里兜底
+            try { video.muted = true; } catch (e) {}
             const playPromise = video.play();
-            if (playPromise && typeof playPromise.catch === 'function') {
-                playPromise.catch(() => {
-                    console.log('视频自动播放受限，等待用户交互后重试');
-                    bindFirstInteraction();
-                    showPlayButton();
-                });
+            if (playPromise && typeof playPromise.then === 'function') {
+                playPromise
+                    .then(() => {
+                        // 自动播放成功：立即隐藏按钮（不等 playing 事件，避免加载慢时按钮闪现）
+                        hidePlayButton();
+                    })
+                    .catch(() => {
+                        console.log('视频自动播放受限，显示「点击进入」等待用户手动触发');
+                        bindFirstInteraction();
+                        showPlayButton();
+                    });
             }
         }
 
