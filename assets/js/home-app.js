@@ -1562,15 +1562,10 @@ window.addEventListener('toggle-chat-panel', () => {
         state = 'idle';
         pet.classList.remove('dragging');
         try { pet.releasePointerCapture(e.pointerId); } catch (_) {}
-        // 拖拽触发害羞
+        // 只有拖拽才触发害羞
         if (dragMoved) {
             setMood('shy');
             playAction('heart');
-            lastAction = Date.now();
-        } else {
-            // 轻点（未拖动）立即害羞：不依赖 click 事件，避免部分浏览器 pointer capture 后
-            // 不派发 click 导致表情不切换
-            setMood('shy');
             lastAction = Date.now();
         }
     }    pet.addEventListener('pointerup', endDrag);
@@ -1590,8 +1585,10 @@ window.addEventListener('toggle-chat-panel', () => {
             showBubble('别戳啦！生气了！');
             pokeCount = 0;
         } else {
-            // 戳一下 → 害羞
-            setMood('shy');
+            // 戳一下 → 随机表情 + 随机动作（害羞只在拖拽后出现）
+            const expr = IDLE_EXPRS[Math.floor(Math.random() * IDLE_EXPRS.length)];
+            setMood(expr, 3000);
+            playAction(ACTIONS[Math.floor(Math.random() * ACTIONS.length)]);
             showBubble(bubbleTexts[Math.floor(Math.random() * bubbleTexts.length)]);
         }
         lastAction = Date.now();
