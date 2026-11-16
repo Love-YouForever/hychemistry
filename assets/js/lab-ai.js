@@ -110,17 +110,24 @@
     function injectUI() {
         const root = el('div');
         root.id = 'lab-ai-root';
-        const launcher = el('button', 'lab-ai-launcher', '问小幻语');
+        const launcher = el('button', 'lab-ai-launcher');
         launcher.type = 'button';
-        launcher.setAttribute('aria-label', '打开实验室 AI 助手');
+        launcher.setAttribute('aria-label', '打开实验助手');
+        launcher.innerHTML =
+            '<svg class="lab-ai-launcher-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+            '<path d="M9.5 3h5M10.5 3v5.2L6.2 16.3A2.2 2.2 0 0 0 8.2 19.6h7.6a2.2 2.2 0 0 0 2-3.3L13.5 8.2V3" ' +
+            'stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>' +
+            '<circle cx="10.4" cy="15.6" r="1" fill="currentColor"/>' +
+            '<circle cx="13.8" cy="13.9" r="0.8" fill="currentColor"/>' +
+            '</svg><span>实验助手</span><span class="lab-ai-launcher-dot"></span>';
         launcher.addEventListener('click', () => openPanel());
 
         panel = el('section', 'lab-ai-panel');
         panel.setAttribute('aria-hidden', 'true');
         const head = el('div', 'lab-ai-head');
         const heading = el('div');
-        heading.appendChild(el('div', 'lab-ai-title', '小幻语 · 实验助手'));
-        heading.appendChild(el('div', 'lab-ai-sub', '选实验后有步骤、现象判断与安全提醒'));
+        heading.appendChild(el('div', 'lab-ai-title', '实验助手'));
+        heading.appendChild(el('div', 'lab-ai-sub', '小幻语 · 看步骤 / 判现象 / 提醒安全'));
         const close = el('button', 'lab-ai-close', '×');
         close.type = 'button';
         close.setAttribute('aria-label', '关闭 AI 面板');
