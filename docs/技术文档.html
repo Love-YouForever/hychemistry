@@ -410,7 +410,7 @@
             <div><b>作品名称</b>元素幻语（Element Whisper）</div>
             <div><b>作品类型</b>AI 原生 Web 应用 / 教育科技</div>
             <div><b>技术栈</b>HTML5 · CSS3 · JavaScript · Three.js · MediaPipe · Python Flask · 大模型 Agent</div>
-            <div><b>文档版本</b>v1.2</div>
+            <div><b>文档版本</b>v1.3（2026-11-16 · 含实验助手 Lab Agent）</div>
         </div>
     </div>
     <div class="cover-foot">ELEMENT WHISPER · TECHNICAL DOCUMENT</div>
@@ -448,7 +448,7 @@
         <div class="metric"><b>10</b><span>功能模块</span></div>
         <div class="metric"><b>118</b><span>元素数据</span></div>
         <div class="metric"><b>72</b><span>实验室配置项</span></div>
-        <div class="metric"><b>6</b><span>AI 可调用工具</span></div>
+        <div class="metric"><b>7</b><span>AI 可调用工具</span></div>
     </div>
 
     <h3>1.3 核心亮点</h3>
@@ -457,10 +457,11 @@
             <tr><th style="width:22%">亮点</th><th>说明</th></tr>
         </thead>
         <tbody>
-            <tr><td><b>AI 化学助教 Agent</b></td><td>不是简单调用大模型接口，而是具备 6 个化学工具调用能力的智能体，能查元素、算摩尔质量、配平方程式、检索反应、查危化品安全、检索知识库</td></tr>
+            <tr><td><b>AI 化学助教 Agent</b></td><td>不是简单调用大模型接口，而是具备 7 个工具调用能力（6 个化学工具 + 1 个场景控制工具）的智能体，能查元素、算摩尔质量、配平方程式、检索反应、查危化品安全、检索知识库、驱动 3D 场景</td></tr>
             <tr><td><b>多模态视觉理解</b></td><td>拍照上传化学方程式，视觉模型识别后自动调用配平工具校验，视觉与计算互相印证</td></tr>
             <tr><td><b>隔空手势操控</b></td><td>基于 MediaPipe + TensorFlow.js 在浏览器端实时识别手部关键点，用手势旋转、缩放 3D 化学方程式词云</td></tr>
             <tr><td><b>3D 虚拟实验室</b></td><td>按真实科研实验室标准构建四大功能分区、72 项器材试剂，支持拖拽操作与反应模拟，并配套完整安全规范体系</td></tr>
+            <tr><td><b>实验助手（Lab Agent）</b></td><td>实验室内的专用 Agent：以 8 个教材实验的安全配置为边界，先用确定性代码审查白名单与禁用试剂，再在实验范围内检索知识库并流式讲解；安全结论不交给模型自由判断</td></tr>
             <tr><td><b>AI 安全护栏</b></td><td>在调用模型前拦截危险化学请求，是化学这一高风险主题下最必要的合规设计</td></tr>
             <tr><td><b>可对话的场景化 AI</b></td><td>首屏 AI 模式、可对话的 3D 元素周期表（元素点击 + 四组探索预设高亮）、化学先驱角色 Agent、文档问答轻量 RAG 四条路径共用同一套 Agent 与可解释引用链路</td></tr>
             <tr><td><b>弱网与不可用降级</b></td><td>首屏视频懒加载（poster 先出、空闲再拉取），弱网/移动端只保留静态帧；WebGL / Three.js 不可用时自动切换为可交互 2D 周期表，AI 问答与元素详情不受影响</td></tr>
@@ -499,7 +500,7 @@
             <tr><td>动态元素周期表</td><td>3D 可视化</td><td>2D / 3D 双视图、118 元素立体排布与旋转缩放、点击查看详情与元素图鉴、维基百科拓展、移动端横屏整表展示</td></tr>
             <tr><td>化学方程式词云</td><td>3D + 手势</td><td>3D 词云、手势控制、相机视角切换</td></tr>
             <tr><td>方程式拖拽填空</td><td>练习</td><td>随机题目、拖拽气泡填空、计分</td></tr>
-            <tr><td>3D 化学实验室</td><td>仿真</td><td>四大分区、72 项器材试剂、拖拽取用、反应模拟、安全规范</td></tr>
+            <tr><td>3D 化学实验室</td><td>仿真 + Agent</td><td>四大分区、72 项器材试剂、拖拽取用、反应模拟、安全规范；内置实验助手：教材实验安全审查、实验范围知识检索、流式讲解与应急处置</td></tr>
             <tr><td>化学杀</td><td>卡牌对战</td><td>手牌组合成物质、酸碱 / 沉淀伤害判定、回合制 AI 对手</td></tr>
             <tr><td>化学史诗</td><td>科普</td><td>化学史时间线与人物故事</td></tr>
             <tr><td>元素 2048 / 原子游戏</td><td>游戏化</td><td>元素合成、原子结构搭建</td></tr>
@@ -547,13 +548,14 @@
             <div class="arch-box hl">rag_engine<br>BM25 + 向量 + RRF</div>
             <div class="arch-box">mcp_server<br>MCP 工具服务</div>
             <div class="arch-box">aigent_service<br>Agent 循环 / SSE</div>
+            <div class="arch-box hl">lab_agent<br>安全审查 / 实验问答</div>
         </div>
         <div class="arch-label" style="margin-top:3mm">MODEL · 模型层</div>
         <div class="arch-row">
             <div class="arch-box dark">DeepSeek Chat<br>语义理解与表达</div>
             <div class="arch-box dark">Qwen3-VL<br>视觉识别</div>
             <div class="arch-box dark">CosyVoice<br>语音合成</div>
-            <div class="arch-box dark" style="flex:2">本地知识库<br>118 篇元素图鉴 · 1213 知识块</div>
+            <div class="arch-box dark" style="flex:2">本地知识库<br>118 篇元素图鉴 · 1213 知识块 · 8 个教材实验 · 40 个实验知识片段</div>
         </div>
     </div>
 
@@ -599,6 +601,8 @@ web_host.py ── 反向代理，SSE 逐块透传 ──▶ backend_server.py (
 │   ├── rag_engine.py         <span class="c"># BM25 + LSA 向量 + RRF 混合检索</span>
 │   ├── relation_graph.py     <span class="c"># 轻量关系证据图（多跳证据路径，可降级）</span>
 │   ├── scene_actions.py      <span class="c"># 受约束 3D 场景动作协议（白名单 + 二次校验）</span>
+│   ├── lab_agent.py          <span class="c"># 实验助手：确定性安全审查 + 实验范围检索 + SSE 流式</span>
+│   ├── lab_data/             <span class="c"># 实验安全配置 experiments.json + 实验知识库 knowledge.md</span>
 │   ├── knowledge_relations.json <span class="c"># 关系图数据（节点/边/证据）</span>
 │   ├── build_index.py        <span class="c"># 构建本地检索索引（落盘）</span>
 │   ├── mcp_server.py         <span class="c"># MCP 工具服务（7 工具 + 3 资源）</span>
@@ -614,7 +618,7 @@ web_host.py ── 反向代理，SSE 逐块透传 ──▶ backend_server.py (
 │   ├── vendor/               <span class="c"># 本地化的第三方库</span>
 │   ├── background.mp4        <span class="c"># 全局背景视频（Git LFS）</span>
 │   └── 无人之地.mp3           <span class="c"># 背景音乐</span>
-├── tests/                    <span class="c"># 122 个离线单元测试</span>
+├── tests/                    <span class="c"># 206 个离线单元测试（8 个测试文件）</span>
 ├── docs/                     <span class="c"># 技术文档与评测报告</span>
 │   ├── 技术文档.html/docx/pdf
 │   ├── AI评测报告.md / RAG评测报告.md / 性能测量报告.md
@@ -640,6 +644,7 @@ web_host.py ── 反向代理，SSE 逐块透传 ──▶ backend_server.py (
             <tr><td>大模型</td><td>DeepSeek Chat</td><td>中文表达自然、支持 Function Calling、成本可控</td></tr>
             <tr><td>视觉模型</td><td>Qwen3-VL</td><td>中文场景 OCR 与图像理解表现好，兼容 OpenAI 协议便于集成</td></tr>
             <tr><td>知识检索</td><td>自研混合 RAG + 关系证据图</td><td>BM25 + LSA 向量 + 二元组 + RRF 三路融合，叠加受控关系证据图做多跳桥接，全本地计算，零额度、可离线、结果可复现</td></tr>
+            <tr><td>实验安全审查</td><td>确定性规则引擎（纯 Python）</td><td>白名单 / 禁用试剂 / 异常现象由代码判定，先于模型调用执行；结论可复现、可测试、可审计，不依赖模型判断</td></tr>
         </tbody>
     </table>
 </section>
@@ -659,6 +664,7 @@ web_host.py ── 反向代理，SSE 逐块透传 ──▶ backend_server.py (
 
     <h3>4.2 Agent 与工具集</h3>
     <p>通过 DeepSeek 的 Function Calling 能力注册 7 个工具（6 个化学工具 + 1 个场景控制工具），模型以 <code>tool_choice: auto</code> 自主决定是否调用、调用哪个，最多支持 4 轮工具链（例如先查元素、再算摩尔质量）。</p>
+    <p>在 3D 实验室页面还存在一个范围更窄的专用 Agent（见 4.10 节）：它不注册工具，而是把实验安全配置与实验知识片段直接注入提示词，先由确定性代码完成安全审查，再流式生成讲解。两个 Agent 共享同一套模型调用、SSE 编码与降级策略，但边界不同——通用助教负责「答得对」，实验助手额外负责「不出事」。</p>
 
     <table>
         <thead>
@@ -882,6 +888,46 @@ O : 0·x₁ + 2·x₂ − 3·x₃ = 0
     <div class="note">
         <b>场景价值：</b>同一个页面，叙事逻辑从「欣赏元素之美」变为「让 AI 帮你解决一个化学问题」——入口、周期表、人物页、文档问答四条路径最终都汇入同一条可解释的 Agent 链路，这也是赛题强调的「AI + 前端解决真实需求」。
     </div>
+
+    <h3>4.10 实验助手：确定性安全审查 + 实验范围检索</h3>
+    <p>实验室里的提问与通用问答不同：学生问的往往是「这一步能不能这么做」「出现这个现象是不是失败了」。这类问题的错误答案会直接对应错误操作，因此实验助手采用「<b>规则先于模型</b>」的设计——安全结论由确定性代码给出，模型只负责讲解与表达。</p>
+
+    <table>
+        <thead>
+            <tr><th style="width:22%">层次</th><th style="width:30%">实现</th><th>作用</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>安全审查层</td><td>纯 Python 分支，<b>先于模型调用</b>执行</td><td>白名单校验、禁用试剂、异常现象三态判定；命中 block 时直接返回拒绝话术，不消耗任何模型 token</td></tr>
+            <tr><td>实验检索层</td><td><code>lab_data/knowledge.md</code> 按二级标题切分为 40 个片段，片段内保留父级上下文与 <code>experiment_id</code> 绑定</td><td>只在当前实验的片段内召回，避免跨实验串知识；关键词未命中时回退到该实验概览片段，保证回答仍有依据</td></tr>
+            <tr><td>生成层</td><td>配置与片段注入 user 消息，复用 <code>aigent_service._request_completion</code> 流式生成</td><td>回答限定在实验步骤、现象判断与应急处置；历史只保留最近 8 轮，超长回答截断至 1200 字</td></tr>
+        </tbody>
+    </table>
+
+    <table>
+        <thead>
+            <tr><th style="width:20%">审查规则</th><th style="width:36%">触发条件</th><th style="width:12%">级别</th><th>处理</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>白名单校验</td><td>实验 ID 不在 8 个教材实验内</td><td>block</td><td>返回拒绝话术，流结束，模型零调用</td></tr>
+            <tr><td>禁用试剂</td><td>用户加入的试剂命中该实验禁用列表（如氯离子检验中作为外加试剂加入盐酸，会造成假阳性）</td><td>block</td><td>同上，并提示停止操作、联系教师</td></tr>
+            <tr><td>异常现象</td><td>观察到的现象命中该实验异常触发词</td><td>warning</td><td>继续生成，但强制在回答开头补【安全警告】并前置应急处置</td></tr>
+        </tbody>
+    </table>
+
+    <p><b>检索打分</b>：对问题与片段计算字符二元组交集，得分归一化为 <code>overlap / √(len_query × len_chunk)</code>，标题命中额外加权 0.2，取 Top-3。该打分不依赖外部向量服务，冷启动即可用，且与主站 RAG 的三路混合检索形成分工：主站面向 1213 个元素知识块做广度召回，实验助手面向几十个片段做高精度、强边界的召回。</p>
+
+<pre>SSE 事件序（实验助手专用）
+safety  → 首帧固定，携带 mode(blocked/answer)、safety_flags、refusal
+sources → 审查通过后返回 Top-3 片段（source_id / title / snippet / score）
+delta   → 模型逐块输出
+done    → 聚合答案、模型名、安全标记与来源；模型不可用时降级为 mode="degraded"
+error   → 空问题或未捕获异常</pre>
+
+    <p><b>前缀去重</b>：模型可能自行输出【安全警告】，因此服务端先缓冲前 20 字判断，已存在的前缀不再重复补写，避免学生看到两条警告而误判严重程度。</p>
+
+    <div class="note">
+        <b>为什么不用大模型判断安全性：</b>模型判断不可复现、不可测试，且提示词注入可以绕过。把「是否允许」写进代码后，每条规则都能写成单元测试，评审也能直接读到判定分支——这是化学教育产品可交付的前提。
+    </div>
 </section>
 
 <!-- ================= 5 核心功能实现 ================= -->
@@ -912,6 +958,7 @@ O : 0·x₁ + 2·x₂ − 3·x₃ = 0
     <p><b>规则与器材的闭环</b>：规范不是写在文档里的死条文，而是能在场景中被执行——把装有试剂的容器拖入废液缸，系统按成分自动判定分类（含重金属 / 酸性 / 碱性），给出对应处置要求；拖拽精密仪器会被拦截并提示「固定安装，请到仪器前操作」。</p>
     <p><b>安全体系</b>：首次进入的安全须知弹窗、21 种试剂的 GHS 风格危险标识、18 个反应的安全提示、五大模块规范面板（安全操作、流程管控、废弃物处理、应急处置、人员准入）。</p>
     <p><b>异常操作演示</b>：除「正确路径」外，场景还内置了三类错误操作的后果演示——把水倒入浓硫酸（暴沸飞溅）、高锰酸钾与乙醇混放（剧烈氧化）、高锰酸钾与盐酸混合（释放氯气）。命中后不执行正常反应流程，而是触发红色警示条、容器红色脉冲、浑浊烟雾与分步处置说明。稀释硫酸的判断还区分了顺序：先加水再缓慢注酸会走「正确稀释」分支，只有酸在前、水在后才判定为异常——这一点与真实实验规范一致，而不是简单的两者一混就报警。</p>
+    <p><b>实验助手</b>：实验室右下角提供渐变胶囊入口，面板内可选择 8 个教材实验（含「未选择实验」的通用问答模式），并填写「异常现象」与已加入的试剂。选中具体实验后，快捷提问自动切换为「实验步骤 / 安全要点 / 异常处理」；回答上方会先渲染安全提醒卡，下方列出所依据的教材片段与命中分数。面板与入口的位置避让左下角废液缸，横屏小高度视口下自动收窄间距，保证拖拽处置区始终可点。</p>
 
     <h3>5.3 其他模块</h3>
     <table>
@@ -975,17 +1022,21 @@ O : 0·x₁ + 2·x₂ − 3·x₃ = 0
     </table>
 
     <h3>6.6 测试与持续集成</h3>
-    <p>六个化学工具与安全规则全部实现为纯函数，具备天然的可测性。项目建立了 122 个用例的单元测试，全部离线运行、不依赖网络与 API 密钥。</p>
+    <p>化学工具、安全规则与实验审查全部实现为纯函数，具备天然的可测性。项目建立了 <b>8 个测试文件、206 个用例</b>的单元测试，全部离线运行、不依赖网络与 API 密钥。</p>
 
     <table>
         <thead>
             <tr><th style="width:28%">测试文件</th><th style="width:44%">覆盖内容</th><th>用例数</th></tr>
         </thead>
         <tbody>
-            <tr><td><code>test_chem_tools.py</code></td><td>元素查询、摩尔质量（含结晶水与嵌套括号）、方程式配平、反应检索、安全查询、知识检索、工具分发</td><td>47</td></tr>
-            <tr><td><code>test_safety.py</code></td><td>危险请求拦截（11 例正样本）+ 正常学术提问不误杀（10 例负样本）</td><td>24</td></tr>
-            <tr><td><code>test_ai_modules.py</code></td><td>评测模块的文本归一化与关键词判定、视觉服务 JSON 解析容错、MCP 工具注册</td><td>24</td></tr>
-            <tr><td><code>test_rag.py</code></td><td>分词、语料切分、向量索引拟合与持久化、BM25 与混合检索、概念扩展、来源多样性</td><td>27</td></tr>
+            <tr><td><code>test_chem_tools.py</code></td><td>元素查询、摩尔质量（含结晶水与嵌套括号）、方程式配平、反应检索、安全查询、知识检索、工具分发</td><td>49</td></tr>
+            <tr><td><code>test_safety.py</code></td><td>危险请求拦截（正样本）+ 正常学术提问不误杀（负样本）</td><td>24</td></tr>
+            <tr><td><code>test_aigent_service.py</code></td><td>提示词组装、场景路由、语义缓存、数值一致性校验、多模型降级链、SSE 事件序</td><td>35</td></tr>
+            <tr><td><code>test_rag.py</code></td><td>分词、语料切分、向量索引拟合与持久化、BM25 与混合检索、概念扩展、来源多样性与关系证据路径</td><td>39</td></tr>
+            <tr><td><code>test_ai_modules.py</code></td><td>评测模块的文本归一化与关键词判定、视觉服务 JSON 解析容错、MCP 工具注册</td><td>22</td></tr>
+            <tr><td><code>test_scene_actions.py</code></td><td>场景动作白名单、参数校验、非法动作拒绝、动作去重</td><td>17</td></tr>
+            <tr><td><code>test_lab_agent.py</code></td><td>白名单加载、未知实验拦截、禁用试剂拦截、异常现象仅告警、检索实验隔离、无命中回退、提示词含配置与来源、SSE 首帧为 safety、拦截时模型零调用、模型异常降级、警告前缀不重复、数据文件可解析</td><td>13</td></tr>
+            <tr><td><code>test_backend_ai.py</code></td><td>Flask 路由与上游异常映射、健康检查、代理错误兜底</td><td>7</td></tr>
         </tbody>
     </table>
 
@@ -1013,6 +1064,7 @@ O : 0·x₁ + 2·x₂ − 3·x₃ = 0
             <tr><td>安全护栏</td><td>接口测试</td><td>输入危险请求 → <code>blocked: true</code>，返回安全教育话术，未产生模型调用</td></tr>
             <tr><td>SSE 流式输出</td><td>接口测试</td><td>单次回答产出 405~612 行事件，含 status / tool / delta / done</td></tr>
             <tr><td>多模态识别</td><td>图片上传</td><td>4.4 秒识别方程式并自动配平，置信度 high</td></tr>
+            <tr><td>实验助手</td><td>真实对话 + 接口测试</td><td>实验下拉返回 8 项；选「氯离子检验」并在异常现象填「蒸馏水空白也出现白色沉淀」→ 首帧 <code>safety</code> 带 warning、回答以【安全警告】开头、附带 Top-3 教材片段；未知实验或禁用试剂 → <code>mode=blocked</code>，模型零调用</td></tr>
             <tr><td>前端面板</td><td>浏览器实测</td><td>面板展开、工具卡片渲染、流式文字、安全警示样式均正常，控制台无报错</td></tr>
         </tbody>
     </table>
@@ -1157,18 +1209,19 @@ copy .env.example .env
 
     <h3>9.2 技术方案创新</h3>
     <p><b>视觉识别与确定性工具的双重校验。</b>常见的多模态应用止步于「识别出来」，本项目让识别结果进入工具链二次验证：手写方程式被识别后，配平算法独立计算一遍，两者不一致即提示未配平。这把「AI 可能看错」的风险，转化为「两个独立系统互相检查」的可靠性保障。</p>
+    <p><b>把安全判定从模型手里拿回来。</b>多数产品只在提示词里要求模型「注意安全」，但模型判断不可复现、可被提示词注入绕过，也无法写成断言。本项目把实验白名单、禁用试剂、异常现象判定写成确定性代码，<b>先于模型调用执行</b>：拦截结论可复现、可测试、可审计，评审可以直接读到判定分支；模型只负责讲解，规则负责守住底线。</p>
 
     <h3>9.3 选题创新</h3>
     <p><b>把 AI 用在最需要的地方，而不是到处贴 AI 标签。</b>项目没有给每个页面强行塞一个通用聊天框，而是把模型能力嵌进具体动作：点元素就问元素、点人物就访谈人物、贴一段资料就只依据资料回答。相应地，3D 周期表、实验室、游戏的核心渲染采用纯前端实现，加载快、可离线，AI 只在需要理解与表达时介入。</p>
 
     <h3>9.4 安全优先的设计观</h3>
-    <p>化学主题天然伴随风险。项目把「安全」做成贯穿始终的设计原则：实验室有规范体系与危废处置、AI 有前置拦截、多模态结果附带安全提示、反应演示标注危险产物。这不是附加功能，而是让化学教育产品具备可交付性的前提。</p>
+    <p>化学主题天然伴随风险。项目把「安全」做成贯穿始终的设计原则：实验室有四大分区规范体系与危废分类处置、AI 有危险请求前置拦截、多模态结果附带安全提示、反应演示标注危险产物；新加入的实验助手则把安全配置变成可执行的审查规则，白名单外的实验与禁用试剂在调用模型之前就被拦下，异常现象只会升级为警告而不会被模型「自由发挥」。这不是附加功能，而是让化学教育产品具备可交付性的前提。</p>
 
     <div class="metrics">
-        <div class="metric"><b>6</b><span>AI 可调用工具</span></div>
+        <div class="metric"><b>7</b><span>AI 可调用工具</span></div>
         <div class="metric"><b>1213</b><span>RAG 知识块</span></div>
-        <div class="metric"><b>20</b><span>危险模式拦截</span></div>
-        <div class="metric"><b>72</b><span>实验室配置项</span></div>
+        <div class="metric"><b>8</b><span>教材实验白名单</span></div>
+        <div class="metric"><b>206</b><span>离线单元测试</span></div>
     </div>
 </section>
 

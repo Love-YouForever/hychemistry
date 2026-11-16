@@ -24,6 +24,7 @@
 | 3D 交互式元素周期表 | 元素按周期律空间排布，悬停/点击查看原子量、熔沸点、分类配色与元素详情 |
 | 化学方程式 3D 词云 | 方程式以 3D 文字云形式呈现，支持手部识别隔空操控视角与缩放 |
 | 3D 虚拟化学实验室 | 四大功能分区（试剂存储 / 实验操作 / 仪器分析 / 清洁处置）、72 项器材试剂、真实反应效果、废弃物分类处置、完整安全规范体系；错误操作会触发异常处置演示（稀释硫酸顺序颠倒、氧化剂混有机物、产生有毒氯气） |
+| 实验助手（Lab Agent） | 实验室右下角的专用 Agent：可选 8 个教材实验，填写已加试剂与异常现象；先用**确定性代码**审查白名单与禁用试剂，再在实验范围内检索知识库并流式讲解，回答带安全提醒卡与教材来源 |
 | 化学史诗 | 分章节的化学史纪录片式浏览体验 |
 | 化学小游戏 | 化学杀、元素 2048、元素符号速配 |
 | AI 化学助教「小幻语」 | 具备工具调用能力的化学 Agent：可查元素、算摩尔质量、配平方程式、检索反应、查危化品安全，回答流式输出并带危险请求安全护栏，支持语音朗读 |
@@ -61,7 +62,8 @@
 | 文本对话 | DeepSeek Chat API（`deepseek-chat`） |
 | 语音合成 | 阿里云 DashScope CosyVoice（`cosyvoice-v3-flash`，`longxiaochun_v3` 音色） |
 | 视觉理解 | 通义千问 VL（`qwen3-vl-plus`）：网页端拍照识别方程式/装置/试剂，桌宠屏幕理解 |
-| Agent 工具调用 | Function Calling + 6 个化学工具（见下节） |
+| Agent 工具调用 | Function Calling + 7 个工具（6 个化学工具 + 1 个场景控制工具，见下节） |
+| 实验安全审查 | 8 个教材实验的确定性规则引擎：白名单 / 禁用试剂命中即拦截，异常现象升级为警告，先于模型调用执行 |
 | 知识检索 | 本地混合 RAG（BM25 + LSA 向量 + RRF 融合，1213 个知识块，可离线） |
 | 流式输出 | Server-Sent Events（status / tool / delta / done 四类事件） |
 
@@ -140,6 +142,18 @@
 ### 4. AI 安全护栏
 
 在调用模型**之前**先做危险意图检测（制毒、爆炸物、化学武器、投毒等 20 类模式），命中即拦截，不消耗模型调用，返回预设的安全教育话术并引导到安全实验方向。这既是合规要求，也是「化学」这一高风险主题下最必要的设计。
+
+### 4.5 实验助手（Lab Agent）：让规则先于模型
+
+3D 实验室里的提问往往直接对应操作（「现在该怎么办」），因此这里的 Agent 采用「规则负责底线、模型负责讲解」的分工，实现见 [`server/lab_agent.py`](server/lab_agent.py)。
+
+| 层次 | 实现 |
+|---|---|
+| 安全审查 | 纯 Python 分支，先于模型执行：实验不在 8 个教材实验白名单 → `block`；加入禁用试剂 → `block`；观察到异常现象 → `warning` 并强制前置【安全警告】 |
+| 实验检索 | [`server/lab_data/knowledge.md`](server/lab_data/knowledge.md) 按标题切分为 40 个片段，只在当前实验内召回；打分 `overlap / √(len_q × len_c)`，标题命中 +0.2，取 Top-3，无命中回退该实验概览片段 |
+| 流式生成 | SSE 事件序 `safety → sources → delta → done / error`，首帧固定携带安全结论；复用主 Agent 的模型调用与降级链 |
+
+关键取舍：`block` 时**不产生任何模型调用**，规则可复现、可写成单元测试（[`tests/test_lab_agent.py`](tests/test_lab_agent.py) 13 例）。实验安全配置存于 [`server/lab_data/experiments.json`](server/lab_data/experiments.json)，每项包含阈值、禁用试剂、异常条件与应急处置，明确声明不替代学校制度与教师现场指令。
 
 ### 5. 多模态视觉理解
 
@@ -265,6 +279,8 @@ Claude Desktop / Cursor 配置示例见 `server/mcp_config.example.json`：
 │   ├── rag_engine.py            # 混合检索引擎（BM25 + LSA 向量 + RRF）
 │   ├── relation_graph.py        # 轻量关系证据图（别名→元素→语料块的多跳证据路径）
 │   ├── scene_actions.py         # 受约束的 3D 场景动作协议（周期表/实验室白名单动作）
+│   ├── lab_agent.py             # 实验助手：确定性安全审查 + 实验范围检索 + SSE 流式生成
+│   ├── lab_data/                # 实验安全配置 experiments.json + 实验知识库 knowledge.md
 │   ├── build_index.py           # 构建本地检索索引（落盘 knowledge_index/）
 │   ├── eval_agent.py            # AI 效果评测（25 题）
 │   ├── eval_rag.py              # RAG 检索评测（15 题，含消融对比）
@@ -286,7 +302,7 @@ Claude Desktop / Cursor 配置示例见 `server/mcp_config.example.json`：
 │   ├── background.mp4           # 全局背景视频
 │   └── 无人之地.mp3              # 背景音乐
 ├── AIgent/                      # 桌面宠物子项目（Python + tkinter）
-├── tests/                       # 122 个离线单元测试（pytest）
+├── tests/                       # 206 个离线单元测试（8 个测试文件，pytest）
 ├── docs/                        # 技术文档、评测报告与文档构建工具
 ├── Dockerfile                   # 生产镜像（python:3.12-slim）
 ├── .env.example                 # 环境变量模板
@@ -382,7 +398,7 @@ python -m http.server 8080
 # 安装测试依赖
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 
-# 运行全部单元测试（122 个用例）
+# 运行全部单元测试（206 个用例）
 .\.venv\Scripts\python.exe -m pytest -v
 
 # 查看覆盖率
@@ -394,12 +410,16 @@ python -m http.server 8080
 
 | 测试文件 | 覆盖内容 | 用例数 |
 |---|---|---|
-| `tests/test_chem_tools.py` | 元素查询、摩尔质量、方程式配平、反应检索、安全查询、知识检索、工具分发 | 47 |
-| `tests/test_safety.py` | 危险请求拦截（11 例正样本）+ 正常提问不误杀（10 例负样本） | 24 |
-| `tests/test_ai_modules.py` | 评测模块的归一化与判定逻辑、视觉服务解析、MCP 工具注册 | 24 |
-| `tests/test_rag.py` | 分词、语料切分、向量索引拟合/持久化、BM25 与混合检索、概念扩展、来源多样性 | 27 |
+| `tests/test_chem_tools.py` | 元素查询、摩尔质量、方程式配平、反应检索、安全查询、知识检索、工具分发 | 49 |
+| `tests/test_safety.py` | 危险请求拦截（正样本）+ 正常提问不误杀（负样本） | 24 |
+| `tests/test_aigent_service.py` | 提示词组装、场景路由、语义缓存、数值一致性校验、多模型降级链、SSE 事件序 | 35 |
+| `tests/test_rag.py` | 分词、语料切分、向量索引拟合/持久化、BM25 与混合检索、概念扩展、来源多样性 | 39 |
+| `tests/test_ai_modules.py` | 评测模块的归一化与判定逻辑、视觉服务解析、MCP 工具注册 | 22 |
+| `tests/test_scene_actions.py` | 场景动作白名单、参数校验、非法动作拒绝、动作去重 | 17 |
+| `tests/test_lab_agent.py` | 白名单加载、未知实验拦截、禁用试剂拦截、异常仅告警、检索实验隔离、无命中回退、SSE 首帧、拦截零调用、降级、前缀去重 | 13 |
+| `tests/test_backend_ai.py` | Flask 路由与上游异常映射、健康检查、代理错误兜底 | 7 |
 
-**当前结果**：122 个用例全部通过，`chem_tools.py` 覆盖率 **95%**。
+**当前结果**：206 个用例全部通过，`chem_tools.py` 覆盖率 **95%**。
 
 持续集成配置见 `.github/workflows/ci.yml`，包含两个任务：
 
@@ -452,7 +472,7 @@ python -m http.server 8080
 
 | 材料 | 路径 | 说明 |
 |---|---|---|
-| 技术文档（PDF） | `docs/技术文档.pdf` | 25 页，含架构设计、AI 方案（含 MCP、可解释性与异常降级实测截图）、实现细节、测试验证、生产部署 |
+| 技术文档（PDF） | `docs/技术文档.pdf` | 29 页，含架构设计、AI 方案（含 MCP、实验助手、可解释性与异常降级实测截图）、实现细节、测试验证、生产部署 |
 | 技术文档（Word） | `docs/技术文档.docx` | 同内容可编辑版本，含封面、目录、大纲级别、页眉页码 |
 | 技术文档（源文件） | `docs/技术文档.html` | 可编辑的 HTML 源，改后可用浏览器打印为 PDF |
 | 演示视频（成片） | `docs/元素幻语_演示视频.mp4` | 5 分 02 秒 · 1920×1080 · 24.5 MB，九段式结构，含旁白与章节标题 |
