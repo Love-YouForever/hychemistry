@@ -106,7 +106,7 @@
 
 全部计算在本机完成，不调用嵌入接口：索引一次构建后落盘（28.9 MB），单次查询约 40 毫秒，可离线、结果可复现。语料与 3D 元素周期表同源，回答不会与页面内容打架。
 
-**效果**：15 题检索评测中，混合检索 Recall@1 由升级前的 73.3% 提升到 **86.7%**，Recall@3 由 80.0% 提升到 **93.3%**，MRR 由 0.767 提升到 **0.900**，报告见 [`docs/RAG评测报告.md`](docs/RAG评测报告.md)。
+**效果**：15 题检索评测中，混合检索 Recall@1 由升级前的 73.3% 提升到 **86.7%**，Recall@3 由 80.0% 提升到 **93.3%**，MRR 由 0.767 提升到 **0.900**。评测报告保留在本地，不纳入版本库。
 
 ### 3.5 关系证据图（Relation Graph）
 
@@ -240,7 +240,7 @@ Claude Desktop / Cursor 配置示例见 `server/mcp_config.example.json`：
 
 ### 7. 效果评测
 
-用 25 道固定题目驱动真实 Agent，量化回答准确性与安全能力，报告见 [`docs/AI评测报告.md`](docs/AI评测报告.md)。
+用 25 道固定题目驱动真实 Agent，量化回答准确性与安全能力。
 
 ```bash
 .\.venv\Scripts\python.exe server\eval_agent.py
@@ -303,7 +303,7 @@ Claude Desktop / Cursor 配置示例见 `server/mcp_config.example.json`：
 │   └── 无人之地.mp3              # 背景音乐
 ├── AIgent/                      # 桌面宠物子项目（Python + tkinter）
 ├── tests/                       # 206 个离线单元测试（8 个测试文件，pytest）
-├── docs/                        # 技术文档、评测报告与文档构建工具
+├── docs/                        # 技术文档 PDF（评测报告等过程文档仅在本地保留）
 ├── Dockerfile                   # 生产镜像（python:3.12-slim）
 ├── .env.example                 # 环境变量模板
 ├── requirements.txt             # pip 依赖清单
@@ -443,7 +443,7 @@ python -m http.server 8080
 .\.venv\Scripts\python.exe server/benchmark.py --with-ai
 ```
 
-**本机实测（报告见 [`docs/性能测量报告.md`](docs/性能测量报告.md)）**：
+**本机实测**：
 
 | 项目 | 结果 |
 |---|---|
@@ -473,17 +473,9 @@ python -m http.server 8080
 | 材料 | 路径 | 说明 |
 |---|---|---|
 | 技术文档（PDF） | `docs/技术文档.pdf` | 29 页，含架构设计、AI 方案（含 MCP、实验助手、可解释性与异常降级实测截图）、实现细节、测试验证、生产部署 |
-| 技术文档（Word） | `docs/技术文档.docx` | 同内容可编辑版本，含封面、目录、大纲级别、页眉页码 |
-| 技术文档（源文件） | `docs/技术文档.html` | 可编辑的 HTML 源，改后可用浏览器打印为 PDF |
-| 演示视频（成片） | `docs/元素幻语_演示视频.mp4` | 5 分 02 秒 · 1920×1080 · 24.5 MB，九段式结构，含旁白与章节标题 |
-| 演示视频脚本 | `docs/演示视频脚本.md` | 分镜表、旁白全文、录制与剪辑参数，可用于重录真人版 |
-| AI 评测报告 | `docs/AI评测报告.md` | 25 题实测：工具准确 100%、答案准确 100%、安全拦截 100% |
-| RAG 评测报告 | `docs/RAG评测报告.md` | 15 题消融对比：混合检索 Recall@1 86.7%、Recall@3 93.3%、MRR 0.900 |
-| 性能测量报告 | `docs/性能测量报告.md` | 后端算法、页面 FCP/load、帧率实测与瓶颈定位 |
-| 文档生成工具 | `docs/tools/html2docx.py` | 修改技术文档 HTML 后重新生成 Word 版 |
-| 后端说明 | `docs/后端结构与代码说明.md` | Flask 双服务结构与接口说明 |
 
-> **导出 PDF**：用 Chrome 打开 `docs/技术文档.html` → `Ctrl + P` → 目标选"另存为 PDF" → 边距"默认"→ 取消勾选"页眉和页脚"。
+> 仓库只保留赛事要求提交的内容：源代码、README、依赖与环境模板、Dockerfile、技术文档 PDF。
+> 演示视频、技术文档 HTML/Word 源文件、AI／RAG／性能评测报告、后端说明、演示视频脚本与演讲稿等过程材料仅保留在本地 `docs/` 与 `传智杯提交材料/`，不纳入版本库。
 
 ---
 

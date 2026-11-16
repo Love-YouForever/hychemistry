@@ -63,3 +63,8 @@ video/道尔顿.mp4
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# ---------- 过程文档（仅保留赛事要求提交的技术文档 PDF） ----------
+# 评测报告、后端说明、技术文档 HTML/Word 源文件、视频脚本、演讲稿等只在本地保留
+docs/*
+!docs/技术文档.pdf
