@@ -498,7 +498,9 @@
             video.setAttribute('x5-video-player-type', 'h5-page');
             video.setAttribute('x5-video-player-fullscreen', 'false');
             video.setAttribute('disablepictureinpicture', 'true');
-            video.setAttribute('controls', 'false');
+            // 关闭原生控件（布尔属性：只要存在即启用，故必须移除而非设为 false）
+            video.removeAttribute('controls');
+            video.controls = false;
             try { video.playsInline = true; } catch (e) {}
             // 同时设置 src 属性（微信内核对 <source> 子元素支持不稳定，src 直接赋值更可靠）
             if (!video.getAttribute('src')) {
