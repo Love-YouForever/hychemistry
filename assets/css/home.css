@@ -595,11 +595,11 @@
         .assistant-panel {
             position: fixed;
             left: 20px;
-            /* 抬高到桌宠上方（桌宠底部 24px + 高 110px），避免遮挡小幻语 */
-            bottom: 150px;
+            /* 抬到桌宠及其上方的气泡之上（桌宠 24+110，气泡再加约 45），避免遮挡 */
+            bottom: 186px;
             width: min(360px, calc(100vw - 32px));
             height: 460px;
-            max-height: calc(100vh - 170px);
+            max-height: calc(100vh - 206px);
             display: flex;
             flex-direction: column;
             background: rgba(8, 18, 25, 0.9);
@@ -774,7 +774,7 @@
         /*响应式适配,全局移动端样式覆盖（最后一段媒体查询）*/
         /*移动端*/
         @media (max-width: 680px) {
-            .assistant-panel { left: 12px; bottom: 148px; width: calc(100vw - 24px); height: 56vh; }
+            .assistant-panel { left: 12px; bottom: 184px; width: calc(100vw - 24px); height: 56vh; }
             .vinyl-player { top: 16px; right: 16px; padding: 6px; }
             .vinyl-disc { width: 52px; height: 52px; }
             .vinyl-label { width: 24px; height: 24px; font-size: 12px; }
@@ -782,7 +782,7 @@
 
         /*大屏*/
         @media (min-width: 1400px) {
-            .assistant-panel { left: 28px; bottom: 150px; }
+            .assistant-panel { left: 28px; bottom: 186px; }
         }
 
         /*临时提示 .music-toast 与动画状态提示*/
@@ -868,7 +868,7 @@
             /* 聊天面板 */
             .assistant-panel { 
                 left: 8px; 
-                bottom: 148px; 
+                bottom: 184px; 
                 width: calc(100vw - 16px); 
                 height: 50vh; 
             }
@@ -945,7 +945,7 @@
                 right: calc(16px + env(safe-area-inset-right));
             }
             .assistant-panel {
-                bottom: calc(148px + env(safe-area-inset-bottom));
+                bottom: calc(184px + env(safe-area-inset-bottom));
             }
         }
         

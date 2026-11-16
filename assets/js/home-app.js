@@ -1567,9 +1567,13 @@ window.addEventListener('toggle-chat-panel', () => {
             setMood('shy');
             playAction('heart');
             lastAction = Date.now();
+        } else {
+            // 轻点（未拖动）立即害羞：不依赖 click 事件，避免部分浏览器 pointer capture 后
+            // 不派发 click 导致表情不切换
+            setMood('shy');
+            lastAction = Date.now();
         }
-    }
-    pet.addEventListener('pointerup', endDrag);
+    }    pet.addEventListener('pointerup', endDrag);
     pet.addEventListener('pointercancel', endDrag);
 
     // 点击（戳）：连续戳生气，单次戳害羞
