@@ -1360,20 +1360,22 @@ window.addEventListener('toggle-chat-panel', () => {
     const bubble = document.getElementById('pet-bubble');
     if (!pet || !img) return;
 
+    // 形象图已压缩到 280×280，加版本参数避免浏览器复用旧的大图缓存
+    const IMG_VER = '?v=20261116s';
     const IMG = {
-        happy: './images/normal1.png',   // 开心
-        idle: './images/normal2.png',    // 中性/发呆
-        shy: './images/shy.png',         // 害羞
-        surprised: './images/amazing.png', // 惊讶
-        angry: './images/angry.png',     // 生气
-        cry: './images/cry.png',         // 哭泣
-        afraid: './images/afraid.png',   // 害怕
-        amazed: './images/amazing2.png', // 惊叹
-        care: './images/care.png',       // 关心
-        hi: './images/hi.png',           // 打招呼
-        salute: './images/salute.png',   // 敬礼
-        tired: './images/tierd.png',     // 疲惫
-        pull: './images/pull.png'        // 被拖拽
+        happy: './images/normal1.png' + IMG_VER,   // 开心
+        idle: './images/normal2.png' + IMG_VER,    // 中性/发呆
+        shy: './images/shy.png' + IMG_VER,         // 害羞
+        surprised: './images/amazing.png' + IMG_VER, // 惊讶
+        angry: './images/angry.png' + IMG_VER,     // 生气
+        cry: './images/cry.png' + IMG_VER,         // 哭泣
+        afraid: './images/afraid.png' + IMG_VER,   // 害怕
+        amazed: './images/amazing2.png' + IMG_VER, // 惊叹
+        care: './images/care.png' + IMG_VER,       // 关心
+        hi: './images/hi.png' + IMG_VER,           // 打招呼
+        salute: './images/salute.png' + IMG_VER,   // 敬礼
+        tired: './images/tierd.png' + IMG_VER,     // 疲惫
+        pull: './images/pull.png' + IMG_VER         // 被拖拽
     };
     const EXPRESSIONS = ['happy', 'idle', 'shy', 'surprised', 'sleepy', 'angry', 'cool', 'love', 'dizzy', 'excited', 'thinking', 'cry', 'afraid', 'amazed', 'care', 'hi', 'salute', 'tired'];
     const ACTIONS = ['jump', 'spin', 'wave', 'shake', 'heart', 'bounce', 'flip', 'wiggle', 'fall', 'dance', 'nod', 'cheer', 'roll', 'salute'];
@@ -1507,9 +1509,12 @@ window.addEventListener('toggle-chat-panel', () => {
         }
         // 心情锁定期间不随机切换表情
         if (!moodLocked) {
-            // 每 5-9 秒切换表情（从闲置表情池随机）
+            // 每 5-9 秒切换表情（从闲置表情池随机，且保证画面和当前不同）
             if (now - lastExprSwitch > 5000 + Math.random() * 4000) {
-                const next = IDLE_EXPRS[Math.floor(Math.random() * IDLE_EXPRS.length)];
+                let next = IDLE_EXPRS[Math.floor(Math.random() * IDLE_EXPRS.length)];
+                for (let i = 0; i < 5 && EXPR_IMG[next] === currentImg; i++) {
+                    next = IDLE_EXPRS[Math.floor(Math.random() * IDLE_EXPRS.length)];
+                }
                 setExpression(next);
                 setImage(EXPR_IMG[next]);
                 lastExprSwitch = now;
