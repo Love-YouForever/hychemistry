@@ -351,27 +351,11 @@
             try { video.muted = true; } catch (e) {}
             const playPromise = video.play();
             if (playPromise && typeof playPromise.then === 'function') {
-                playPromise
-                    .then(() => {
-                        // 自动播放成功：立即隐藏按钮（不等 playing 事件，避免加载慢时按钮闪现）
-                        hidePlayButton();
-                    })
-                    .catch(() => {
-                        console.log('视频自动播放受限，显示「点击进入」等待用户手动触发');
-                        bindFirstInteraction();
-                        showPlayButton();
-                    });
+                playPromise.catch(() => {
+                    console.log('视频自动播放受限，等待用户首次交互后重试');
+                    bindFirstInteraction();
+                });
             }
-        }
-
-        // 显示播放按钮（自动播放失败时的兜底）
-        function showPlayButton() {
-            const btn = document.getElementById('video-play-btn');
-            if (btn) btn.style.display = 'block';
-        }
-        function hidePlayButton() {
-            const btn = document.getElementById('video-play-btn');
-            if (btn) btn.style.display = 'none';
         }
 
         function bindFirstInteraction() {
@@ -383,7 +367,6 @@
                 document.removeEventListener('mousedown', handler);
                 document.removeEventListener('pointerdown', handler);
                 interactionBound = false;
-                hidePlayButton();
                 playMedia();
             };
             document.addEventListener('click', handler, { passive: true });
@@ -449,17 +432,8 @@
 
         video.addEventListener('playing', () => {
             markReady();
-            hidePlayButton();
         });
 
-        // 播放按钮点击后播放视频和音乐
-        const playBtn = document.getElementById('video-play-btn');
-        if (playBtn) {
-            playBtn.addEventListener('click', () => {
-                hidePlayButton();
-                playMedia();
-            });
-        }
         video.addEventListener('loadeddata', () => { if (video.readyState >= 2) markReady(); });
         video.addEventListener('canplay', () => {
             markReady();
