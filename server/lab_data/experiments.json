@@ -1,0 +1,166 @@
+{
+  "schema_version": "1.0",
+  "safety_notice": "本文件为低危微量教学实验的保守配置，不替代学校实验室制度、试剂安全数据表（SDS）及教师现场指令。低危不等于无风险；实验须经教师审核并在指导下进行。",
+  "experiments": [
+    {
+      "experiment_id": "exp-salt-sand-separation",
+      "experiment_name": "食盐与泥沙的分离（溶解、过滤与蒸发）",
+      "safety_thresholds": {
+        "max_concentration": "食盐水≤10%（质量分数）；单组食盐与砂的混合物≤2 g",
+        "max_temperature": "样液≤80 ℃；仅用水浴或有温控电热设备，禁止明火和干烧",
+        "forbidden_reagents": [
+          "浓酸、浓碱及含重金属盐试剂（本实验不需要）",
+          "易燃有机溶剂和强氧化剂（本实验不需要）"
+        ]
+      },
+      "abnormal_triggers": [
+        "加热时液体剧烈飞溅、蒸发皿干烧或玻璃器皿破裂",
+        "电热设备冒烟、异常发热或电源线破损"
+      ],
+      "emergency_steps": [
+        "立即停止加热；仅在安全可行时切断电源。热液或热器皿接触皮肤时，用流动凉水持续冲洗至少20分钟并通知教师",
+        "玻璃破损勿徒手拾取；电器起火不得泼水，通知教师并按实验室消防预案处置"
+      ]
+    },
+    {
+      "experiment_id": "exp-nacl-solution-preparation",
+      "experiment_name": "一定物质的量浓度的氯化钠溶液配制",
+      "safety_thresholds": {
+        "max_concentration": "目标浓度0.100 mol/L；配制溶液最高≤0.50 mol/L",
+        "max_temperature": "≤30 ℃；室温配制，不加热，容量瓶不得加热",
+        "forbidden_reagents": [
+          "浓酸、浓碱及腐蚀性清洁剂（本实验不需要）",
+          "可溶性铅、汞、铬等重金属盐（本实验不需要）"
+        ]
+      },
+      "abnormal_triggers": [
+        "容量瓶、烧杯或玻璃棒破裂，或溶液洒漏",
+        "溶液异常发热、变色或混入不明物质（纯氯化钠配制不应出现）"
+      ],
+      "emergency_steps": [
+        "停止操作并通知教师；溶液进入眼睛时用洗眼器或流动清水持续冲洗至少15分钟，皮肤接触后用清水充分冲洗",
+        "碎玻璃勿徒手清理；盐水洒漏后擦净并用清水复擦，地面完全干燥前提醒防滑"
+      ]
+    },
+    {
+      "experiment_id": "exp-co2-generation-properties",
+      "experiment_name": "二氧化碳的制取与性质",
+      "safety_thresholds": {
+        "max_concentration": "乙酸≤0.50 mol/L；石灰水≤0.02 mol/L；碳酸氢钠≤0.20 g/组",
+        "max_temperature": "≤30 ℃；不加热",
+        "forbidden_reagents": [
+          "浓盐酸、浓硫酸等浓酸（本实验不需要）",
+          "含次氯酸盐的漂白剂或消毒液（不得与酸性试剂接触）"
+        ]
+      },
+      "abnormal_triggers": [
+        "反应剧烈起泡，液体冲入导气管或塞子松脱",
+        "导气管堵塞、容器鼓胀，或出现强烈刺激性气味、眼鼻不适"
+      ],
+      "emergency_steps": [
+        "立即停止加酸，不堵塞或拆卸异常装置；人员退至安全位置并通知教师，按实验室异常气体处置预案处理",
+        "试液溅入眼睛或皮肤时用流动清水持续冲洗至少15分钟；如有呼吸不适，移至空气新鲜处并立即求助"
+      ]
+    },
+    {
+      "experiment_id": "exp-iron-copper-sulfate-reaction",
+      "experiment_name": "铁与硫酸铜溶液的反应",
+      "safety_thresholds": {
+        "max_concentration": "硫酸铜溶液≤0.10 mol/L；每组溶液≤5 mL",
+        "max_temperature": "≤30 ℃；不加热",
+        "forbidden_reagents": [
+          "浓盐酸、浓硫酸等浓酸（本实验不需要）",
+          "强氧化剂及成分不明的混合试剂（本实验不需要）"
+        ]
+      },
+      "abnormal_triggers": [
+        "硫酸铜溶液洒漏或溅入眼睛、皮肤",
+        "出现明显异常放热、冒泡或刺激性气味（正常反应不应出现）"
+      ],
+      "emergency_steps": [
+        "停止操作并通知教师；溶液接触皮肤或眼睛时用流动清水持续冲洗至少15分钟",
+        "洒漏或玻璃破损时隔离现场，勿徒手清理；含铜溶液、固体及冲洗液按含铜废物流程收集，不得倒入下水道"
+      ]
+    },
+    {
+      "experiment_id": "exp-acid-base-neutralization",
+      "experiment_name": "稀盐酸与稀氢氧化钠的中和反应",
+      "safety_thresholds": {
+        "max_concentration": "盐酸和氢氧化钠均≤0.10 mol/L；建议使用0.050 mol/L；每份溶液≤5 mL",
+        "max_temperature": "≤30 ℃；不加热",
+        "forbidden_reagents": [
+          "浓盐酸、浓硫酸、浓氢氧化钠等浓腐蚀性试剂（本实验不需要）",
+          "含次氯酸盐的漂白剂或消毒液（不得与酸性试液接触）"
+        ]
+      },
+      "abnormal_triggers": [
+        "溶液意外明显升温、剧烈起泡或出现刺激性气体（正常微量中和不应出现）",
+        "酸碱溶液溅入眼睛或皮肤，或玻璃器皿破裂"
+      ],
+      "emergency_steps": [
+        "立即停止滴加并通知教师；皮肤接触后用流动清水冲洗，眼睛用洗眼器或流动清水持续冲洗至少15分钟",
+        "出现刺激性气味时移至空气新鲜处并报告教师；泄漏不得自行中和，由教师按校内酸碱泄漏预案处置"
+      ]
+    },
+    {
+      "experiment_id": "exp-chloride-ion-test",
+      "experiment_name": "氯离子的检验",
+      "safety_thresholds": {
+        "max_concentration": "硝酸银溶液≤0.05 mol/L；待测氯化物溶液≤0.10 mol/L；每组硝酸银≤1 mL",
+        "max_temperature": "≤30 ℃；不加热",
+        "forbidden_reagents": [
+          "盐酸及含氯清洁剂作为外加检验试剂（会引入Cl⁻并造成假阳性）",
+          "浓氨水及含氨清洁剂（本实验不需要）"
+        ]
+      },
+      "abnormal_triggers": [
+        "蒸馏水空白也出现白色沉淀或浑浊（提示交叉污染）",
+        "硝酸银溶液洒漏或溅入眼睛，皮肤出现明显刺激或着色"
+      ],
+      "emergency_steps": [
+        "硝酸银接触皮肤或眼睛时立即用流动清水持续冲洗至少15分钟并通知教师；眼部暴露后及时接受医疗评估",
+        "洒漏由教师按银盐废物流程收集，勿徒手擦拭或倒入下水道；玻璃破损时勿徒手拾取"
+      ]
+    },
+    {
+      "experiment_id": "exp-starch-iodine-test",
+      "experiment_name": "淀粉的碘检验",
+      "safety_thresholds": {
+        "max_concentration": "碘-碘化钾水溶液中I₂≤0.05%（质量分数）；淀粉样液≤1%",
+        "max_temperature": "≤30 ℃；不加热",
+        "forbidden_reagents": [
+          "含乙醇的碘酊及其他易燃有机溶剂（本实验不需要）",
+          "浓碘液和强氧化剂（本实验不需要）"
+        ]
+      },
+      "abnormal_triggers": [
+        "碘液洒漏、溅入眼睛或造成明显皮肤刺激",
+        "出现强烈刺激性气味、眼鼻不适或容器破损"
+      ],
+      "emergency_steps": [
+        "碘液接触眼睛或皮肤时立即用流动清水持续冲洗至少15分钟，脱去被污染衣物并通知教师",
+        "洒漏时通知教师并按含碘试剂流程处理；不得用酒精或其他有机溶剂擦拭皮肤"
+      ]
+    },
+    {
+      "experiment_id": "exp-calcium-carbonate-precipitation",
+      "experiment_name": "碳酸钙沉淀的制备（复分解反应）",
+      "safety_thresholds": {
+        "max_concentration": "氯化钙和碳酸钠溶液均≤0.10 mol/L；每组总液量≤10 mL",
+        "max_temperature": "≤30 ℃；不加热",
+        "forbidden_reagents": [
+          "浓盐酸、浓硫酸等浓酸（会消耗碳酸根并改变实验现象）",
+          "含铅、汞、铬等重金属盐及强氧化剂（本实验不需要）"
+        ]
+      },
+      "abnormal_triggers": [
+        "试液明显飞溅或溅入眼睛、皮肤",
+        "出现剧烈冒泡、明显发热或刺激性气味（正常反应不应出现）"
+      ],
+      "emergency_steps": [
+        "停止加液并通知教师；溶液接触眼睛或皮肤时用流动清水持续冲洗至少15分钟",
+        "玻璃破损或洒漏时隔离现场，勿徒手清理；不得自行加入酸处理，由教师按校内废液流程处置"
+      ]
+    }
+  ]
+}

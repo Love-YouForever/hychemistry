@@ -37,6 +37,7 @@ from aigent_service import (
     synthesize_aigent_speech,
 )
 from chem_tools import balance_equation, get_safety_info
+from lab_agent import list_experiments, stream_lab_agent
 from Periodic_Table.app import app
 from vision_service import analyze_image
 
@@ -232,6 +233,50 @@ def aigent_chat_stream():
         headers={
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no",   # 关闭 Nginx 缓冲，保证逐字输出
+        },
+    )
+
+
+#实验助手：实验白名单列表（来自 chem-agent 的 experiments_whitelist）
+@app.get("/api/lab/experiments")
+def lab_experiments():
+    return jsonify({"ok": True, "items": list_experiments()})
+
+
+#实验助手流式接口：确定性安全审查 + 本地实验知识库检索 + 流式回答
+#请求体：{message, experiment_id, observed_phenomenon, added_reagents, history}
+@app.post("/api/lab/agent/stream")
+def lab_agent_stream():
+    payload = request.get_json(silent=True) or {}
+    message = (payload.get("message") or "").strip()
+    if not message:
+        return jsonify({"ok": False, "error": "message required"}), 400
+    experiment_id = (payload.get("experiment_id") or "").strip() or None
+    observed = (payload.get("observed_phenomenon") or "").strip() or None
+    added_reagents = payload.get("added_reagents") or []
+    if not isinstance(added_reagents, list):
+        added_reagents = []
+    history = payload.get("history") or []
+
+    def generate():
+        try:
+            for frame in stream_lab_agent(
+                message,
+                experiment_id=experiment_id,
+                observed=observed,
+                added_reagents=added_reagents,
+                history=history,
+            ):
+                yield frame
+        except Exception as exc:  # 流式场景用事件上报错误，保证前端能优雅收尾
+            yield "event: error\ndata: " + json.dumps({"message": str(exc)}, ensure_ascii=False) + "\n\n"
+
+    return Response(
+        generate(),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
         },
     )
 

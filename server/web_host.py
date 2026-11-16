@@ -93,7 +93,22 @@ def proxy_aigent_quiz():
 @app.post("/api/aigent/chat/stream")
 def proxy_aigent_chat_stream():
     """流式转发 AI 对话：SSE 必须逐块透传，不能先缓冲完整响应。"""
-    upstream_url = f"{BACKEND_ORIGIN}/api/aigent/chat/stream"
+    return proxy_stream("/api/aigent/chat/stream")
+
+
+@app.get("/api/lab/experiments")
+def proxy_lab_experiments():
+    return proxy_backend("/api/lab/experiments")
+
+
+@app.post("/api/lab/agent/stream")
+def proxy_lab_agent_stream():
+    """实验助手流式接口，同样需要逐块透传。"""
+    return proxy_stream("/api/lab/agent/stream")
+
+
+def proxy_stream(upstream_path):
+    upstream_url = f"{BACKEND_ORIGIN}{upstream_path}"
     try:
         upstream = requests.request(
             method="POST",
