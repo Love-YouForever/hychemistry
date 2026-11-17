@@ -703,7 +703,7 @@
             <div class="close-video">✕</div>
             <div class="video-title">▶ ${personName}</div>
             <video controls autoplay loop playsinline webkit-playsinline>
-                <source src="video/${encodeURIComponent(personName)}.mp4" type="video/mp4">
+                <source src="video/${encodeURIComponent(personName)}.mp4?v=20261117a" type="video/mp4">
                 您的浏览器不支持 video 标签。
             </video>
             <div class="video-error-tip" style="display:none;">
