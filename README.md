@@ -311,48 +311,54 @@ response_id,reviewer_id,correctness,grade_fit,citation_support,safety,comment
 ```
 元素幻语/
 ├── 主页.html                    # 站点入口
-├── server/                      # 后端服务
-│   ├── start_bs.py              # 本地一键启动（拉起 4100 + 4101，含自签 HTTPS）
+├── server/                      # 后端服务与评测脚本
+│   ├── start_bs.py              # 本地一键启动（4100 + 4101，含自签 HTTPS）
 │   ├── start_prod.py            # 生产启动入口（容器内运行，TLS 交由 Nginx）
-│   ├── web_host.py              # 站点宿主与 API 反向代理
-│   ├── backend_server.py        # API 路由（对话 / 视觉 / TTS / 维基代理）
-│   ├── aigent_service.py        # DeepSeek 对话、SSE 流式与 TTS 封装
-│   ├── chem_tools.py            # 6 个化学工具
-│   ├── vision_service.py        # 多模态视觉识别
+│   ├── web_host.py              # 静态站点宿主与 API 反向代理
+│   ├── backend_server.py        # API 路由（对话 / 视觉 / TTS / 实验助手等）
+│   ├── aigent_service.py        # DeepSeek 对话、工具链、SSE 流式与 TTS 封装
+│   ├── chem_tools.py            # 6 个确定性化学工具
+│   ├── scene_actions.py         # 第 7 个工具：受约束的 3D 场景控制
+│   ├── vision_service.py        # 多模态视觉识别与 OCR 降级
+│   ├── rag_engine.py            # BM25 + LSA + bigram + RRF 混合检索与语义缓存
+│   ├── relation_graph.py        # 受控关系证据图与多跳证据路径
+│   ├── knowledge_relations.json # 关系边、别名与语料证据配置
+│   ├── lab_agent.py             # 实验助手：确定性安全审查 + 范围内检索 + SSE
+│   ├── lab_data/                # 8 个实验的安全配置与 40 个实验知识片段
 │   ├── mcp_server.py            # MCP 化学工具服务（6 工具 + 3 资源）
-│   ├── rag_engine.py            # 混合检索引擎（BM25 + LSA 向量 + RRF）
-│   ├── relation_graph.py        # 轻量关系证据图（别名→元素→语料块的多跳证据路径）
-│   ├── scene_actions.py         # 受约束的 3D 场景动作协议（周期表/实验室白名单动作）
-│   ├── lab_agent.py             # 实验助手：确定性安全审查 + 实验范围检索 + SSE 流式生成
-│   ├── lab_data/                # 实验安全配置 experiments.json + 实验知识库 knowledge.md
-│   ├── build_index.py           # 构建本地检索索引（落盘 knowledge_index/）
-│   ├── eval_agent.py            # AI 效果评测（25 题）
-│   ├── eval_rag.py              # RAG 检索评测（15 题，含消融对比）
-│   ├── benchmark.py             # 性能基准（后端算法 + 页面加载 + 可选 AI 端到端）
-│   └── prompt_templates.json    # 提示词模板
+│   ├── mcp_config.example.json  # MCP 客户端配置示例
+│   ├── build_index.py           # 构建可再生成的 knowledge_index/ 本地索引
+│   ├── eval_agent.py            # Agent 效果评测（25 题）
+│   ├── eval_rag.py              # RAG 消融评测（15 道 dev + 7 道冻结 holdout）
+│   ├── benchmark.py             # 后端算法、页面加载与可选 AI 端到端性能测量
+│   └── prompt_templates.json    # 场景化提示词模板
 ├── pages/                       # 功能页面
-│   ├── Periodic_Table/          # 3D 元素周期表
-│   ├── Chemical_equation/       # 方程式词云 + 拖拽填空挑战
+│   ├── Periodic_Table/          # 2D/3D 元素周期表与 118 份元素 RAG 语料
+│   ├── Chemical_equation/       # 手势方程式词云 + 拖拽填空挑战
 │   ├── chemistry_lab/           # 3D 虚拟化学实验室
-│   ├── Chemical_Epics/          # 化学史诗
+│   ├── Chemical_Epics/          # 化学史诗与化学先驱
 │   ├── chemistry_kill/          # 化学杀
 │   ├── games/                   # 元素 2048 / 原子游戏
 │   └── surprise.html            # 彩蛋页
-├── assets/                      # 共享静态资源
-│   ├── css/                     # 各页面样式（与页面同名）
-│   ├── js/                      # 各页面脚本（与页面同名）
+├── assets/                      # 全站共享静态资源
+│   ├── css/ · js/               # 页面样式与交互脚本
+│   ├── vendor/                  # Vue 3 UMD 本地依赖
 │   ├── character/               # 元素角色图
-│   ├── photo_up/ photo_down/    # 元素图鉴图片
-│   ├── background.mp4           # 全局背景视频
-│   └── 无人之地.mp3              # 背景音乐
-├── AIgent/                      # 桌面宠物子项目（Python + tkinter）
-├── tests/                       # 206 个离线单元测试（8 个测试文件，pytest）
-├── docs/                        # 技术文档 PDF（评测报告等过程文档仅在本地保留）
-├── Dockerfile                   # 生产镜像（python:3.12-slim）
-├── .env.example                 # 环境变量模板
-├── requirements.txt             # pip 依赖清单
-├── pyproject.toml               # uv 工程配置
-└── .gitignore
+│   ├── photo_up/ · photo_down/  # 元素图鉴图片
+│   └── 背景视频、海报与背景音乐
+├── AIgent/                      # 桌宠「小幻语」子项目（视觉识别 + 对话）
+├── images/                      # 桌宠表情与页面图片
+├── video/                       # 化学家人物视频（完整 7 部见提交源码 ZIP）
+├── tests/                       # 8 个测试文件，206 个离线单元测试
+├── docs/                        # 技术文档；提交 ZIP 另含 docs/evaluation/ 三份实测报告
+├── .github/workflows/ci.yml     # pytest、服务端语法检查与 Ruff 持续集成
+├── Dockerfile · .dockerignore   # 生产镜像与构建排除规则
+├── requirements.txt · requirements-dev.txt
+├── pyproject.toml · uv.lock     # uv 工程配置与锁定依赖
+├── pytest.ini · ruff.toml       # 测试与代码规范配置
+├── .env.example                 # 环境变量模板（不含真实密钥）
+├── .gitattributes · .gitignore  # Git LFS 与本地文件排除规则
+└── README.md
 ```
 
 ---
@@ -397,7 +403,7 @@ cp .env.example .env
 uv run server/start_bs.py
 ```
 
-服务启动后访问：**http://localhost:4100**
+服务启动后访问：**https://127.0.0.1:4100**
 
 首次检索时若没有索引文件，会在内存中现场拟合（约 2 秒）。想省掉这一步可提前构建：
 
