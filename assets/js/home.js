@@ -699,10 +699,12 @@
         videoDiv.style.setProperty('--arrow-left', pos.arrowLeft + '%');
         videoDiv.style.setProperty('--origin-x', pos.originX + '%');
 
+        const posterSrc = items.find(it => it.name === personName)?.img || 'assets/character/1.jpg';
+
         videoDiv.innerHTML = `
             <div class="close-video">✕</div>
             <div class="video-title">▶ ${personName}</div>
-            <video controls autoplay loop playsinline webkit-playsinline>
+            <video controls loop preload="metadata" playsinline webkit-playsinline poster="${posterSrc}">
                 <source src="video/${encodeURIComponent(personName)}.mp4?v=20261117a" type="video/mp4">
                 您的浏览器不支持 video 标签。
             </video>
@@ -731,8 +733,22 @@
             console.warn(`视频加载失败: video/${personName}.mp4`);
             errorTip.style.display = 'block';
             showMsgToast(`📽️ 未找到视频：${personName}.mp4，请将文件放入 video 文件夹`, 3200);
-            videoElem.poster = items.find(it => it.name === personName)?.img || 'assets/character/1.jpg';
+            videoElem.poster = posterSrc;
         });
+
+        // 必须在点击手势内主动 play()：仅靠 autoplay 属性会被浏览器策略拦截，
+        // 表现为一直黑屏、readyState 停在 0，看起来像视频加载失败。
+        const playPromise = videoElem.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(() => {
+                // 无用户激活或桌面浏览器限制有声自动播放时，退化为静音播放
+                videoElem.muted = true;
+                const mutedPlay = videoElem.play();
+                if (mutedPlay && typeof mutedPlay.catch === 'function') {
+                    mutedPlay.catch(() => showMsgToast('点击视频区域即可播放', 2600));
+                }
+            });
+        }
 
         // 关闭按钮
         videoDiv.querySelector('.close-video').addEventListener('click', (e) => {
