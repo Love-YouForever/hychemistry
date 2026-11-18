@@ -42,8 +42,6 @@
             }
         }
     </script>
-    <script src="./vendor/tf.min.js"></script>
-    <script src="./vendor/handpose.js"></script>
     <script>
         window.__chemicalEquationPendingCameraToggle = false;
         window.__chemicalEquationHandleCameraToggle = function () {
@@ -61,8 +59,37 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-        const tf = globalThis.tf;
-        const handpose = globalThis.handpose;
+        let tf = globalThis.tf;
+        let handpose = globalThis.handpose;
+
+        // 手势库按需动态加载：首屏不阻塞 1.47MB 的 tfjs，首次开启摄像头或空闲预加载时再加载
+        let handposeLibsPromise = null;
+        function loadClassicScript(src) {
+            return new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = src;
+                s.onload = () => resolve();
+                s.onerror = () => reject(new Error('脚本加载失败：' + src));
+                document.head.appendChild(s);
+            });
+        }
+        function ensureHandposeLibs() {
+            if (tf && handpose) return Promise.resolve();
+            if (!handposeLibsPromise) {
+                handposeLibsPromise = loadClassicScript('./vendor/tf.min.js')
+                    .then(() => loadClassicScript('./vendor/handpose.js'))
+                    .then(() => {
+                        tf = globalThis.tf;
+                        handpose = globalThis.handpose;
+                        if (!tf || !handpose) throw new Error('手势识别库加载失败');
+                    })
+                    .catch((err) => {
+                        handposeLibsPromise = null;
+                        throw err;
+                    });
+            }
+            return handposeLibsPromise;
+        }
         const pageLoadingOverlay = document.getElementById('page-loading-overlay');
         const pageLoadingText = document.getElementById('page-loading-text');
 
@@ -1095,6 +1122,9 @@
             if (handLandmarker) return handLandmarker;
             if (!handLandmarkerInitPromise) {
                 handLandmarkerInitPromise = (async () => {
+                    if (!tf || !handpose) {
+                        await ensureHandposeLibs();
+                    }
                     if (!tfBackendReady) {
                         if (!tf || !handpose) {
                             throw new Error('手势识别库加载失败');

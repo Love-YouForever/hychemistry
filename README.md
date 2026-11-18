@@ -40,10 +40,10 @@
 
 | 技术 | 用途 |
 |---|---|
-| HTML5 / CSS3 / ES6+ | 页面结构、视觉表现与交互逻辑（零构建依赖） |
-| Vue 3（本地 UMD 构建） | 主页应用外壳：导航、AI 助手面板与对话状态管理 |
+| Vite 5 + Vue 3.5 + TypeScript 5.7 | 主页应用工程化构建：SFC 组件、Composition API、类型检查与按需分包 |
+| HTML5 / CSS3 / ES2020 | 其余页面结构、视觉表现与交互逻辑 |
 | Three.js（CDN） | 3D 元素周期表、方程式词云场景渲染 |
-| TensorFlow.js + MediaPipe Handpose | 浏览器端手部关键点识别，实现隔空手势控制 |
+| TensorFlow.js + MediaPipe Handpose | 浏览器端手部关键点识别，实现隔空手势控制；1.47 MB 的 tfjs 与手势库改为首次使用时动态加载 |
 | Canvas 2D | 主页粒子背景与反应特效 |
 
 ### 后端
@@ -310,7 +310,17 @@ response_id,reviewer_id,correctness,grade_fit,citation_support,safety,comment
 
 ```
 元素幻语/
-├── 主页.html                    # 站点入口
+├── 主页.html                    # 站点入口（Vue 挂载点 + 构建产物 main.js）
+├── src/                         # 前端源码（Vite + Vue 3 SFC + TypeScript）
+│   ├── main.ts                  # 应用入口：挂载导航与 AI 面板，初始化桌宠
+│   ├── types.ts                 # 消息、引用、指标、小测等共享类型
+│   ├── env.d.ts                 # Vue SFC 与 window 全局类型声明
+│   ├── pet.ts                   # 桌宠漫游、拖拽、表情与气泡逻辑
+│   ├── components/
+│   │   ├── SiteNav.vue          # 顶部导航组件
+│   │   └── AssistantPanel.vue   # AI 对话面板、证据/指标/小测/文档问答弹窗
+│   └── composables/
+│       └── useAssistant.ts      # 对话状态、SSE 流式、工具轨迹、RAG 引用与语音
 ├── server/                      # 后端服务与评测脚本
 │   ├── start_bs.py              # 本地一键启动（4100 + 4101，含自签 HTTPS）
 │   ├── start_prod.py            # 生产启动入口（容器内运行，TLS 交由 Nginx）
@@ -341,8 +351,9 @@ response_id,reviewer_id,correctness,grade_fit,citation_support,safety,comment
 │   ├── games/                   # 元素 2048 / 原子游戏
 │   └── surprise.html            # 彩蛋页
 ├── assets/                      # 全站共享静态资源
+│   ├── dist/                    # Vite 构建产物（main.js 与按需分包，随仓库提交以保证可直接部署）
 │   ├── css/ · js/               # 页面样式与交互脚本
-│   ├── vendor/                  # Vue 3 UMD 本地依赖
+│   ├── vendor/                  # 第三方本地依赖
 │   ├── character/               # 元素角色图
 │   ├── photo_up/ · photo_down/  # 元素图鉴图片
 │   └── 背景视频、海报与背景音乐
@@ -354,6 +365,10 @@ response_id,reviewer_id,correctness,grade_fit,citation_support,safety,comment
 ├── .github/workflows/ci.yml     # pytest、服务端语法检查与 Ruff 持续集成
 ├── Dockerfile · .dockerignore   # 生产镜像与构建排除规则
 ├── requirements.txt · requirements-dev.txt
+├── package.json                 # 前端依赖与 dev / build / lint / format 脚本
+├── vite.config.ts               # Vite 构建配置（多入口、代码分割、相对路径部署）
+├── tsconfig.json · tsconfig.node.json
+├── .eslintrc.cjs · .prettierrc  # 前端代码规范与格式化配置
 ├── pyproject.toml · uv.lock     # uv 工程配置与锁定依赖
 ├── pytest.ini · ruff.toml       # 测试与代码规范配置
 ├── .env.example                 # 环境变量模板（不含真实密钥）
@@ -383,6 +398,16 @@ uv sync
 ```bash
 pip install -r requirements.txt
 ```
+
+如需修改主页前端（`src/`），再安装前端依赖并构建：
+
+```bash
+npm install
+npm run build        # vue-tsc 类型检查 + vite 构建，产物输出到 assets/dist/
+npm run lint         # ESLint 检查
+```
+
+仓库已提交 `assets/dist/` 构建产物，仅运行站点时无需安装 Node.js。
 
 ### 3. 配置环境变量
 
@@ -510,11 +535,11 @@ python -m http.server 8080
 
 ### 其他说明
 
-- **模块化拆分**：所有页面的内联样式与脚本已抽离至 `assets/css/` 与 `assets/js/`，按页面同名对应，HTML 平均从千行级降至百行级，便于维护与缓存复用。
+- **前端工程化**：主页导航与 AI 助手已迁移为 Vite + Vue 3 SFC + TypeScript，对话逻辑沉淀在 `useAssistant` 组合式函数中，配合 ESLint / Prettier / `vue-tsc` 类型检查；构建产物按 chunk 分割，`assets/dist/` 随仓库提交，静态部署方式保持不变。
 - **密钥安全**：全部敏感信息通过环境变量注入，仓库内仅保留 `.env.example` 占位模板；`.env`、证书、桌宠构建产物均已加入 `.gitignore`。
 - **素材体积控制**：视频统一由 Git LFS 托管。其中 4 部历史人物高清纪录片（门捷列夫、拉瓦锡、舍勒、鲍林）单文件超过 100MB 且超出 LFS 免费额度，未纳入公开仓库，缺失时页面会自动降级为海报图展示。
 - **响应式适配**：统一使用 `css/mobile-adaptation.css` 与 `viewport-fit=cover`，支持移动端横竖屏。
-- **无构建依赖**：所有页面可直接静态部署，降低评审环境复现成本。
+- **首屏性能**：方程式的 TensorFlow.js 与 Handpose（合计约 1.5 MB）不再阻塞 HTML 解析，改为首次开启摄像头或空闲时动态注入加载。
 
 ---
 

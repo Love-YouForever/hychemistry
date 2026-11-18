@@ -17,6 +17,12 @@ env/
 .pytest_cache/
 .mypy_cache/
 
+# ---------- 前端（Vite + Vue 3 + TypeScript） ----------
+node_modules/
+.vite/
+npm-debug.log*
+# 构建产物 assets/dist/ 需要随静态站点部署，保留入库
+
 # ---------- 日志与临时产物 ----------
 *.log
 .coverage
