@@ -405,7 +405,10 @@ pip install -r requirements.txt
 npm install
 npm run build        # vue-tsc 类型检查 + vite 构建，产物输出到 assets/dist/
 npm run lint         # ESLint 检查
+npm run test:e2e     # Playwright 冒烟测试（首次运行前执行 npx playwright install chromium）
 ```
+
+冒烟测试覆盖主页导航渲染、桌宠打开 AI 面板、发送问题与流式回答展示；后端接口通过 Playwright 路由模拟，无需模型密钥。
 
 仓库已提交 `assets/dist/` 构建产物，仅运行站点时无需安装 Node.js。
 

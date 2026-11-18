@@ -23,6 +23,12 @@ node_modules/
 npm-debug.log*
 # 构建产物 assets/dist/ 需要随静态站点部署，保留入库
 
+# ---------- Playwright ----------
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
 # ---------- 日志与临时产物 ----------
 *.log
 .coverage
