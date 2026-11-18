@@ -361,12 +361,14 @@ response_id,reviewer_id,correctness,grade_fit,citation_support,safety,comment
 ├── images/                      # 桌宠表情与页面图片
 ├── video/                       # 化学家人物视频（完整 7 部见提交源码 ZIP）
 ├── tests/                       # 8 个测试文件，206 个离线单元测试
+│   └── e2e/                     # Playwright 冒烟测试与零依赖静态服务器
 ├── docs/                        # 技术文档；提交 ZIP 另含 docs/evaluation/ 三份实测报告
-├── .github/workflows/ci.yml     # pytest、服务端语法检查与 Ruff 持续集成
+├── .github/workflows/ci.yml     # 后端 pytest / 语法检查 / Ruff + 前端 lint / build / E2E
 ├── Dockerfile · .dockerignore   # 生产镜像与构建排除规则
 ├── requirements.txt · requirements-dev.txt
 ├── package.json                 # 前端依赖与 dev / build / lint / format 脚本
 ├── vite.config.ts               # Vite 构建配置（多入口、代码分割、相对路径部署）
+├── playwright.config.ts         # Playwright 端到端测试配置
 ├── tsconfig.json · tsconfig.node.json
 ├── .eslintrc.cjs · .prettierrc  # 前端代码规范与格式化配置
 ├── pyproject.toml · uv.lock     # uv 工程配置与锁定依赖
