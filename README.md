@@ -499,10 +499,11 @@ python -m http.server 8080
 
 **当前结果**：206 个用例全部通过，`chem_tools.py` 覆盖率 **95%**。
 
-持续集成配置见 `.github/workflows/ci.yml`，包含两个任务：
+持续集成配置见 `.github/workflows/ci.yml`，包含三个任务：
 
 - **单元测试**：Python 3.12 环境下跑 pytest 与服务端语法校验
 - **代码规范**：Ruff 静态检查（未定义变量、未使用导入、import 排序等）
+- **前端工程**：Node 20 下执行 `npm ci`、ESLint、`vue-tsc` + Vite 构建与 Playwright 冒烟测试
 
 > 测试确实发挥了作用：编写安全用例时发现「TNT 的分子结构」「冰毒的危害有哪些」「化学武器为什么被禁止」这类正常学术提问被关键词规则误杀，已改为「危险名词 + 操作动词」组合判定，正负样本全部通过。
 

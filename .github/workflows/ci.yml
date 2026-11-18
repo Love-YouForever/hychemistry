@@ -54,3 +54,39 @@ jobs:
 
       - name: Ruff 静态检查
         run: ruff check server tests --output-format=github
+
+  frontend:
+    name: 前端构建与冒烟测试
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 代码规范检查
+        run: npm run lint
+
+      - name: 类型检查与构建
+        run: npm run build
+
+      - name: 安装 Playwright 浏览器
+        run: npx playwright install --with-deps chromium
+
+      - name: 运行冒烟测试
+        run: npm run test:e2e
+
+      - name: 上传测试报告
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
